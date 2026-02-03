@@ -80,6 +80,14 @@ git pull origin develop
 git branch -d feat/nombre-de-la-tarea
 ```
 
+### Paso 7: Limpieza Remota
+Borra la rama remota después de la integración.
+```bash
+git push origin --delete feat/nombre-de-la-tarea
+o
+git push origin :feat/nombre-de-la-tarea
+```
+
 ---
 
 ## 4. Arquitectura de Ramas 🏗️
