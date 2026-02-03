@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -34,6 +35,7 @@ export default function RootLayout({
           <main className="min-h-screen pt-[80px]">
             {children}
           </main>
+          <Toaster richColors position="top-center" />
           <Footer />
         </Providers>
       </body>

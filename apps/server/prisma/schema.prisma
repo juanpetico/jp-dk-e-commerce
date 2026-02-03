@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Cuando creemos el .env, este será la URL de la base de datos
+  url      = env("DATABASE_URL")
 }
 
 // 1. Usuarios y Roles
@@ -15,14 +15,42 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String?
-  email     String   @unique
+  email     String    @unique
   password  String
-  role      Role     @default(CLIENT)
+  phone     String?
+  role      Role      @default(CLIENT)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  orders    Order[]
+  addresses Address[]
+}
+
+// 1.1. Direcciones del Usuario
+model Address {
+  id        String  @id @default(cuid())
+  name      String
+  rut       String?
+  street    String
+  city      String
+  region    String
+  zipCode   String? // Código postal
+  country   String  @default("Chile")
+  phone     String
+  isDefault Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relaciones inversa para Orders
+  shippingOrders Order[] @relation("ShippingAddress")
+  billingOrders  Order[] @relation("BillingAddress")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders    Order[]
+
+  @@index([userId])
 }
 
 // 2. Productos y Categorías
@@ -42,14 +70,16 @@ model Category {
 }
 
 model Product {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  price       Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
-  isNew       Boolean @default(true)
-  slug        String  @unique // SEO: /product/polera-shooters-pink-black
-  stock       Int     @default(0)
-  sizes       Size[] // Array de Enums (S, M, L...)
+  id            String  @id @default(cuid())
+  name          String
+  description   String?
+  price         Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
+  originalPrice Int? // Precio original (para ofertas)
+  isNew         Boolean @default(true)
+  isSale        Boolean @default(false)
+  slug          String  @unique // SEO: /product/polera-shooters-pink-black
+  stock         Int     @default(0)
+  sizes         Size[] // Array de Enums (S, M, L, XL, XXL)
 
   // Relaciones
   categoryId String
@@ -73,23 +103,37 @@ model ProductImage {
 
 // 3. Sistema de Órdenes (Ventas Reales)
 enum OrderStatus {
-  PENDING
-  PAID
-  SHIPPED
-  DELIVERED
-  CANCELLED
+  PENDING // Pendiente
+  CONFIRMED // Confirmado (equivalente a PAID)
+  SHIPPED // Enviado
+  DELIVERED // Entregado
+  CANCELLED // Cancelado
 }
 
 model Order {
-  id     String      @id @default(cuid())
-  total  Int
-  status OrderStatus @default(PENDING)
-  isPaid Boolean     @default(false)
-  paidAt DateTime?
+  id             String      @id @default(cuid())
+  date           String // Fecha formato string para frontend
+  total          Int
+  subtotal       Int // Subtotal antes de impuestos y envío
+  shippingCost   Int // Costo de envío
+  taxes          Int // Impuestos aplicados
+  taxRate        Float // Tasa de impuesto (ej: 0.19 para 19%)
+  shippingMethod String? // Descripción del método de envío
+  status         OrderStatus @default(PENDING)
+  isPaid         Boolean     @default(false)
+  paidAt         DateTime?
+  confirmedAt    DateTime? // Fecha de confirmación
 
   // Relación con el cliente
   userId String
   user   User   @relation(fields: [userId], references: [id])
+
+  // Direcciones
+  shippingAddressId String
+  shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+
+  billingAddressId String
+  billingAddress   Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
 
   // Detalle de la compra
   items OrderItem[]
