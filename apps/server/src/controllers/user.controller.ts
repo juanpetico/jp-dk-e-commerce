@@ -97,17 +97,76 @@ export const userController = {
                 throw new AppError("Authentication required", 401);
             }
 
-            const { name, email, password } = req.body;
+            const { name, email, password, phone } = req.body;
+            // Also update phone if provided, based on schema
             const user = await userService.updateUser(req.user.id, {
                 name,
                 email,
                 password,
+                phone,
             });
 
             res.json({
                 success: true,
                 message: "Profile updated successfully",
                 data: user,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async addAddress(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) {
+                throw new AppError("Authentication required", 401);
+            }
+
+            const addressData = req.body;
+            const address = await userService.addAddress(req.user.id, addressData);
+
+            res.status(201).json({
+                success: true,
+                message: "Address added successfully",
+                data: address,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async updateAddress(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) {
+                throw new AppError("Authentication required", 401);
+            }
+
+            const addressId = getParam(req, "id");
+            const addressData = req.body;
+            const address = await userService.updateAddress(req.user.id, addressId, addressData);
+
+            res.json({
+                success: true,
+                message: "Address updated successfully",
+                data: address,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async deleteAddress(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) {
+                throw new AppError("Authentication required", 401);
+            }
+
+            const addressId = getParam(req, "id");
+            await userService.deleteAddress(req.user.id, addressId);
+
+            res.json({
+                success: true,
+                message: "Address deleted successfully",
             });
         } catch (error) {
             next(error);

@@ -18,6 +18,11 @@ router.post("/auth/login", loginValidation, userController.login);
 router.get("/users/profile", authenticate, userController.getProfile);
 router.put("/users/profile", authenticate, userController.updateProfile);
 
+// Address routes
+router.post("/users/address", authenticate, userController.addAddress);
+router.put("/users/address/:id", authenticate, userController.updateAddress);
+router.delete("/users/address/:id", authenticate, userController.deleteAddress);
+
 // Admin only routes
 router.get("/users", authenticate, requireRole("ADMIN"), userController.getAllUsers);
 router.get("/users/:id", authenticate, requireRole("ADMIN"), userController.getUserById);

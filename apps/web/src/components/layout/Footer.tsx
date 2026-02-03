@@ -2,9 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@repo/ui';
 
 const Footer: React.FC = () => {
+    const pathname = usePathname();
+    const isProfileRoute = ['/profile', '/orders', '/settings'].some(route => pathname?.startsWith(route));
+
+    if (isProfileRoute) return null;
+
     return (
         <footer className="bg-black text-white pt-16 pb-8 border-t border-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
