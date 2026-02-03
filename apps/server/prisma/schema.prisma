@@ -1,0 +1,117 @@
+// Configuración básica
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Usuarios y Roles
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  orders        Order[]
+}
+
+// 2. Productos y Categorías
+enum Size {
+  S
+  M
+  L
+  XL
+  XXL
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique // Para URLs amigables (ej: /category/poleras)
+  products  Product[]
+}
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  price       Int            // Usamos Int para evitar problemas de redondeo (ej: 25990)
+  isNew       Boolean        @default(true)
+  slug        String         @unique // SEO: /product/polera-shooters-pink-black
+  stock       Int            @default(0)
+  sizes       Size[]         // Array de Enums (S, M, L...)
+  
+  // Relaciones
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id])
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  url       String
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// 3. Sistema de Órdenes (Ventas Reales)
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  total       Int
+  status      OrderStatus @default(PENDING)
+  isPaid      Boolean     @default(false)
+  paidAt      DateTime?
+  
+  // Relación con el cliente
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  
+  // Detalle de la compra
+  items       OrderItem[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Int     // Guardamos el precio del momento de la compra
+  size      Size
+  
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
