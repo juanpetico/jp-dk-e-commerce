@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") // Cuando creemos el .env, este será la URL de la base de datos
 }
 
 // 1. Usuarios y Roles
@@ -15,14 +15,14 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String
-  role          Role      @default(CLIENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  orders        Order[]
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
 }
 
 // 2. Productos y Categorías
@@ -35,30 +35,30 @@ enum Size {
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique // Para URLs amigables (ej: /category/poleras)
-  products  Product[]
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique // Para URLs amigables (ej: /category/poleras)
+  products Product[]
 }
 
 model Product {
-  id          String         @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   description String?
-  price       Int            // Usamos Int para evitar problemas de redondeo (ej: 25990)
-  isNew       Boolean        @default(true)
-  slug        String         @unique // SEO: /product/polera-shooters-pink-black
-  stock       Int            @default(0)
-  sizes       Size[]         // Array de Enums (S, M, L...)
-  
+  price       Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
+  isNew       Boolean @default(true)
+  slug        String  @unique // SEO: /product/polera-shooters-pink-black
+  stock       Int     @default(0)
+  sizes       Size[] // Array de Enums (S, M, L...)
+
   // Relaciones
-  categoryId  String
-  category    Category       @relation(fields: [categoryId], references: [id])
-  images      ProductImage[]
-  orderItems  OrderItem[]
-  
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  categoryId String
+  category   Category       @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([categoryId])
   @@index([slug])
@@ -81,34 +81,34 @@ enum OrderStatus {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  total       Int
-  status      OrderStatus @default(PENDING)
-  isPaid      Boolean     @default(false)
-  paidAt      DateTime?
-  
+  id     String      @id @default(cuid())
+  total  Int
+  status OrderStatus @default(PENDING)
+  isPaid Boolean     @default(false)
+  paidAt DateTime?
+
   // Relación con el cliente
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
-  
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
   // Detalle de la compra
-  items       OrderItem[]
-  
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  quantity  Int
-  price     Int     // Guardamos el precio del momento de la compra
-  size      Size
-  
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
-  
+  id       String @id @default(cuid())
+  quantity Int
+  price    Int // Guardamos el precio del momento de la compra
+  size     Size
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
