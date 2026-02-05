@@ -101,7 +101,7 @@ const ProductPage: React.FC = () => {
                                     onClick={() => setSelectedSize(size)}
                                     className={`w-12 h-12 flex items-center justify-center border rounded font-medium text-sm transition-all ${selectedSize === size
                                         ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
-                                        : 'bg-white dark:bg-gray-800 text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white'
+                                        : 'bg-white dark:bg-black text-black dark:text-white border-gray-200 dark:border-gray-700 hover:border-black dark:hover:border-white'
                                         }`}
                                 >
                                     {size}
@@ -132,7 +132,7 @@ const ProductPage: React.FC = () => {
 
                     {/* Actions */}
                     <div className="space-y-3 mb-4">
-                        <Button fullWidth variant="outline" onClick={handleAddToCart} className="bg-white dark:bg-gray-800 border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <Button fullWidth variant="outline" onClick={handleAddToCart} className="bg-white dark:bg-black border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             Agregar al carrito
                         </Button>
                         <Button fullWidth onClick={handleAddToCart} className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100">

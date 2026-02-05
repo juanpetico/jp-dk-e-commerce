@@ -2,11 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCart } from '../../store/CartContext';
 import { useUser } from '../../store/UserContext';
 import { Search, User, ShoppingBag, Menu, ChevronDown } from 'lucide-react';
+
+import SearchOverlay from './SearchOverlay';
 
 const Navbar: React.FC = () => {
     const pathname = usePathname();
@@ -15,6 +18,7 @@ const Navbar: React.FC = () => {
     const router = useRouter();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -50,7 +54,9 @@ const Navbar: React.FC = () => {
 
     return (
         <div className="fixed top-0 left-0 right-0 z-50">
-            <div className="bg-black text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-gray-800">
+            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+            <div className="relative z-50 bg-black text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-gray-800">
                 <div className="flex whitespace-nowrap animate-marquee">
                     <div className="flex items-center">
                         <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
@@ -69,7 +75,7 @@ const Navbar: React.FC = () => {
                 </div>
             </div>
 
-            <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 text-black dark:text-white">
+            <nav className="relative z-50 bg-white/95 dark:bg-black backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 text-black dark:text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Mobile Menu Button */}
@@ -84,8 +90,17 @@ const Navbar: React.FC = () => {
 
                         {/* Logo */}
                         <div className="flex-shrink-0 flex items-center justify-center flex-1 md:flex-none md:justify-start">
-                            <Link href="/" className="font-display text-4xl font-black tracking-tighter italic transform -skew-x-12 px-2 border-4 border-black dark:border-white">
-                                JP DK
+                            <Link href="/" className="flex-shrink-0">
+                                <span className="sr-only">JP DK</span>
+                                <div className="relative h-12 w-32">
+                                    <NextImage
+                                        src="/logo.png"
+                                        alt="JP DK Logo"
+                                        fill
+                                        className="object-contain dark:invert"
+                                        priority
+                                    />
+                                </div>
                             </Link>
                         </div>
 
@@ -99,7 +114,10 @@ const Navbar: React.FC = () => {
 
                         {/* Icons */}
                         <div className="flex items-center space-x-2 md:space-x-4">
-                            <button className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2 transition-colors">
+                            <button
+                                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                                className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2 transition-colors"
+                            >
                                 <Search className="w-5 h-5" />
                             </button>
 
@@ -115,7 +133,7 @@ const Navbar: React.FC = () => {
 
                                 {/* Dropdown cuando NO está autenticado - aparece en hover */}
                                 {!isAuthenticated && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                         <Link
                                             href="/login"
                                             onClick={() => setIsUserDropdownOpen(false)}
@@ -135,7 +153,7 @@ const Navbar: React.FC = () => {
 
                                 {/* Dropdown cuando SÍ está autenticado - aparece en hover */}
                                 {user && (
-                                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
                                                 <User className="w-4 h-4" />
@@ -179,7 +197,7 @@ const Navbar: React.FC = () => {
 
                 {/* Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 animate-slide-in">
+                    <div className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-black animate-slide-in">
                         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                             <Link href="/" className="block px-3 py-2 text-base font-bold font-display uppercase hover:bg-gray-50 dark:hover:bg-gray-800">Inicio</Link>
                             <Link href="/catalog" className="block px-3 py-2 text-base font-bold font-display uppercase hover:bg-gray-50 dark:hover:bg-gray-800">Catálogo</Link>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@repo/ui';
 
@@ -17,8 +18,14 @@ const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Brand */}
                     <div>
-                        <Link href="/" className="font-display text-4xl font-black tracking-tighter italic block mb-6">
-                            JP DK
+                        <Link href="/" className="block mb-6 relative h-12 w-32">
+                            <span className="sr-only">JP DK</span>
+                            <NextImage
+                                src="/logo.png"
+                                alt="JP DK Logo"
+                                fill
+                                className="object-contain dark:invert"
+                            />
                         </Link>
                         <p className="text-gray-400 text-sm leading-relaxed mb-6">
                             Es Calle. Moda urbana con carácter. Diseñado para destacar en la jungla de concreto.

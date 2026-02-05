@@ -19,19 +19,23 @@ interface CreateProductData {
     name: string;
     description?: string;
     price: number;
+    originalPrice?: number;
     stock: number;
     categoryId: string;
     sizes: Size[];
     isNew?: boolean;
+    isSale?: boolean;
     images?: string[];
 }
 
 interface ProductFilters {
+    // ... existing filters
     categoryId?: string;
     minPrice?: number;
     maxPrice?: number;
     size?: Size;
     isNew?: boolean;
+    isSale?: boolean;
     search?: string;
 }
 
@@ -52,18 +56,22 @@ export const productService = {
         const product = await prisma.product.create({
             data: {
                 name: data.name,
-                description: data.description,
+                description: data.description ?? null,
                 price: data.price,
+                originalPrice: data.originalPrice ?? null,
                 stock: data.stock,
                 categoryId: data.categoryId,
                 sizes: data.sizes,
                 isNew: data.isNew ?? true,
+                isSale: data.isSale ?? false,
                 slug,
-                images: data.images
+                ...(data.images
                     ? {
-                        create: data.images.map((url) => ({ url })),
+                        images: {
+                            create: data.images.map((url) => ({ url })),
+                        },
                     }
-                    : undefined,
+                    : {}),
             },
             include: {
                 images: true,
@@ -74,6 +82,7 @@ export const productService = {
         return product;
     },
 
+    // ... (getAllProducts, getProductById, getProductBySlug remain similar but ensure filters are correct in getAllProducts if needed)
     async getAllProducts(filters?: ProductFilters) {
         const where: any = {};
 
@@ -101,6 +110,10 @@ export const productService = {
             where.isNew = filters.isNew;
         }
 
+        if (filters?.isSale !== undefined) {
+            where.isSale = filters.isSale;
+        }
+
         if (filters?.search) {
             where.OR = [
                 { name: { contains: filters.search, mode: "insensitive" } },
@@ -122,6 +135,7 @@ export const productService = {
         return products;
     },
 
+    // ... getProductById ...
     async getProductById(id: string) {
         const product = await prisma.product.findUnique({
             where: { id },
@@ -156,17 +170,17 @@ export const productService = {
 
     async updateProduct(
         id: string,
-        data: Partial<CreateProductData> & { slug?: string }
+        productData: Partial<CreateProductData> & { slug?: string }
     ) {
         // Generate new slug if name is being updated
-        if (data.name && !data.slug) {
-            data.slug = generateSlug(data.name);
+        if (productData.name && !productData.slug) {
+            productData.slug = generateSlug(productData.name);
         }
 
         // Verify category exists if being updated
-        if (data.categoryId) {
+        if (productData.categoryId) {
             const category = await prisma.category.findUnique({
-                where: { id: data.categoryId },
+                where: { id: productData.categoryId },
             });
 
             if (!category) {
@@ -177,14 +191,22 @@ export const productService = {
         const product = await prisma.product.update({
             where: { id },
             data: {
-                name: data.name,
-                description: data.description,
-                price: data.price,
-                stock: data.stock,
-                categoryId: data.categoryId,
-                sizes: data.sizes,
-                isNew: data.isNew,
-                slug: data.slug,
+                ...(productData.name !== undefined ? { name: productData.name } : {}),
+                ...(productData.description !== undefined ? { description: productData.description } : {}),
+                ...(productData.price !== undefined ? { price: productData.price } : {}),
+                ...(productData.originalPrice !== undefined ? { originalPrice: productData.originalPrice } : {}),
+                ...(productData.stock !== undefined ? { stock: productData.stock } : {}),
+                ...(productData.categoryId
+                    ? {
+                        category: {
+                            connect: { id: productData.categoryId },
+                        },
+                    }
+                    : {}),
+                ...(productData.sizes !== undefined ? { sizes: productData.sizes } : {}),
+                ...(productData.isNew !== undefined ? { isNew: productData.isNew } : {}),
+                ...(productData.isSale !== undefined ? { isSale: productData.isSale } : {}),
+                ...(productData.slug !== undefined ? { slug: productData.slug } : {}),
             },
             include: {
                 images: true,

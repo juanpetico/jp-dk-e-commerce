@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
-import localFont from "next/font/local";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import Navbar from "../src/components/layout/Navbar";
 import Footer from "../src/components/layout/Footer";
 import CartDrawer from "../src/components/layout/CartDrawer";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${montserrat.variable} font-sans`}>
         <Providers>
           <Navbar />
           <CartDrawer />
@@ -42,3 +38,4 @@ export default function RootLayout({
     </html>
   );
 }
+

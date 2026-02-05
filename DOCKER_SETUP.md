@@ -34,7 +34,7 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### Detener y eliminar volumes (⚠️ elimina todos los datos)
+### Detener y eliminar volumes 
 ```bash
 docker-compose down -v
 ```
@@ -51,7 +51,7 @@ docker-compose down -v
    - **General Tab**:
      - Name: `E-commerce DB`
    - **Connection Tab**:
-     - Host name/address: `postgres` (nombre del servicio)
+     - Host name/address: `postgres`
      - Port: `5432`
      - Maintenance database: `ecommerce_db`
      - Username: `ecommerce_user`
@@ -76,8 +76,8 @@ Con Docker corriendo:
 
 ```bash
 cd apps/server
-npx prisma migrate dev --name init
-npx prisma generate
+pnpm --filter server exec prisma migrate dev --name init
+pnpm --filter server exec prisma generate
 ```
 
 ## Health Check
