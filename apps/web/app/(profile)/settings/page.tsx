@@ -33,7 +33,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Right Side: Action Card */}
-                <div className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                <div className="flex-1 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex flex-col md:flex-row items-center gap-6">
                         <button
                             onClick={handleLogoutAll}

@@ -15,8 +15,8 @@ const config: Config = {
                 accent: "#FBBF24", // Example accent color from original
             },
             fontFamily: {
-                display: ["var(--font-geist-sans)", "system-ui", "sans-serif"], // Mapping display to geist for now
-                sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+                display: ["var(--font-montserrat)", "system-ui", "sans-serif"],
+                sans: ["var(--font-montserrat)", "system-ui", "sans-serif"],
             },
             animation: {
                 'marquee': 'marquee 30s linear infinite',

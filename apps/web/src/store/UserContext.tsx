@@ -6,8 +6,8 @@ import { User, Address } from '../types';
 
 interface UserContextType {
     user: User | null;
-    login: (email: string, password: string) => Promise<boolean>;
-    register: (email: string, password: string, name: string, phone?: string) => void;
+    login: (email: string, password: string) => Promise<{ success: boolean; role?: string }>;
+    register: (email: string, password: string, name: string, phone?: string) => Promise<boolean>;
     logout: () => void;
     isAuthenticated: boolean;
     updateProfile: (data: Partial<User>) => Promise<boolean>;
@@ -57,7 +57,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         checkAuth();
     }, []);
 
-    const login = async (email: string, password: string): Promise<boolean> => {
+    const login = async (email: string, password: string): Promise<{ success: boolean; role?: string }> => {
         try {
             const response = await fetch('http://localhost:5001/api/auth/login', {
                 method: 'POST',
@@ -71,31 +71,34 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (!response.ok) {
                 toast.error(data.message || 'Error al iniciar sesión');
-                return false;
+                return { success: false };
             }
 
             if (data.success) {
                 localStorage.setItem('token', data.data.token);
+                document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
                 setUser(data.data.user);
                 toast.success('Sesión iniciada correctamente');
-                return true;
+                return { success: true, role: data.data.user.role };
             }
-            return false;
+            return { success: false };
         } catch (error: any) {
             toast.error(error.message || 'Ocurrió un error inesperado');
             console.error('Login error:', error);
-            return false;
+            return { success: false };
         }
     };
 
-    const register = async (email: string, password: string, name: string, phone?: string) => {
+    const register = async (email: string, password: string, name: string, phone?: string): Promise<boolean> => {
         try {
+            const trimmedEmail = email.trim();
+            console.log("Sending register data:", { email: trimmedEmail, password, name, phone });
             const response = await fetch('http://localhost:5001/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password, name }),
+                body: JSON.stringify({ email: trimmedEmail, password, name, phone }),
             });
 
             const data = await response.json();
@@ -106,17 +109,22 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (data.success) {
                 localStorage.setItem('token', data.data.token);
+                document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
                 setUser(data.data.user);
                 toast.success('Registro exitoso');
+                return true;
             }
+            return false;
         } catch (error: any) {
             toast.error(error.message || 'Ocurrió un error inesperado');
             console.error('Register error:', error);
+            return false;
         }
     };
 
     const logout = () => {
         localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         setUser(null);
         toast.success('Sesión cerrada correctamente');
     };

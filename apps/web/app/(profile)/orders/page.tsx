@@ -42,7 +42,7 @@ export default function OrdersPage() {
                     <div className="relative">
                         <button
                             onClick={() => setShowViewDropdown(!showViewDropdown)}
-                            className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 bg-gray-100 dark:bg-black hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded text-sm font-medium transition-colors"
                         >
                             {viewMode === 'gallery' ? <Grid3x3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
                             {viewMode === 'gallery' ? 'Galería' : 'Lista'}
@@ -50,7 +50,7 @@ export default function OrdersPage() {
                         </button>
 
                         {showViewDropdown && (
-                            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
                                 <button
                                     onClick={() => {
                                         setViewMode('gallery');
@@ -79,12 +79,12 @@ export default function OrdersPage() {
                     <div className="relative group">
                         <button
                             onClick={() => setShowFilter(!showFilter)}
-                            className="bg-gray-100 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded text-gray-700 dark:text-gray-300 transition-colors"
+                            className="bg-gray-100 dark:bg-black hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded text-gray-700 dark:text-gray-300 transition-colors"
                         >
                             <Filter className="w-5 h-5" />
                         </button>
                         {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black dark:bg-gray-700 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
                             Filtro
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default function OrdersPage() {
             )}
 
             {/* Filter Modal - desliza desde la derecha */}
-            <div className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-800 shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-black shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700 ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex flex-col h-full">
                     {/* Header con pestañas */}
                     <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 p-6">
@@ -241,7 +241,24 @@ export default function OrdersPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 relative">                {/* Orders List */}
                 <div className="flex-1">
-                    {viewMode === 'gallery' ? (
+                    {(!user.orders || user.orders.length === 0) ? (
+                        <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-black rounded-lg border border-gray-100 dark:border-gray-700">
+                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-full mb-4">
+                                <Grid3x3 className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">No tienes pedidos aún</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6 text-center max-w-sm">
+                                Parece que no has realizado ninguna compra todavía. ¡Explora nuestro catálogo!.
+                            </p>
+                            <Link href="/catalog">
+                                <Button
+                                    className="px-8 rounded py-3 bg-[#FF0000] text-white hover:bg-[#CC0000] normal-case font-bold"
+                                >
+                                    Ver Catálogo
+                                </Button>
+                            </Link>
+                        </div>
+                    ) : viewMode === 'gallery' ? (
                         // Vista Galería - Grid responsive
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {user.orders?.map((order) => {
@@ -253,7 +270,7 @@ export default function OrdersPage() {
                                         href={`/orders/${order.id}`}
                                         className="block"
                                     >
-                                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                        <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 mb-6 inline-flex items-center gap-2">
                                                 <span className="text-black dark:text-white">✓</span>
                                                 <div>
@@ -298,7 +315,7 @@ export default function OrdersPage() {
                             const firstItem = order.items[0];
 
                             return (
-                                <div key={order.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div key={order.id} className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-4">
                                         {firstItem && (
                                             <div className="w-16 h-16 bg-black rounded flex-shrink-0">
@@ -339,7 +356,7 @@ export default function OrdersPage() {
                                                         className="fixed inset-0 z-10"
                                                         onClick={() => setOpenMenuId(null)}
                                                     />
-                                                    <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                                                    <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
                                                         <Link
                                                             href={`/orders/${order.id}`}
                                                             className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

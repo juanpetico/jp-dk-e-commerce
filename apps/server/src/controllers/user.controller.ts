@@ -8,16 +8,19 @@ import { getParam } from "../utils/request.js";
 
 // Validation rules
 export const registerValidation = [
-    body("email").isEmail().withMessage("Valid email is required"),
+    body("email")
+        .trim()
+        .notEmpty().withMessage("El correo electrónico es obligatorio")
+        .isEmail().withMessage("Formato de correo electrónico inválido"),
     body("password")
         .isLength({ min: 6 })
-        .withMessage("Password must be at least 6 characters"),
-    body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
+        .withMessage("La contraseña debe tener al menos 6 caracteres"),
+    body("name").optional().trim().notEmpty().withMessage("El nombre no puede estar vacío"),
 ];
 
 export const loginValidation = [
-    body("email").isEmail().withMessage("Valid email is required"),
-    body("password").notEmpty().withMessage("Password is required"),
+    body("email").trim().isEmail().normalizeEmail().withMessage("Correo electrónico inválido"),
+    body("password").notEmpty().withMessage("La contraseña es obligatoria"),
 ];
 
 // Controller functions
@@ -40,7 +43,7 @@ export const userController = {
 
             res.status(201).json({
                 success: true,
-                message: "User registered successfully",
+                message: "Usuario registrado exitosamente",
                 data: result,
             });
         } catch (error) {
@@ -66,7 +69,7 @@ export const userController = {
 
             res.json({
                 success: true,
-                message: "Login successful",
+                message: "Inicio de sesión exitoso",
                 data: result,
             });
         } catch (error) {
@@ -77,7 +80,7 @@ export const userController = {
     async getProfile(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
-                throw new AppError("Authentication required", 401);
+                throw new AppError("Autenticación requerida", 401);
             }
 
             const user = await userService.getUserById(req.user.id);
@@ -94,7 +97,7 @@ export const userController = {
     async updateProfile(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
-                throw new AppError("Authentication required", 401);
+                throw new AppError("Autenticación requerida", 401);
             }
 
             const { name, email, password, phone } = req.body;
@@ -108,7 +111,7 @@ export const userController = {
 
             res.json({
                 success: true,
-                message: "Profile updated successfully",
+                message: "Perfil actualizado exitosamente",
                 data: user,
             });
         } catch (error) {
@@ -119,7 +122,7 @@ export const userController = {
     async addAddress(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
-                throw new AppError("Authentication required", 401);
+                throw new AppError("Autenticación requerida", 401);
             }
 
             const addressData = req.body;
@@ -127,7 +130,7 @@ export const userController = {
 
             res.status(201).json({
                 success: true,
-                message: "Address added successfully",
+                message: "Dirección agregada exitosamente",
                 data: address,
             });
         } catch (error) {
@@ -138,7 +141,7 @@ export const userController = {
     async updateAddress(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
-                throw new AppError("Authentication required", 401);
+                throw new AppError("Autenticación requerida", 401);
             }
 
             const addressId = getParam(req, "id");
@@ -147,7 +150,7 @@ export const userController = {
 
             res.json({
                 success: true,
-                message: "Address updated successfully",
+                message: "Dirección actualizada exitosamente",
                 data: address,
             });
         } catch (error) {
@@ -158,7 +161,7 @@ export const userController = {
     async deleteAddress(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             if (!req.user) {
-                throw new AppError("Authentication required", 401);
+                throw new AppError("Autenticación requerida", 401);
             }
 
             const addressId = getParam(req, "id");
@@ -166,7 +169,7 @@ export const userController = {
 
             res.json({
                 success: true,
-                message: "Address deleted successfully",
+                message: "Dirección eliminada exitosamente",
             });
         } catch (error) {
             next(error);
@@ -207,7 +210,7 @@ export const userController = {
 
             res.json({
                 success: true,
-                message: "User deleted successfully",
+                message: "Usuario eliminado exitosamente",
             });
         } catch (error) {
             next(error);

@@ -16,6 +16,7 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
         country: 'Chile',
         firstName: '',
         lastName: '',
+        rut: '',
         company: '',
         street: '',
         apartment: '',
@@ -34,6 +35,7 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
                 country: initialData.country,
                 firstName: first || '',
                 lastName: last.join(' ') || '',
+                rut: initialData.rut || '',
                 company: '', // Not in type
                 street: initialData.street,
                 apartment: '', // Not in type (assumed part of street usually)
@@ -48,6 +50,7 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
                 country: 'Chile',
                 firstName: '',
                 lastName: '',
+                rut: '',
                 company: '',
                 street: '',
                 apartment: '',
@@ -67,6 +70,7 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
         const fullAddress: Partial<Address> = {
             country: formData.country,
             name: `${formData.firstName} ${formData.lastName}`.trim(),
+            rut: formData.rut,
             street: `${formData.street} ${formData.apartment ? ', ' + formData.apartment : ''}`.trim(),
             city: formData.city,
             region: formData.region,
@@ -81,7 +85,7 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="relative bg-white dark:bg-black rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
@@ -137,13 +141,14 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
                             />
                         </div>
 
-                        {/* Company */}
+                        {/* Rut */}
                         <input
                             type="text"
-                            placeholder="Empresa"
-                            value={formData.company}
-                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                            placeholder="Rut"
+                            value={formData.rut}
+                            onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
                             className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600"
+                            required
                         />
 
                         {/* Address */}
@@ -154,13 +159,6 @@ export default function AddressModal({ isOpen, onClose, onSave, initialData }: A
                             onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                             className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600"
                             required
-                        />
-                        <input
-                            type="text"
-                            placeholder="Apartamento, local, etc. (opcional)"
-                            value={formData.apartment}
-                            onChange={(e) => setFormData({ ...formData, apartment: e.target.value })}
-                            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-red-600"
                         />
 
                         {/* Zip & City */}

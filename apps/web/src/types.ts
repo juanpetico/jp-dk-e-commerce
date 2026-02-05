@@ -52,6 +52,7 @@ export interface User {
     name: string;
     email: string;
     phone?: string;
+    role: string;
     addresses: Address[];
     orders: Order[];
 }

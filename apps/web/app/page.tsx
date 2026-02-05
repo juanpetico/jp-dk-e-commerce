@@ -288,7 +288,7 @@ const LookbookCard = ({ product }: { product: Product }) => {
 
   return (
     <div className="flex-none w-[85vw] md:w-[400px] snap-center flex flex-col group">
-      <div className="relative aspect-[3/4] overflow-hidden bg-gray-900 mb-4">
+      <div className="relative aspect-[3/4] overflow-hidden bg-neutral-900 mb-4">
         <Link href={`/product/${product.id}`}>
           <img
             src={product.images[0]}

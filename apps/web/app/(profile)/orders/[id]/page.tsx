@@ -68,7 +68,7 @@ export default function OrderDetailsPage() {
                 {/* Left Column */}
                 <div className="flex-1 space-y-6">
                     {/* Status Card */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="text-green-600">
                                 <Check className="w-5 h-5" />
@@ -81,7 +81,7 @@ export default function OrderDetailsPage() {
                     </div>
 
                     {/* Address & Contact Info Card */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-sm">
+                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                             {/* Contact Layout */}
                             <div>
@@ -136,7 +136,7 @@ export default function OrderDetailsPage() {
 
                 {/* Right Column - Product List & Totals */}
                 <div className="lg:w-[400px]">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
                         {/* Product List */}
                         <div className="space-y-6 mb-8 border-b border-gray-100 dark:border-gray-700 pb-8">
                             {order.items.map((item) => (

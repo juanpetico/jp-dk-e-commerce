@@ -19,9 +19,20 @@ export default function RegisterPage() {
 
     const handleEmailSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (email) {
-            setStep('password');
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
+            toast.error('El correo electrónico es obligatorio');
+            return;
         }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+            toast.error('Formato de correo electrónico inválido');
+            return;
+        }
+
+        setEmail(trimmedEmail);
+        setStep('password');
     };
 
     const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -31,20 +42,17 @@ export default function RegisterPage() {
         }
     };
 
-    const handleCompleteSubmit = (e: React.FormEvent) => {
+    const handleCompleteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            register(email, password, name, phone);
-            toast.success('Cuenta creada exitosamente');
+        const success = await register(email, password, name, phone);
+        if (success) {
             router.push('/profile');
-        } catch (error) {
-            toast.error('Error al crear la cuenta');
         }
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-            <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-black px-4">
+            <div className="max-w-md w-full bg-white dark:bg-black p-8 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h1 className="font-display text-4xl font-black italic tracking-tighter mb-6 transform -skew-x-12 inline-block border-4 border-black dark:border-white px-2">
                         JP DK

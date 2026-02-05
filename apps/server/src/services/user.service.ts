@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import bcrypt from "bcrypt";
 import { AppError } from "../middleware/error-handler.js";
+import { CLIENT_RENEG_LIMIT } from "tls";
 
 // Helper for consistent User selections and transformations
 const userInclude = {
@@ -103,6 +104,16 @@ export const userService = {
 
         if (!user) return null;
         return mapUserToResponse(user);
+    },
+
+    async getUserByEmailWithPassword(email: string) {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: userInclude,
+        });
+
+        if (!user) return null;
+        return user;
     },
 
     async updateUser(

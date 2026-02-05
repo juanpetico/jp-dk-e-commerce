@@ -75,15 +75,16 @@ export default function ProfilePage() {
                 <h1 className="font-display text-3xl font-bold mb-8 text-black dark:text-white">Perfil</h1>
 
                 {/* Personal Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 p-6 mb-8 shadow-sm">
-                    <div className="flex items-center gap-2 mb-6">
+                <div className="bg-white dark:bg-black rounded-lg border border-gray-100 dark:border-gray-700 p-6 mb-8 shadow-sm relative">
+                    <button
+                        onClick={() => setIsProfileModalOpen(true)}
+                        className="absolute top-6 right-6 text-red-600 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/20 p-1.5 rounded-full"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </button>
+
+                    <div className="mb-6">
                         <h2 className="font-bold text-lg text-black dark:text-white">{user.name}</h2>
-                        <button
-                            onClick={() => setIsProfileModalOpen(true)}
-                            className="text-red-600 hover:text-red-700 transition-colors bg-red-50 dark:bg-red-900/20 p-1.5 rounded-full"
-                        >
-                            <Edit className="w-4 h-4" />
-                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -112,17 +113,27 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[...(user.addresses || [])].sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1)).map((addr, index) => (
-                            <div key={addr.id} className={`bg-white dark:bg-gray-800 rounded-lg border ${addr.isDefault ? 'border-red-600 dark:border-red-600 ring-1 ring-red-600' : 'border-gray-100 dark:border-gray-700'} p-6 shadow-sm relative group`}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        {index === 0 && addr.isDefault && (
-                                            <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold px-2 py-1 rounded">
-                                                Predeterminada
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1">
+                        {(!user.addresses || user.addresses.length === 0) ? (
+                            <div className="md:col-span-2 flex flex-col items-center justify-center py-12 bg-white dark:bg-black rounded-lg border border-gray-100 dark:border-gray-700">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-full mb-4">
+                                    <span className="text-3xl">📍</span>
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">No tienes direcciones guardadas</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6 text-center max-w-sm">
+                                    Agrega una dirección para agilizar tus compras futuras.
+                                </p>
+                                <button
+                                    onClick={handleAddAddress}
+                                    className="px-6 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-sm font-bold transition-colors"
+                                >
+                                    Agregar dirección
+                                </button>
+                            </div>
+                        ) : (
+                            [...(user.addresses || [])].sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1)).map((addr, index) => (
+                                <div key={addr.id} className={`bg-white dark:bg-black rounded-lg border ${addr.isDefault ? 'border-red-600 dark:border-red-600 ring-1 ring-red-600' : 'border-gray-100 dark:border-gray-700'} p-6 shadow-sm relative group`}>
+                                    {/* Action Buttons */}
+                                    <div className="absolute top-6 right-6 flex items-center gap-1">
                                         <button
                                             onClick={() => handleEditAddress(addr)}
                                             className="text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors p-1.5"
@@ -136,28 +147,38 @@ export default function ProfilePage() {
                                             <span className="text-xl leading-none block -mt-1">×</span>
                                         </button>
                                     </div>
-                                </div>
 
-                                <div className="text-sm text-gray-800 dark:text-gray-200 space-y-1 mb-4">
-                                    <p className="font-bold">{addr.name}</p>
-                                    {addr.rut && <p>{addr.rut}</p>}
-                                    <p>{addr.street}</p>
-                                    <p>{addr.city}, {addr.region}</p>
-                                    <p>{addr.country}</p>
-                                    <p>{addr.phone}</p>
-                                </div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            {index === 0 && addr.isDefault && (
+                                                <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold px-2 py-1 rounded">
+                                                    Predeterminada
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
 
-                                {/* Button to make default (only if not default/first) */}
-                                {(!addr.isDefault) && (
-                                    <button
-                                        onClick={() => handleSaveAddress({ ...addr, isDefault: true })}
-                                        className="w-full text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded py-2 hover:border-gray-400 transition-colors"
-                                    >
-                                        Esta es mi dirección predeterminada
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 space-y-1 mb-4">
+                                        <p className="font-bold">{addr.name}</p>
+                                        {addr.rut && <p>{addr.rut}</p>}
+                                        <p>{addr.street}</p>
+                                        <p>{addr.city}, {addr.region}</p>
+                                        <p>{addr.country}</p>
+                                        <p>{addr.phone}</p>
+                                    </div>
+
+                                    {/* Button to make default (only if not default/first) */}
+                                    {(!addr.isDefault) && (
+                                        <button
+                                            onClick={() => handleSaveAddress({ ...addr, isDefault: true })}
+                                            className="w-full text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white border border-gray-200 dark:border-gray-700 rounded py-2 hover:border-gray-400 transition-colors"
+                                        >
+                                            Esta es mi dirección predeterminada
+                                        </button>
+                                    )}
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>

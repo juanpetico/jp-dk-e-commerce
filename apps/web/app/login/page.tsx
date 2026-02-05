@@ -24,10 +24,13 @@ export default function LoginPage() {
     const handlePasswordSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const success = await login(email, password);
-            if (success) {
-                // Toast is already handled in UserContext
-                router.push('/profile');
+            const result = await login(email, password);
+            if (result.success) {
+                if (result.role === 'ADMIN') {
+                    router.push('/admin/dashboard');
+                } else {
+                    router.push('/profile');
+                }
             }
             // If !success, do nothing regarding navigation.
             // UserContext already showed the error toast.
@@ -39,8 +42,8 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-            <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-black px-4">
+            <div className="max-w-md w-full bg-white dark:bg-black p-8 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="text-center mb-8">
                     <h1 className="font-display text-4xl font-black italic tracking-tighter mb-6 transform -skew-x-12 inline-block border-4 border-black dark:border-white px-2">
                         JP DK
