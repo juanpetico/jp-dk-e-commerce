@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, X, ArrowRight } from 'lucide-react';
+import { fetchProducts } from '../../services/productService';
 import { Product } from '../../types';
 
 interface SearchOverlayProps {
@@ -42,21 +43,60 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         fetchCategories();
     }, []);
 
+    // Handle search with debounce
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchTerm.trim().length > 0) {
+                setIsLoading(true);
+                try {
+
+                    // Fetch products from API
+                    const foundProducts = await fetchProducts({ search: searchTerm });
+                    setProducts(foundProducts);
+
+                    // Filter categories locally by name
+                    const nameMatches = categories.filter(cat =>
+                        cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+
+                    // Extract categories from found products
+                    const productCategories = foundProducts.map(p => p.category);
+
+                    // Merge and deduplicate
+                    const uniqueCategoriesMap = new Map<string, Category>();
+
+                    // Add name matches
+                    nameMatches.forEach(cat => uniqueCategoriesMap.set(cat.id, cat));
+
+                    // Add product categories
+                    productCategories.forEach(cat => {
+                        if (cat && cat.id) {
+                            uniqueCategoriesMap.set(cat.id, cat);
+                        }
+                    });
+
+                    setSuggestions(Array.from(uniqueCategoriesMap.values()));
+                } catch (error) {
+                    console.error("Error searching products:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setSuggestions([]);
+                setProducts([]);
+            }
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(timer);
+    }, [searchTerm, categories]);
 
     // Prevent body scroll when open
     useEffect(() => {
         if (isOpen) {
-            document.body.style.overflow = 'hidden';
             if (inputRef.current) {
                 setTimeout(() => inputRef.current?.focus(), 100);
             }
-        } else {
-            document.body.style.overflow = 'unset';
-            setSearchTerm(''); // Optional: clear on close if desired, reference does handleClear but also keeps state? Reference clears on handleClear.
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
     }, [isOpen]);
 
     const handleClear = () => {
@@ -76,19 +116,19 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
     return (
         <div
-            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm flex flex-col pt-[112px] animate-fade-in"
+            className="absolute top-full left-0 w-full z-30 bg-background/95 backdrop-blur-md border-b border-border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300"
             onClick={handleBackdropClick}
         >
             <div
-                className="bg-white/95 dark:bg-black/95 text-black dark:text-white flex flex-col shadow-xl max-h-[70vh]"
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header / Input Area */}
                 <div className="relative pt-6 px-4 md:px-8 pb-4">
                     <div className="max-w-4xl mx-auto w-full">
-                        <div className="border border-gray-300 dark:border-gray-700 px-4 py-3 flex items-center bg-white dark:bg-black">
+                        <div className="border border-border px-4 py-3 flex items-center bg-background rounded-lg">
                             <div className="flex flex-col flex-1">
-                                <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+                                <label className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">
                                     Búsqueda
                                 </label>
                                 <input
@@ -96,21 +136,21 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="bg-transparent text-black dark:text-white text-lg font-medium focus:outline-none w-full placeholder-gray-400"
+                                    className="bg-transparent text-foreground text-lg font-medium focus:outline-none w-full placeholder-muted-foreground"
                                     placeholder="Buscar productos..."
                                 />
                             </div>
 
                             <div className="flex items-center gap-4">
                                 {searchTerm && (
-                                    <button onClick={handleClear} className="text-gray-400 hover:text-black dark:hover:text-white">
+                                    <button onClick={handleClear} className="text-muted-foreground hover:text-foreground">
                                         <X className="w-5 h-5" />
                                     </button>
                                 )}
-                                <Search className="w-6 h-6 text-black dark:text-white" />
+                                <Search className="w-6 h-6 text-foreground" />
 
                                 {/* Close Overlay Button */}
-                                <button onClick={onClose} className="text-gray-400 hover:text-red-600 transition-colors ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                                <button onClick={onClose} className="text-muted-foreground hover:text-destructive transition-colors ml-2 pl-2 border-l border-border">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -119,13 +159,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 </div>
 
                 {/* Results Area */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8 border-t border-border">
                     <div className="max-w-4xl mx-auto w-full">
                         {(searchTerm.length > 0 && (suggestions.length > 0 || products.length > 0)) ? (
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                                 {/* Suggestions Column */}
                                 <div className="md:col-span-4">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
                                         Sugerencias
                                     </h3>
                                     <ul className="space-y-3">
@@ -134,7 +174,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                 <Link
                                                     href={`/catalog?category=${cat.id}`}
                                                     onClick={onClose}
-                                                    className="text-black dark:text-white font-bold text-sm hover:underline hover:text-gray-600 dark:hover:text-gray-300 block"
+                                                    className="text-foreground font-bold text-sm hover:underline hover:text-muted-foreground block"
                                                 >
                                                     {cat.name}
                                                 </Link>
@@ -145,7 +185,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
                                 {/* Products Column */}
                                 <div className="md:col-span-8">
-                                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+                                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
                                         Productos
                                     </h3>
                                     <div className="space-y-4">
@@ -154,20 +194,20 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                                 key={product.id}
                                                 href={`/product/${product.id}`}
                                                 onClick={onClose}
-                                                className="flex items-center gap-4 group hover:bg-gray-50 dark:hover:bg-gray-900 p-2 rounded transition-colors"
+                                                className="flex items-center gap-4 group hover:bg-accent p-2 rounded transition-colors"
                                             >
-                                                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                                                <div className="w-12 h-12 bg-muted flex-shrink-0 rounded-md overflow-hidden">
                                                     <img
-                                                        src={product.images[0]}
+                                                        src={product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg'}
                                                         alt={product.name}
                                                         className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <span className="font-bold text-sm text-black dark:text-white group-hover:underline block">
+                                                    <span className="font-bold text-sm text-foreground group-hover:underline block">
                                                         {product.name}
                                                     </span>
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-muted-foreground">
                                                         {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(product.price)}
                                                     </span>
                                                 </div>
@@ -177,7 +217,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                 </div>
                             </div>
                         ) : searchTerm.length > 0 && products.length === 0 && !isLoading ? (
-                            <div className="text-center text-gray-500 mt-4 pb-8">
+                            <div className="text-center text-muted-foreground mt-4 pb-8">
                                 <p>No se encontraron resultados para "{searchTerm}"</p>
                             </div>
                         ) : null}
@@ -186,12 +226,12 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
                 {/* Footer Action Bar */}
                 {searchTerm.length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-4">
+                    <div className="border-t border-border bg-muted/50 p-4">
                         <div className="max-w-4xl mx-auto w-full">
                             <Link
                                 href={`/catalog?search=${encodeURIComponent(searchTerm)}`}
                                 onClick={onClose}
-                                className="flex items-center justify-between text-black dark:text-white font-bold uppercase tracking-wider text-sm hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                className="flex items-center justify-between text-foreground font-bold uppercase tracking-wider text-sm hover:text-muted-foreground transition-colors"
                             >
                                 <span>Buscar "{searchTerm}"</span>
                                 <ArrowRight className="w-5 h-5" />

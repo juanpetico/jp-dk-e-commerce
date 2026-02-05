@@ -5,7 +5,9 @@ import { CLIENT_RENEG_LIMIT } from "tls";
 
 // Helper for consistent User selections and transformations
 const userInclude = {
-    addresses: true,
+    addresses: {
+        where: { isActive: true },
+    },
     orders: {
         include: {
             items: {
@@ -228,8 +230,30 @@ export const userService = {
             throw new AppError("Unauthorized access to this address", 403);
         }
 
-        await prisma.address.delete({
+        // If it's the current default, we need to pick another one if available
+        if (existingAddress.isDefault) {
+            const anotherAddress = await prisma.address.findFirst({
+                where: {
+                    userId,
+                    isActive: true,
+                    id: { not: addressId },
+                },
+            });
+
+            if (anotherAddress) {
+                await prisma.address.update({
+                    where: { id: anotherAddress.id },
+                    data: { isDefault: true },
+                });
+            }
+        }
+
+        await prisma.address.update({
             where: { id: addressId },
+            data: {
+                isActive: false,
+                isDefault: false
+            },
         });
 
         // If we deleted the default address, should we make another one default?

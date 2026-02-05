@@ -39,17 +39,21 @@ export const productController = {
                 );
             }
 
-            const { name, description, price, stock, categoryId, sizes, isNew, images } =
+            const { name, description, price, originalPrice, discountPercent, stock, categoryId, sizes, isNew, isSale, isPublished, images } =
                 req.body;
 
             const product = await productService.createProduct({
                 name,
                 description,
                 price,
+                originalPrice,
+                discountPercent,
                 stock,
                 categoryId,
                 sizes,
                 isNew,
+                isSale,
+                isPublished,
                 images,
             });
 
@@ -80,6 +84,7 @@ export const productController = {
                 size?: Size;
                 isNew?: boolean;
                 search?: string;
+                isPublished?: boolean;
             } = {};
 
             if (categoryId) filters.categoryId = categoryId;
@@ -88,6 +93,11 @@ export const productController = {
             if (sizeStr) filters.size = sizeStr as Size;
             if (isNewStr === "true") filters.isNew = true;
             else if (isNewStr === "false") filters.isNew = false;
+
+            const isPublishedStr = getQuery(req, "isPublished");
+            if (isPublishedStr === "true") filters.isPublished = true;
+            else if (isPublishedStr === "false") filters.isPublished = false;
+
             if (search) filters.search = search;
 
             const products = await productService.getAllProducts(filters);
@@ -132,17 +142,22 @@ export const productController = {
     async updateProduct(req: Request, res: Response, next: NextFunction) {
         try {
             const id = getParam(req, "id");
-            const { name, description, price, stock, categoryId, sizes, isNew } =
+            const { name, description, price, originalPrice, discountPercent, stock, categoryId, sizes, isNew, isSale, isPublished, images } =
                 req.body;
 
             const product = await productService.updateProduct(id, {
                 name,
                 description,
                 price,
+                originalPrice,
+                discountPercent,
                 stock,
                 categoryId,
                 sizes,
                 isNew,
+                isSale,
+                isPublished,
+                images,
             });
 
             res.json({

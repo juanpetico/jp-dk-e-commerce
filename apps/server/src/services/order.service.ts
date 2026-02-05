@@ -3,7 +3,7 @@ import { AppError } from "../middleware/error-handler.js";
 
 // Type definitions until Prisma generates types
 type Size = "S" | "M" | "L" | "XL" | "XXL";
-type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 interface OrderItemInput {
     productId: string;
@@ -18,7 +18,7 @@ export const orderService = {
         }
 
         // Use a transaction to ensure data consistency
-        const order = await prisma.$transaction(async (tx: typeof prisma) => {
+        const order = await prisma.$transaction(async (tx: any) => {
             let total = 0;
             const orderItemsData = [];
 
@@ -73,13 +73,31 @@ export const orderService = {
                 });
             }
 
+            // Fetch user addresses for the order
+            const userAddresses = await tx.address.findMany({
+                where: { userId, isActive: true },
+            });
+
+            if (userAddresses.length === 0) {
+                throw new AppError("User must have at least one address to create an order", 400);
+            }
+
+            const defaultAddress = userAddresses.find((a: any) => a.isDefault) || userAddresses[0];
+
             // Create order with items
             const newOrder = await tx.order.create({
                 data: {
                     userId,
+                    date: new Date().toISOString(),
                     total,
+                    subtotal: total,
+                    shippingCost: 0,
+                    taxes: 0,
+                    taxRate: 0,
                     status: "PENDING",
                     isPaid: false,
+                    shippingAddressId: defaultAddress.id,
+                    billingAddressId: defaultAddress.id,
                     items: {
                         create: orderItemsData,
                     },
@@ -167,8 +185,69 @@ export const orderService = {
         return order;
     },
 
-    async getAllOrders() {
+    async getAllOrders(filters?: {
+        status?: OrderStatus;
+        startDate?: Date;
+        endDate?: Date;
+        search?: string;
+    }) {
+        // Construir el objeto where dinámicamente
+        const where: any = {};
+
+        // Filtro por estado
+        if (filters?.status) {
+            where.status = filters.status;
+        }
+
+        // Filtro por rango de fechas
+        if (filters?.startDate || filters?.endDate) {
+            where.createdAt = {};
+            if (filters.startDate) {
+                where.createdAt.gte = filters.startDate;
+            }
+            if (filters.endDate) {
+                where.createdAt.lte = filters.endDate;
+            }
+        }
+
+        // Búsqueda por ID de orden o nombre de cliente
+        if (filters?.search) {
+            where.OR = [
+                {
+                    id: {
+                        startsWith: filters.search,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    user: {
+                        OR: [
+                            {
+                                name: {
+                                    startsWith: filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                            {
+                                name: {
+                                    contains: " " + filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                            {
+                                email: {
+                                    startsWith: filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                        ],
+                    },
+                },
+            ];
+        }
+
         const orders = await prisma.order.findMany({
+            where,
             include: {
                 items: {
                     include: {
@@ -186,6 +265,8 @@ export const orderService = {
                         name: true,
                     },
                 },
+                shippingAddress: true,
+                billingAddress: true,
             },
             orderBy: {
                 createdAt: "desc",
@@ -202,9 +283,22 @@ export const orderService = {
             include: {
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: {
+                                images: true,
+                            },
+                        },
                     },
                 },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                    },
+                },
+                shippingAddress: true,
+                billingAddress: true,
             },
         });
 
@@ -217,14 +311,27 @@ export const orderService = {
             data: {
                 isPaid: true,
                 paidAt: new Date(),
-                status: "PAID",
+                status: "CONFIRMED",
             },
             include: {
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: {
+                                images: true,
+                            },
+                        },
                     },
                 },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                    },
+                },
+                shippingAddress: true,
+                billingAddress: true,
             },
         });
 
@@ -244,7 +351,7 @@ export const orderService = {
         }
 
         // Use transaction to restore stock and update order
-        const updatedOrder = await prisma.$transaction(async (tx: typeof prisma) => {
+        const updatedOrder = await prisma.$transaction(async (tx: any) => {
             // Restore stock for each item
             for (const item of order.items) {
                 await tx.product.update({

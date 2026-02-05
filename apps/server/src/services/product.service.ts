@@ -20,12 +20,14 @@ interface CreateProductData {
     description?: string;
     price: number;
     originalPrice?: number;
+    discountPercent?: number;
     stock: number;
     categoryId: string;
     sizes: Size[];
     isNew?: boolean;
     isSale?: boolean;
     images?: string[];
+    isPublished?: boolean;
 }
 
 interface ProductFilters {
@@ -37,6 +39,7 @@ interface ProductFilters {
     isNew?: boolean;
     isSale?: boolean;
     search?: string;
+    isPublished?: boolean;
 }
 
 export const productService = {
@@ -52,6 +55,13 @@ export const productService = {
             throw new AppError("Category not found", 404);
         }
 
+        // Validate price integrity: originalPrice must be greater than price
+        if (data.originalPrice !== undefined && data.originalPrice !== null) {
+            if (data.originalPrice <= data.price) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        }
+
         // Create product with images
         const product = await prisma.product.create({
             data: {
@@ -59,11 +69,13 @@ export const productService = {
                 description: data.description ?? null,
                 price: data.price,
                 originalPrice: data.originalPrice ?? null,
+                discountPercent: data.discountPercent ?? null,
                 stock: data.stock,
                 categoryId: data.categoryId,
                 sizes: data.sizes,
                 isNew: data.isNew ?? true,
                 isSale: data.isSale ?? false,
+                isPublished: data.isPublished ?? false,
                 slug,
                 ...(data.images
                     ? {
@@ -119,6 +131,10 @@ export const productService = {
                 { name: { contains: filters.search, mode: "insensitive" } },
                 { description: { contains: filters.search, mode: "insensitive" } },
             ];
+        }
+
+        if (filters?.isPublished !== undefined) {
+            where.isPublished = filters.isPublished;
         }
 
         const products = await prisma.product.findMany({
@@ -188,6 +204,25 @@ export const productService = {
             }
         }
 
+        // Validate price integrity: originalPrice must be greater than price
+        // Need to check both new values and existing values
+        if (productData.originalPrice !== undefined && productData.originalPrice !== null) {
+            // originalPrice is being set to a value, validate it
+            const priceToCheck = productData.price !== undefined ? productData.price : (await prisma.product.findUnique({ where: { id } }))?.price;
+            if (priceToCheck !== undefined && productData.originalPrice <= priceToCheck) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        } else if (productData.originalPrice === null) {
+            // originalPrice is being explicitly set to null (removing offer), skip validation
+            // This is valid - we're removing the offer
+        } else if (productData.price !== undefined) {
+            // If only price is being updated, check against existing originalPrice
+            const existingProduct = await prisma.product.findUnique({ where: { id } });
+            if (existingProduct?.originalPrice && existingProduct.originalPrice <= productData.price) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        }
+
         const product = await prisma.product.update({
             where: { id },
             data: {
@@ -195,6 +230,7 @@ export const productService = {
                 ...(productData.description !== undefined ? { description: productData.description } : {}),
                 ...(productData.price !== undefined ? { price: productData.price } : {}),
                 ...(productData.originalPrice !== undefined ? { originalPrice: productData.originalPrice } : {}),
+                ...(productData.discountPercent !== undefined ? { discountPercent: productData.discountPercent } : {}),
                 ...(productData.stock !== undefined ? { stock: productData.stock } : {}),
                 ...(productData.categoryId
                     ? {
@@ -206,7 +242,16 @@ export const productService = {
                 ...(productData.sizes !== undefined ? { sizes: productData.sizes } : {}),
                 ...(productData.isNew !== undefined ? { isNew: productData.isNew } : {}),
                 ...(productData.isSale !== undefined ? { isSale: productData.isSale } : {}),
+                ...(productData.isPublished !== undefined ? { isPublished: productData.isPublished } : {}),
                 ...(productData.slug !== undefined ? { slug: productData.slug } : {}),
+                ...(productData.images
+                    ? {
+                        images: {
+                            deleteMany: {},
+                            create: productData.images.map((url) => ({ url })),
+                        },
+                    }
+                    : {}),
             },
             include: {
                 images: true,

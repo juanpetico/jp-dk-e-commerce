@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Product } from '../../types';
-import { Button } from '@repo/ui';
+import { Button } from '../ui/Button';
 import { useCart } from '../../store/CartContext';
 
 interface ProductCardProps {
@@ -26,23 +26,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             onMouseLeave={() => setIsHovered(false)}
         >
             <div className="relative aspect-[4/5] bg-gray-100 mb-4 overflow-hidden">
-                <Link href={`/product/${product.id}`}>
+                <Link href={`/product/${product.slug}`}>
                     <img
-                        src={product.images[0]}
+                        src={product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg'}
                         alt={product.name}
                         className={`w-full h-full object-cover transition-transform duration-700 ease-in-out ${isHovered ? 'scale-110' : 'scale-100'}`}
                     />
                 </Link>
 
                 {/* Badges */}
-                <div className="absolute top-2 left-2 flex flex-col gap-2">
+                <div className="absolute top-0 left-0 flex flex-col items-start z-10">
                     {product.isNew && (
-                        <span className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest">
+                        <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
                             New
                         </span>
                     )}
                     {product.isSale && (
-                        <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest">
+                        <span className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">
                             Sale
                         </span>
                     )}
@@ -51,12 +51,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 {/* Quick Add Overlay */}
                 <div className={`absolute bottom-0 left-0 right-0 p-4 transform transition-transform duration-300 ${isHovered ? 'translate-y-0' : 'translate-y-full'}`}>
                     <Button
-                        fullWidth
                         onClick={(e) => {
                             e.preventDefault();
                             addToCart(product, product.sizes[0] || ''); // Default to first size for quick add
                         }}
-                        className="bg-white text-black border-white hover:bg-gray-100 shadow-lg"
+                        className="w-full bg-white text-black border-white hover:bg-gray-100 shadow-lg"
                     >
                         Añadir al Carrito
                     </Button>
@@ -64,7 +63,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
 
             <div className="flex-1 flex flex-col">
-                <Link href={`/product/${product.id}`}>
+                <Link href={`/product/${product.slug}`}>
                     <h3 className="text-sm font-bold uppercase tracking-wide mb-1 group-hover:underline">
                         {product.name}
                     </h3>

@@ -4,8 +4,23 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../../src/store/UserContext';
-import Button from '../../../src/components/ui/Button';
-import { Grid3x3, Filter, List, MoreVertical } from 'lucide-react';
+import { Button } from '../../../src/components/ui/Button';
+import { Grid3x3, Filter, List, MoreVertical, Eye } from 'lucide-react';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, subDays, subMonths, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { Calendar as CalendarIcon, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function OrdersPage() {
     const { user, isAuthenticated } = useUser();
@@ -14,14 +29,29 @@ export default function OrdersPage() {
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
     const [showViewDropdown, setShowViewDropdown] = useState(false);
     const [filterTab, setFilterTab] = useState<'sort' | 'filter'>('sort');
-    const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+    // Filter & Sort State
+    const [sortBy, setSortBy] = useState<string>('date-desc');
+    const [dateFilter, setDateFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [dateRange, setDateRange] = useState<{ from: Date | undefined; to?: Date | undefined } | undefined>(undefined);
+
+    // Persistence and Auth
     React.useEffect(() => {
+        const savedViewMode = localStorage.getItem('ordersViewMode');
+        if (savedViewMode === 'gallery' || savedViewMode === 'list') {
+            setViewMode(savedViewMode);
+        }
+
         if (!isAuthenticated || (user === null && !isAuthenticated)) {
             router.push('/login');
         }
     }, [isAuthenticated, user, router]);
+
+    React.useEffect(() => {
+        localStorage.setItem('ordersViewMode', viewMode);
+    }, [viewMode]);
 
     if (!user) {
         return null;
@@ -31,18 +61,97 @@ export default function OrdersPage() {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);
     };
 
+    const translateStatus = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'PENDING': 'Pendiente',
+            'CONFIRMED': 'Confirmado',
+            'SHIPPED': 'Enviado',
+            'DELIVERED': 'Entregado',
+            'CANCELLED': 'Cancelado',
+            'PROCESSING': 'Procesando',
+            'PAID': 'Pagado'
+        };
+        return statusMap[status.toUpperCase()] || status;
+    };
+
+    const getFilteredAndSortedOrders = () => {
+        if (!user.orders) return [];
+
+        let filtered = [...user.orders];
+
+        // Status Filter
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(order => order.status.toUpperCase() === statusFilter.toUpperCase());
+        }
+
+        // Date Filter
+        const now = new Date();
+        const today = startOfDay(now);
+
+        if (dateFilter === 'custom' && dateRange?.from) {
+            filtered = filtered.filter(order => {
+                const orderDate = new Date(order.createdAt || order.date);
+                const from = startOfDay(dateRange.from!);
+                const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from!);
+                return orderDate >= from && orderDate <= to;
+            });
+        } else if (dateFilter !== 'all') {
+            let startDate: Date;
+            switch (dateFilter) {
+                case 'today':
+                    startDate = today;
+                    break;
+                case '7days':
+                    startDate = subDays(today, 7);
+                    break;
+                case '30days':
+                    startDate = subDays(today, 30);
+                    break;
+                case '90days':
+                    startDate = subDays(today, 90);
+                    break;
+                case '12months':
+                    startDate = subMonths(today, 12);
+                    break;
+                default:
+                    startDate = new Date(0);
+            }
+            filtered = filtered.filter(order => new Date(order.createdAt || order.date) >= startDate);
+        }
+
+        // Sorting
+        filtered.sort((a, b) => {
+            switch (sortBy) {
+                case 'date-desc':
+                    return new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime();
+                case 'date-asc':
+                    return new Date(a.createdAt || a.date).getTime() - new Date(b.createdAt || b.date).getTime();
+                case 'total-desc':
+                    return b.total - a.total;
+                case 'total-asc':
+                    return a.total - b.total;
+                default:
+                    return 0;
+            }
+        });
+
+        return filtered;
+    };
+
+    const filteredOrders = getFilteredAndSortedOrders();
+
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Top Navigation Removed - Handled by Layout */}
 
             <div className="flex items-center justify-between mb-8">
-                <h1 className="font-display text-3xl font-bold">Pedidos</h1>
+                <h1 className="font-display text-3xl font-bold text-foreground">Pedidos</h1>
                 <div className="flex gap-2">
                     {/* Vista Dropdown */}
                     <div className="relative">
                         <button
                             onClick={() => setShowViewDropdown(!showViewDropdown)}
-                            className="flex items-center gap-2 bg-gray-100 dark:bg-black hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded text-sm font-medium transition-colors"
                         >
                             {viewMode === 'gallery' ? <Grid3x3 className="w-4 h-4" /> : <List className="w-4 h-4" />}
                             {viewMode === 'gallery' ? 'Galería' : 'Lista'}
@@ -50,13 +159,13 @@ export default function OrdersPage() {
                         </button>
 
                         {showViewDropdown && (
-                            <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                            <div className="absolute right-0 mt-2 w-40 bg-popover text-popover-foreground border border-border rounded-lg shadow-xl z-20 py-1">
                                 <button
                                     onClick={() => {
                                         setViewMode('gallery');
                                         setShowViewDropdown(false);
                                     }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                                 >
                                     <Grid3x3 className="w-4 h-4" />
                                     Galería
@@ -66,7 +175,7 @@ export default function OrdersPage() {
                                         setViewMode('list');
                                         setShowViewDropdown(false);
                                     }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                                 >
                                     <List className="w-4 h-4" />
                                     Lista
@@ -79,12 +188,12 @@ export default function OrdersPage() {
                     <div className="relative group">
                         <button
                             onClick={() => setShowFilter(!showFilter)}
-                            className="bg-gray-100 dark:bg-black hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded text-gray-700 dark:text-gray-300 transition-colors"
+                            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 p-2 rounded transition-colors"
                         >
                             <Filter className="w-5 h-5" />
                         </button>
                         {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black dark:bg-gray-700 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground border border-border text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-sm">
                             Filtro
                         </div>
                     </div>
@@ -94,30 +203,30 @@ export default function OrdersPage() {
             {/* Overlay oscuro cuando el filtro está abierto */}
             {showFilter && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
                     onClick={() => setShowFilter(false)}
                 />
             )}
 
             {/* Filter Modal - desliza desde la derecha */}
-            <div className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-black shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700 ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed top-0 right-0 h-full w-96 bg-background shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out border-l border-border ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex flex-col h-full">
                     {/* Header con pestañas */}
-                    <div className="flex justify-between border-b border-gray-200 dark:border-gray-700 p-6">
+                    <div className="flex border-b border-border">
                         <button
                             onClick={() => setFilterTab('sort')}
-                            className={`px-4 py-1 rounded text-sm font-medium transition-colors ${filterTab === 'sort'
-                                ? 'bg-gray-100 dark:bg-gray-700 text-red-600'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            className={`flex-1 py-4 text-sm font-medium transition-colors border-b-2 ${filterTab === 'sort'
+                                ? 'border-[var(--color-amber-900)] text-[var(--color-amber-900)]'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             Ordenar
                         </button>
                         <button
                             onClick={() => setFilterTab('filter')}
-                            className={`px-4 py-1 rounded text-sm font-medium transition-colors ${filterTab === 'filter'
-                                ? 'bg-gray-100 dark:bg-gray-700 text-red-600'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            className={`flex-1 py-4 text-sm font-medium transition-colors border-b-2 ${filterTab === 'filter'
+                                ? 'border-[var(--color-amber-900)] text-[var(--color-amber-900)]'
+                                : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             Filtrar
@@ -128,110 +237,137 @@ export default function OrdersPage() {
                     <div className="flex-1 overflow-y-auto p-6">
                         {filterTab === 'sort' ? (
                             /* Opciones de Ordenar */
-                            <div className="space-y-4">
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" defaultChecked />
-                                    Del más reciente al más antiguo
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" />
-                                    Del más antiguo al más reciente
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" />
-                                    Número de pedido (de mayor a menor)
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" />
-                                    Número de pedido (de menor a mayor)
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" />
-                                    Total del pedido (de mayor a menor)
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="sort" className="accent-red-600 w-4 h-4" />
-                                    Total del pedido (de menor a mayor)
-                                </label>
+                            <div className="space-y-6">
+                                <RadioGroup value={sortBy} onValueChange={setSortBy}>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="date-desc" id="date-desc" />
+                                        <Label htmlFor="date-desc" className="text-sm font-normal cursor-pointer">Del más reciente al más antiguo</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="date-asc" id="date-asc" />
+                                        <Label htmlFor="date-asc" className="text-sm font-normal cursor-pointer">Del más antiguo al más reciente</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="total-desc" id="total-desc" />
+                                        <Label htmlFor="total-desc" className="text-sm font-normal cursor-pointer">Total del pedido (de mayor a menor)</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <RadioGroupItem value="total-asc" id="total-asc" />
+                                        <Label htmlFor="total-asc" className="text-sm font-normal cursor-pointer">Total del pedido (de menor a mayor)</Label>
+                                    </div>
+                                </RadioGroup>
                             </div>
                         ) : (
                             /* Opciones de Filtrar */
-                            <div className="space-y-4">
-                                <h3 className="font-bold text-sm mb-4">Fecha del pedido</h3>
-
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="dateFilter" className="accent-red-600 w-4 h-4" />
-                                    Hoy
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="dateFilter" className="accent-red-600 w-4 h-4" />
-                                    Últimos siete días
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="dateFilter" className="accent-red-600 w-4 h-4" />
-                                    Últimos 30 días
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="dateFilter" className="accent-red-600 w-4 h-4" />
-                                    Últimos 90 días
-                                </label>
-                                <label className="flex items-center gap-3 text-sm cursor-pointer">
-                                    <input type="radio" name="dateFilter" className="accent-red-600 w-4 h-4" />
-                                    Últimos 12 meses
-                                </label>
-
-                                {/* Opción Personalizado */}
+                            <div className="space-y-8">
                                 <div>
-                                    <label className="flex items-center gap-3 text-sm cursor-pointer mb-3">
-                                        <input
-                                            type="radio"
-                                            name="dateFilter"
-                                            className="accent-red-600 w-4 h-4"
-                                            onChange={(e) => setShowCustomDatePicker(e.target.checked)}
-                                        />
-                                        Personalizado
-                                    </label>
+                                    <h3 className="font-bold text-sm mb-4 text-foreground uppercase tracking-wider">Estado del pedido</h3>
+                                    <RadioGroup value={statusFilter} onValueChange={setStatusFilter} className="space-y-3">
+                                        {['all', 'PENDING', 'CONFIRMED', 'PROCESSING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => (
+                                            <div key={status} className="flex items-center space-x-3">
+                                                <RadioGroupItem value={status} id={`status-${status}`} />
+                                                <Label htmlFor={`status-${status}`} className="text-sm font-normal cursor-pointer">
+                                                    {status === 'all' ? 'Todos los estados' : translateStatus(status)}
+                                                </Label>
+                                            </div>
+                                        ))}
+                                    </RadioGroup>
+                                </div>
 
-                                    {showCustomDatePicker && (
-                                        <div className="ml-7 space-y-3 animate-fade-in">
-                                            <div>
-                                                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Fecha de inicio</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="date"
-                                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-red-600"
+                                <div className="border-t border-border pt-6">
+                                    <h3 className="font-bold text-sm mb-4 text-foreground uppercase tracking-wider">Fecha del pedido</h3>
+                                    <RadioGroup value={dateFilter} onValueChange={setDateFilter} className="space-y-3">
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="all" id="date-all" />
+                                            <Label htmlFor="date-all" className="text-sm font-normal cursor-pointer">Todos</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="today" id="date-today" />
+                                            <Label htmlFor="date-today" className="text-sm font-normal cursor-pointer">Hoy</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="7days" id="date-7days" />
+                                            <Label htmlFor="date-7days" className="text-sm font-normal cursor-pointer">Últimos siete días</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="30days" id="date-30days" />
+                                            <Label htmlFor="date-30days" className="text-sm font-normal cursor-pointer">Últimos 30 días</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="90days" id="date-90days" />
+                                            <Label htmlFor="date-90days" className="text-sm font-normal cursor-pointer">Últimos 90 días</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="12months" id="date-12months" />
+                                            <Label htmlFor="date-12months" className="text-sm font-normal cursor-pointer">Últimos 12 meses</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <RadioGroupItem value="custom" id="date-custom" />
+                                            <Label htmlFor="date-custom" className="text-sm font-normal cursor-pointer">Personalizado</Label>
+                                        </div>
+                                    </RadioGroup>
+
+                                    {dateFilter === 'custom' && (
+                                        <div className="mt-4 pl-7 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "w-full justify-start text-left font-normal",
+                                                            !dateRange?.from && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {dateRange?.from ? (
+                                                            dateRange?.to ? (
+                                                                <>
+                                                                    {format(dateRange.from, "dd/MM/yyyy")} -{" "}
+                                                                    {format(dateRange.to, "dd/MM/yyyy")}
+                                                                </>
+                                                            ) : (
+                                                                format(dateRange.from, "dd/MM/yyyy")
+                                                            )
+                                                        ) : (
+                                                            <span>Seleccionar rango</span>
+                                                        )}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        initialFocus
+                                                        mode="range"
+                                                        defaultMonth={dateRange?.from}
+                                                        selected={dateRange}
+                                                        onSelect={setDateRange}
+                                                        numberOfMonths={1}
                                                     />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Fecha de finalización</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="date"
-                                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 text-sm focus:outline-none focus:border-red-600"
-                                                    />
-                                                </div>
-                                            </div>
+                                                </PopoverContent>
+                                            </Popover>
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Borrar selección */}
-                                <button className="text-red-600 text-sm font-medium hover:underline mt-4">
-                                    Borrar selección
-                                </button>
                             </div>
-                        )}
+                        )
+                        }
                     </div>
 
                     {/* Footer con botones */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
-                        <button className="text-red-600 text-sm font-medium">
-                            Borrar todo
+                    <div className="border-t border-border p-6 flex justify-between items-center bg-card">
+                        <button
+                            onClick={() => {
+                                setSortBy('date-desc');
+                                setDateFilter('all');
+                                setStatusFilter('all');
+                                setDateRange(undefined);
+                            }}
+                            className="text-[var(--color-amber-900)] text-sm font-medium hover:underline"
+                        >
+                            Limpiar todo
                         </button>
                         <button
                             onClick={() => setShowFilter(false)}
-                            className="bg-[#FF0000] text-white px-8 py-2 rounded font-bold text-sm hover:bg-[#CC0000] transition-colors"
+                            className="bg-[var(--color-amber-900)] text-white px-10 py-2.5 rounded font-bold text-sm hover:bg-[var(--color-amber-900)]/90 transition-colors shadow-md"
                         >
                             Aplicar
                         </button>
@@ -241,18 +377,18 @@ export default function OrdersPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 relative">                {/* Orders List */}
                 <div className="flex-1">
-                    {(!user.orders || user.orders.length === 0) ? (
-                        <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-black rounded-lg border border-gray-100 dark:border-gray-700">
-                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-full mb-4">
-                                <Grid3x3 className="w-8 h-8 text-gray-400" />
+                    {(!filteredOrders || filteredOrders.length === 0) ? (
+                        <div className="flex flex-col items-center justify-center py-16 bg-card rounded-lg border border-border">
+                            <div className="bg-muted p-4 rounded-full mb-4">
+                                <Grid3x3 className="w-8 h-8 text-muted-foreground" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">No tienes pedidos aún</h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6 text-center max-w-sm">
+                            <h3 className="text-xl font-bold mb-2 text-foreground">No tienes pedidos aún</h3>
+                            <p className="text-muted-foreground mb-6 text-center max-w-sm">
                                 Parece que no has realizado ninguna compra todavía. ¡Explora nuestro catálogo!.
                             </p>
                             <Link href="/catalog">
                                 <Button
-                                    className="px-8 rounded py-3 bg-[#FF0000] text-white hover:bg-[#CC0000] normal-case font-bold"
+                                    className="px-8 rounded py-3 bg-[var(--color-amber-900)] text-white hover:bg-[var(--color-amber-900)]/90 normal-case font-bold"
                                 >
                                     Ver Catálogo
                                 </Button>
@@ -261,7 +397,7 @@ export default function OrdersPage() {
                     ) : viewMode === 'gallery' ? (
                         // Vista Galería - Grid responsive
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {user.orders?.map((order) => {
+                            {filteredOrders.map((order) => {
                                 const firstItem = order.items[0];
 
                                 return (
@@ -270,36 +406,35 @@ export default function OrdersPage() {
                                         href={`/orders/${order.id}`}
                                         className="block"
                                     >
-                                        <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-                                            <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 mb-6 inline-flex items-center gap-2">
-                                                <span className="text-black dark:text-white">✓</span>
+                                        <div className="bg-card text-card-foreground border border-border rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                            <div className="mb-6 inline-flex items-center gap-2">
+                                                <span className="text-foreground">✓</span>
                                                 <div>
-                                                    <p className="text-xs font-bold text-black dark:text-white uppercase">{order.status}</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">{order.date}</p>
+                                                    <p className="text-xs font-bold text-foreground uppercase">{translateStatus(order.status)}</p>
+                                                    <p className="text-xs text-muted-foreground">{order.date}</p>
                                                 </div>
                                             </div>
 
                                             {firstItem && (
                                                 <div className="flex flex-col gap-4 mb-6">
-                                                    <div className="w-full aspect-square bg-black rounded overflow-hidden">
-                                                        <img src={firstItem.images[0]} alt={firstItem.name} className="w-full h-full object-cover" />
+                                                    <div className="w-full aspect-square bg-muted rounded overflow-hidden">
+                                                        <img src={firstItem.product.images[0]?.url} alt={firstItem.product.name} className="w-full h-full object-cover" />
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-display font-bold text-lg uppercase leading-tight">{firstItem.name}</h3>
+                                                        <h3 className="font-display font-bold text-lg uppercase leading-tight text-foreground">{firstItem.product.name}</h3>
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                                                <p className="text-sm font-bold mb-1">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Pedido #{order.id}</p>
+                                            <div className="border-t border-border pt-4">
+                                                <p className="text-sm font-bold mb-1 text-foreground">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</p>
+                                                <p className="text-xs text-muted-foreground mb-4">Pedido #{order.id}</p>
 
-                                                <p className="text-lg font-bold mb-6">{formatPrice(order.total)}</p>
+                                                <p className="text-lg font-bold mb-6 text-foreground">{formatPrice(order.total)}</p>
 
                                                 <Button
                                                     variant="outline"
-                                                    fullWidth
-                                                    className="rounded border-gray-200 dark:border-gray-700 text-red-600 hover:text-red-700 hover:border-red-600 hover:bg-transparent normal-case font-bold"
+                                                    className="w-full rounded border-border text-[var(--color-amber-900)] hover:text-[var(--color-amber-900)]/80 hover:border-[var(--color-amber-900)] hover:bg-transparent normal-case font-bold"
                                                 >
                                                     Volver a comprar
                                                 </Button>
@@ -310,68 +445,63 @@ export default function OrdersPage() {
                             })}
                         </div>
                     ) : (
-                        // Vista Lista
-                        user.orders?.map((order) => {
-                            const firstItem = order.items[0];
-
-                            return (
-                                <div key={order.id} className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-4">
-                                        {firstItem && (
-                                            <div className="w-16 h-16 bg-black rounded flex-shrink-0">
-                                                <img src={firstItem.images[0]} alt={firstItem.name} className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-sm">#{order.id}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</p>
-                                        </div>
-
-                                        {/* Estado (Confirmado) - con bold */}
-                                        <div className="min-w-[100px]">
-                                            <p className="text-sm font-bold">{order.status}</p>
-                                        </div>
-
-                                        {/* Fecha */}
-                                        <div className="min-w-[80px] text-gray-500 dark:text-gray-400">
-                                            <p className="text-xs">{order.date}</p>
-                                        </div>
-
-                                        <div className="text-right min-w-[120px]">
-                                            <p className="font-bold">{formatPrice(order.total)}</p>
-                                        </div>
-
-                                        <div className="relative">
-                                            <button
-                                                onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
-                                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                                            >
-                                                <MoreVertical className="w-5 h-5" />
-                                            </button>
-
-                                            {openMenuId === order.id && (
-                                                <>
-                                                    <div
-                                                        className="fixed inset-0 z-10"
-                                                        onClick={() => setOpenMenuId(null)}
-                                                    />
-                                                    <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
-                                                        <Link
-                                                            href={`/orders/${order.id}`}
-                                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                                            onClick={() => setOpenMenuId(null)}
-                                                        >
-                                                            Ver pedido
+                        // Vista Lista - Table
+                        <div className="bg-card rounded-md border border-border overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted hover:bg-muted">
+                                        <TableHead className="w-[300px] text-xs font-bold uppercase tracking-wider pl-6">Pedido</TableHead>
+                                        <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
+                                        <TableHead className="text-xs font-bold uppercase tracking-wider">Fecha</TableHead>
+                                        <TableHead className="text-right text-xs font-bold uppercase tracking-wider">Total</TableHead>
+                                        <TableHead className="text-center text-xs font-bold uppercase tracking-wider pr-6">Acciones</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredOrders.map((order) => {
+                                        const firstItem = order.items[0];
+                                        return (
+                                            <TableRow key={order.id} className="hover:bg-muted/50 transition-colors group">
+                                                <TableCell className="pl-6 font-medium">
+                                                    <div className="flex items-center gap-4">
+                                                        {firstItem && (
+                                                            <div className="w-10 h-10 bg-muted rounded overflow-hidden">
+                                                                <img src={firstItem.product.images[0]?.url} alt={firstItem.product.name} className="w-full h-full object-cover" />
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <span className="font-bold text-sm text-foreground block">#{order.id}</span>
+                                                            <span className="text-xs text-muted-foreground">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-sm text-foreground">
+                                                        {translateStatus(order.status)}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">
+                                                    {order.date}
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-foreground">
+                                                    {formatPrice(order.total)}
+                                                </TableCell>
+                                                <TableCell className="text-center pr-6">
+                                                    <div className="flex justify-center gap-2">
+                                                        <Link href={`/orders/${order.id}`}>
+                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                                                <Eye className="w-4 h-4" />
+                                                                <span className="sr-only">Ver pedido</span>
+                                                            </Button>
                                                         </Link>
                                                     </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </div>
             </div>

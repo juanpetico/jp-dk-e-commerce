@@ -3,31 +3,38 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Product } from '../../../src/types';
-import { fetchProductById } from '../../../src/services/productService';
-import { Button } from '@repo/ui';
+import { fetchProductBySlug } from '../../../src/services/productService';
+import { Button } from '../../../src/components/ui/Button';
 import { useCart } from '../../../src/store/CartContext';
+import ImageMagnifier from '../../../src/components/ui/ImageMagnifier';
 
 const ProductPage: React.FC = () => {
-    const { id } = useParams() as { id: string };
+    const { slug } = useParams() as { slug: string };
     const [product, setProduct] = useState<Product | undefined>(undefined);
+    const [selectedImage, setSelectedImage] = useState<string>('');
     const [selectedSize, setSelectedSize] = useState<string>('');
     const [quantity, setQuantity] = useState<number>(1);
     const [loading, setLoading] = useState(true);
     const { addToCart } = useCart();
 
     useEffect(() => {
-        if (id) {
-            fetchProductById(id).then((data) => {
+        if (slug) {
+            fetchProductBySlug(slug).then((data) => {
                 setProduct(data);
-                if (data && data.sizes.length > 0) {
-                    setSelectedSize(data.sizes[2] || data.sizes[0] || ''); // Default to 'L' if available
+                if (data) {
+                    if (data.images && data.images.length > 0 && data.images[0]) {
+                        setSelectedImage(data.images[0].url);
+                    }
+                    if (data.sizes.length > 0) {
+                        setSelectedSize(data.sizes[2] || data.sizes[0] || ''); // Default to 'L' if available
+                    }
                 }
                 setLoading(false);
             });
         }
-    }, [id]);
+    }, [slug]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center">Cargando...</div>;
+    if (loading) return <div className="h-screen flex items-center justify-center">Cargando producto...</div>;
     if (!product) return <div className="h-screen flex items-center justify-center">Producto no encontrado</div>;
 
     const handleAddToCart = () => {
@@ -47,30 +54,53 @@ const ProductPage: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <nav className="flex mb-8 text-xs text-gray-500 uppercase tracking-wide">
-                <span className="hover:text-black">Inicio</span>
+            <nav className="flex mb-8 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <span className="hover:text-black dark:hover:text-white cursor-pointer">Inicio</span>
                 <span className="mx-2">/</span>
-                <span className="hover:text-black">{product.category}</span>
+                <span className="hover:text-black dark:hover:text-white cursor-pointer">{product.category.name}</span>
                 <span className="mx-2">/</span>
-                <span className="text-black font-medium">{product.name}</span>
+                <span className="text-black dark:text-white font-medium">{product.name}</span>
             </nav>
 
             <div className="lg:grid lg:grid-cols-12 lg:gap-12">
                 {/* Gallery */}
                 <div className="lg:col-span-7">
-                    <div className="relative aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden mb-4">
-                        <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                        {product.isNew && (
-                            <span className="absolute top-4 left-4 bg-black text-white text-xs font-bold px-3 py-1 uppercase tracking-widest">
-                                Nuevo Drop
-                            </span>
-                        )}
+                    <div className="relative aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden mb-4 border border-gray-100 dark:border-gray-800">
+                        <ImageMagnifier
+                            src={selectedImage || (product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg')}
+                            alt={product.name}
+                            className="w-full h-full"
+                        />
+                        <div className="absolute top-0 left-0 flex flex-col items-start z-10">
+                            {product.isNew && (
+                                <span className="bg-black text-white text-xs font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
+                                    New
+                                </span>
+                            )}
+                            {product.isSale && (
+                                <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
+                                    Sale
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    {/* Thumbnails (Mock) */}
+                    {/* Thumbnails */}
                     <div className="grid grid-cols-4 gap-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className={`aspect-square bg-gray-100 rounded border cursor-pointer ${i === 1 ? 'border-black' : 'border-transparent'}`}>
-                                <img src={product.images[0]} className="w-full h-full object-cover opacity-80 hover:opacity-100" />
+                        {product.images && product.images.map((img, idx) => (
+                            <div
+                                key={img.id || idx}
+                                onClick={() => setSelectedImage(img.url)}
+                                className={`aspect-square bg-gray-100 rounded border cursor-pointer overflow-hidden transition-all ${selectedImage === img.url
+                                    ? 'border-black dark:border-white ring-1 ring-black dark:ring-white'
+                                    : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}
+                            >
+                                <img
+                                    src={img.url}
+                                    alt={`${product.name} view ${idx + 1}`}
+                                    className={`w-full h-full object-cover transition-opacity ${selectedImage === img.url ? 'opacity-100' : 'opacity-70 hover:opacity-100'
+                                        }`}
+                                />
                             </div>
                         ))}
                     </div>
@@ -81,7 +111,14 @@ const ProductPage: React.FC = () => {
                     <div className="mb-6">
                         <h1 className="font-display text-4xl font-bold uppercase tracking-tight mb-2 leading-tight">{product.name}</h1>
                         <div className="flex items-baseline space-x-4">
-                            <p className="text-2xl font-medium">{formatPrice(product.price)}</p>
+                            {product.originalPrice && product.originalPrice > product.price && (
+                                <p className="text-lg text-red-500 line-through">
+                                    {formatPrice(product.originalPrice)}
+                                </p>
+                            )}
+                            <p className={`text-2xl font-medium ${product.isSale ? 'text-red-600' : ''}`}>
+                                {formatPrice(product.price)}
+                            </p>
                             <p className="text-sm text-gray-500">Impuestos incluidos.</p>
                         </div>
                     </div>
@@ -132,10 +169,10 @@ const ProductPage: React.FC = () => {
 
                     {/* Actions */}
                     <div className="space-y-3 mb-4">
-                        <Button fullWidth variant="outline" onClick={handleAddToCart} className="bg-white dark:bg-black border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <Button variant="outline" onClick={handleAddToCart} className="w-full bg-white dark:bg-black border-2 border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             Agregar al carrito
                         </Button>
-                        <Button fullWidth onClick={handleAddToCart} className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100">
+                        <Button onClick={handleAddToCart} className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100">
                             Comprar ahora
                         </Button>
                     </div>

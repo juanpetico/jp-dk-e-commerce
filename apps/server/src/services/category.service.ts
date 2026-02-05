@@ -1,20 +1,41 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import slugify from "slugify";
 
 // Helper function to generate slug from name
-const generateSlug = (name: string): string => {
-    return name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove accents
-        .replace(/[^a-z0-9\s-]/g, "") // Remove special chars
-        .trim()
-        .replace(/\s+/g, "-"); // Replace spaces with hyphens
+const generateSlug = async (name: string, excludeId?: string): Promise<string> => {
+    let slug = slugify(name, {
+        lower: true,
+        strict: true,
+        trim: true,
+    });
+
+    // Check if slug exists
+    let slugExists = await prisma.category.findUnique({
+        where: { slug },
+    });
+
+    // If excluding an ID (update case), and the found category is the same one, it's fine
+    if (slugExists && excludeId && slugExists.id === excludeId) {
+        return slug;
+    }
+
+    if (slugExists) {
+        let counter = 1;
+        let newSlug = `${slug}-${counter}`;
+        while (await prisma.category.findUnique({ where: { slug: newSlug } })) {
+            counter++;
+            newSlug = `${slug}-${counter}`;
+        }
+        slug = newSlug;
+    }
+
+    return slug;
 };
 
 export const categoryService = {
     async createCategory(name: string) {
-        const slug = generateSlug(name);
+        const slug = await generateSlug(name);
 
         const category = await prisma.category.create({
             data: {
@@ -80,7 +101,7 @@ export const categoryService = {
     },
 
     async updateCategory(id: string, name: string) {
-        const slug = generateSlug(name);
+        const slug = await generateSlug(name, id);
 
         const category = await prisma.category.update({
             where: { id },

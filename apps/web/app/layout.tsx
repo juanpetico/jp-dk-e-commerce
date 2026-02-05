@@ -3,13 +3,13 @@ import { Toaster } from "sonner";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import Navbar from "../src/components/layout/Navbar";
-import Footer from "../src/components/layout/Footer";
-import CartDrawer from "../src/components/layout/CartDrawer";
+import AppLayout from "../src/components/layout/AppLayout";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
   variable: "--font-montserrat",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -26,13 +26,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${montserrat.variable} font-sans`}>
         <Providers>
-          <Navbar />
-          <CartDrawer />
-          <main className="min-h-screen pt-[80px]">
+          <AppLayout>
             {children}
-          </main>
-          <Toaster richColors position="top-center" />
-          <Footer />
+          </AppLayout>
+          <Toaster position="top-center" richColors />
         </Providers>
       </body>
     </html>

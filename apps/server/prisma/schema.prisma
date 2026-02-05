@@ -33,12 +33,13 @@ model Address {
   name      String
   rut       String?
   street    String
-  city      String
+  comuna    String
   region    String
   zipCode   String? // Código postal
   country   String  @default("Chile")
   phone     String
   isDefault Boolean @default(false)
+  isActive  Boolean @default(true) // Para soft delete y mantener historial en órdenes
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -70,16 +71,18 @@ model Category {
 }
 
 model Product {
-  id            String  @id @default(cuid())
-  name          String
-  description   String?
-  price         Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
-  originalPrice Int? // Precio original (para ofertas)
-  isNew         Boolean @default(true)
-  isSale        Boolean @default(false)
-  slug          String  @unique // SEO: /product/polera-shooters-pink-black
-  stock         Int     @default(0)
-  sizes         Size[] // Array de Enums (S, M, L, XL, XXL)
+  id              String  @id @default(cuid())
+  name            String
+  description     String?
+  price           Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
+  originalPrice   Int? // Precio original (para ofertas)
+  discountPercent Int? // Porcentaje de descuento (ej: 20 para 20%)
+  isNew           Boolean @default(true)
+  isSale          Boolean @default(false)
+  slug            String  @unique // SEO: /product/polera-shooters-pink-black
+  stock           Int     @default(0)
+  sizes           Size[] // Array de Enums (S, M, L, XL, XXL)
+  isPublished     Boolean @default(false)
 
   // Relaciones
   categoryId String

@@ -24,7 +24,8 @@ const Footer: React.FC = () => {
                                 src="/logo.png"
                                 alt="JP DK Logo"
                                 fill
-                                className="object-contain dark:invert"
+                                sizes="128px"
+                                className="object-contain invert"
                             />
                         </Link>
                         <p className="text-gray-400 text-sm leading-relaxed mb-6">

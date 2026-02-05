@@ -4,8 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useParams, redirect, useRouter } from 'next/navigation';
 import { useUser } from '../../../../src/store/UserContext';
-import Button from '../../../../src/components/ui/Button';
-import { ArrowLeft, Check, ShoppingBag } from 'lucide-react';
+import { Button } from '../../../../src/components/ui/Button';
+import { ArrowLeft, Check, ShoppingBag, FileText } from 'lucide-react';
 import { Order } from '../../../../src/types';
 
 export default function OrderDetailsPage() {
@@ -28,8 +28,8 @@ export default function OrderDetailsPage() {
     if (!order) {
         return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-                <h1 className="text-2xl font-bold mb-4">Pedido no encontrado</h1>
-                <Link href="/orders" className="text-red-600 underline">
+                <h1 className="text-2xl font-bold mb-4 text-foreground">Pedido no encontrado</h1>
+                <Link href="/orders" className="text-primary hover:underline">
                     Volver a mis pedidos
                 </Link>
             </div>
@@ -46,47 +46,59 @@ export default function OrderDetailsPage() {
             <div className="flex justify-between items-start mb-8">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <Link href="/orders" className="text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                        <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
-                        <h1 className="font-display text-2xl font-bold">Pedido #{order.id}</h1>
+                        <h1 className="font-display text-2xl font-bold text-foreground">Pedido #{order.id}</h1>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 ml-7">
+                    <p className="text-sm text-muted-foreground ml-7">
                         Fecha de confirmación: {order.date} 2025 {/* Assuming year is not in date string based on mock */}
                     </p>
                 </div>
-                <Button
-                    variant="outline"
-                    className="rounded border-gray-200 dark:border-gray-700 text-red-600 hover:text-red-700 hover:border-red-600 hover:bg-transparent normal-case font-bold"
-                    onClick={() => router.push('/')}
-                >
-                    Volver a comprar
-                </Button>
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            // TODO: Implement PDF export functionality
+                            alert('Funcionalidad de exportar PDF próximamente');
+                        }}
+                        className="gap-2"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Exportar PDF
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push('/')}
+                    >
+                        Volver a comprar
+                    </Button>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Left Column */}
                 <div className="flex-1 space-y-6">
                     {/* Status Card */}
-                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+                    <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="text-green-600">
+                            <div className="text-green-600 dark:text-green-400">
                                 <Check className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="font-bold text-sm text-black dark:text-white">{order.status}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{order.date} 2025</p>
+                                <p className="font-bold text-sm text-foreground">{order.status}</p>
+                                <p className="text-xs text-muted-foreground">{order.date} 2025</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Address & Contact Info Card */}
-                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-8 shadow-sm">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div className="bg-card border border-border rounded-lg p-8 shadow-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                             {/* Contact Layout */}
                             <div>
-                                <h3 className="font-bold text-sm mb-4">Información de contacto</h3>
-                                <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                                <h3 className="font-bold text-sm mb-4 text-foreground">Información de contacto</h3>
+                                <div className="text-sm text-muted-foreground space-y-1">
                                     <p>{order.shippingAddress?.name}</p>
                                     <p>{user.email}</p>
                                 </div>
@@ -94,8 +106,8 @@ export default function OrderDetailsPage() {
 
                             {/* Billing Address Layout */}
                             <div>
-                                <h3 className="font-bold text-sm mb-4">Dirección de facturación</h3>
-                                <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                                <h3 className="font-bold text-sm mb-4 text-foreground">Dirección de facturación</h3>
+                                <div className="text-sm text-muted-foreground space-y-1">
                                     <p>{order.billingAddress?.name}</p>
                                     <p>{order.billingAddress?.rut}</p>
                                     <p>{order.billingAddress?.street}</p>
@@ -108,8 +120,8 @@ export default function OrderDetailsPage() {
 
                             {/* Shipping Address Layout */}
                             <div>
-                                <h3 className="font-bold text-sm mb-4">Dirección de envío</h3>
-                                <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                                <h3 className="font-bold text-sm mb-4 text-foreground">Dirección de envío</h3>
+                                <div className="text-sm text-muted-foreground space-y-1">
                                     <p>{order.shippingAddress?.name}</p>
                                     <p>{order.shippingAddress?.rut}</p>
                                     <p>{order.shippingAddress?.street}</p>
@@ -119,15 +131,12 @@ export default function OrderDetailsPage() {
                                     <p>{order.shippingAddress?.phone}</p>
                                 </div>
                             </div>
-
-                            {/* Empty column to match grid layout of design which seems to have 2 columns but row wrapping */}
-                            <div></div>
                         </div>
 
                         {/* Shipping Method */}
                         <div>
-                            <h3 className="font-bold text-sm mb-4">Método de envío</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                            <h3 className="font-bold text-sm mb-4 text-foreground">Método de envío</h3>
+                            <p className="text-sm text-muted-foreground">
                                 {order.shippingMethod || 'Estándar'}
                             </p>
                         </div>
@@ -136,48 +145,48 @@ export default function OrderDetailsPage() {
 
                 {/* Right Column - Product List & Totals */}
                 <div className="lg:w-[400px]">
-                    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+                    <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
                         {/* Product List */}
-                        <div className="space-y-6 mb-8 border-b border-gray-100 dark:border-gray-700 pb-8">
+                        <div className="space-y-6 mb-8 border-b border-border pb-8">
                             {order.items.map((item) => (
                                 <div key={item.id} className="flex gap-4">
-                                    <div className="relative w-16 h-16 bg-black rounded flex-shrink-0 overflow-hidden">
-                                        <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
-                                        <div className="absolute top-0 right-0 bg-black text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-bl font-bold">
+                                    <div className="relative w-16 h-16 bg-muted rounded flex-shrink-0 overflow-hidden">
+                                        <img src={item.product.images[0]?.url} alt={item.product.name} className="w-full h-full object-cover" />
+                                        <div className="absolute top-0 right-0 bg-foreground text-background text-[10px] w-5 h-5 flex items-center justify-center rounded-bl font-bold">
                                             {item.quantity}
                                         </div>
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-display font-medium text-sm">{item.name}</h4>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.selectedSize}</p>
+                                        <h4 className="font-display font-medium text-sm text-foreground">{item.product.name}</h4>
+                                        <p className="text-xs text-muted-foreground">{item.size}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-medium text-sm">{formatPrice(item.price * item.quantity)}</p>
+                                        <p className="font-medium text-sm text-foreground">{formatPrice(item.price * item.quantity)}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
                         {/* Totals */}
-                        <div className="space-y-3 pb-6 border-b border-gray-100 dark:border-gray-700 mb-6">
+                        <div className="space-y-3 pb-6 border-b border-border mb-6">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-                                <span>{formatPrice(order.subtotal)}</span>
+                                <span className="text-muted-foreground">Subtotal</span>
+                                <span className="text-foreground">{formatPrice(order.subtotal)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">Envío</span>
-                                <span>{formatPrice(order.shippingCost)}</span>
+                                <span className="text-muted-foreground">Envío</span>
+                                <span className="text-foreground">{formatPrice(order.shippingCost)}</span>
                             </div>
                         </div>
 
                         <div className="flex justify-between items-baseline mb-2">
-                            <span className="text-lg font-bold">Total</span>
+                            <span className="text-lg font-bold text-foreground">Total</span>
                             <div className="text-right">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">CLP</span>
-                                <span className="text-xl font-bold">{formatPrice(order.total).replace('$', '')}</span>
+                                <span className="text-xs text-muted-foreground mr-2">CLP</span>
+                                <span className="text-xl font-bold text-foreground">{formatPrice(order.total).replace('$', '')}</span>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                             Incluye {formatPrice(order.taxes).replace('$', '')} $ de impuestos
                         </p>
                     </div>

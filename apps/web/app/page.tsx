@@ -207,10 +207,10 @@ const HomePage: React.FC = () => {
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12 relative">
-          <h2 className="text-3xl md:text-5xl font-display font-black uppercase tracking-tight text-black inline-block relative z-10 bg-white px-6">
+          <h2 className="text-3xl md:text-5xl font-display font-black uppercase tracking-tight text-black dark:text-white inline-block relative z-10 bg-white dark:bg-black px-6">
             Nuevo Drop Shooters BG
           </h2>
-          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -z-0"></div>
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-300 dark:bg-gray-700 -z-0"></div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 gap-y-12">
@@ -289,17 +289,29 @@ const LookbookCard = ({ product }: { product: Product }) => {
   return (
     <div className="flex-none w-[85vw] md:w-[400px] snap-center flex flex-col group">
       <div className="relative aspect-[3/4] overflow-hidden bg-neutral-900 mb-4">
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${product.slug}`}>
           <img
-            src={product.images[0]}
+            src={product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg'}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
           />
         </Link>
+        <div className="absolute top-0 left-0 flex flex-col items-start z-10">
+          {product.isNew && (
+            <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
+              New
+            </span>
+          )}
+          {product.isSale && (
+            <span className="bg-red-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
+              Sale
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <Link href={`/product/${product.id}`}>
+        <Link href={`/product/${product.slug}`}>
           <h3 className="font-display font-bold uppercase text-sm tracking-widest">{product.name}</h3>
         </Link>
         <div className="flex items-center gap-2">

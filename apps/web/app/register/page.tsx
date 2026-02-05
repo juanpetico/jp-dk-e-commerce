@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '../../src/components/ui/Button';
+import { Button } from '../../src/components/ui/Button';
 import { toast } from 'sonner';
 import { useUser } from '../../src/store/UserContext';
 import Link from 'next/link';
@@ -51,14 +51,14 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 dark:bg-black px-4">
-            <div className="max-w-md w-full bg-white dark:bg-black p-8 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="min-h-[80vh] flex items-center justify-center bg-background px-4">
+            <div className="max-w-md w-full bg-card p-8 rounded-lg shadow-sm border border-border">
                 <div className="text-center mb-8">
                     <h1 className="font-display text-4xl font-black italic tracking-tighter mb-6 transform -skew-x-12 inline-block border-4 border-black dark:border-white px-2">
                         JP DK
                     </h1>
                     <h2 className="font-display text-2xl font-bold mb-2">Crear cuenta</h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                         {step === 'email' ? 'Ingresa tu correo electrónico' :
                             step === 'password' ? 'Crea una contraseña segura' :
                                 'Completa tu perfil'}
@@ -75,21 +75,20 @@ export default function RegisterPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Correo electrónico"
-                                    className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-4 py-3 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                                    className="w-full border border-input bg-background text-foreground rounded px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground"
                                 />
                             </div>
 
                             <Button
                                 type="submit"
-                                fullWidth
-                                className="bg-[#FF0000] border-[#FF0000] hover:bg-[#CC0000] text-white rounded font-bold normal-case text-base py-3"
+                                className="w-full bg-[#78350f] border-[#78350f] hover:bg-[#451a03] text-white rounded font-bold normal-case text-lg py-4 shadow-lg transition-all active:scale-[0.98]"
                             >
                                 Continuar
                             </Button>
 
-                            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-center text-sm text-muted-foreground">
                                 ¿Ya tienes cuenta?{' '}
-                                <Link href="/login" className="text-red-600 dark:text-red-500 hover:underline font-bold">
+                                <Link href="/login" className="text-foreground hover:underline font-bold">
                                     Iniciar sesión
                                 </Link>
                             </div>
@@ -99,11 +98,11 @@ export default function RegisterPage() {
                             <div className="flex items-center gap-2 mb-4">
                                 <button
                                     onClick={() => setStep('email')}
-                                    className="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <span className="text-xl">←</span>
                                 </button>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{email}</p>
+                                <p className="text-sm text-muted-foreground">{email}</p>
                             </div>
 
                             <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -114,11 +113,11 @@ export default function RegisterPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Contraseña"
-                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-4 py-3 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                                        className="w-full border border-input bg-background text-foreground rounded px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground"
                                         autoFocus
                                         minLength={6}
                                     />
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Mínimo 6 caracteres</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Mínimo 6 caracteres</p>
                                 </div>
 
                                 <div>
@@ -128,7 +127,7 @@ export default function RegisterPage() {
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         placeholder="Confirmar contraseña"
-                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-4 py-3 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                                        className="w-full border border-input bg-background text-foreground rounded px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground"
                                     />
                                     {confirmPassword && password !== confirmPassword && (
                                         <p className="text-xs text-red-600 mt-1">Las contraseñas no coinciden</p>
@@ -137,9 +136,8 @@ export default function RegisterPage() {
 
                                 <Button
                                     type="submit"
-                                    fullWidth
                                     disabled={password !== confirmPassword || password.length < 6}
-                                    className="bg-[#FF0000] border-[#FF0000] hover:bg-[#CC0000] text-white rounded font-bold normal-case text-base py-3"
+                                    className="w-full bg-[#78350f] border-[#78350f] hover:bg-[#451a03] text-white rounded font-bold normal-case text-lg py-4 shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:hover:bg-[#78350f]"
                                 >
                                     Continuar
                                 </Button>
@@ -150,11 +148,11 @@ export default function RegisterPage() {
                             <div className="flex items-center gap-2 mb-4">
                                 <button
                                     onClick={() => setStep('password')}
-                                    className="text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <span className="text-xl">←</span>
                                 </button>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">{email}</p>
+                                <p className="text-sm text-muted-foreground">{email}</p>
                             </div>
 
                             <form onSubmit={handleCompleteSubmit} className="space-y-4">
@@ -165,7 +163,7 @@ export default function RegisterPage() {
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Nombre completo"
-                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-4 py-3 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                                        className="w-full border border-input bg-background text-foreground rounded px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground"
                                         autoFocus
                                     />
                                 </div>
@@ -176,14 +174,13 @@ export default function RegisterPage() {
                                         value={phone}
                                         onChange={(e) => setPhone(e.target.value)}
                                         placeholder="Teléfono (opcional)"
-                                        className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-4 py-3 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+                                        className="w-full border border-input bg-background text-foreground rounded px-4 py-3 text-sm focus:outline-none focus:border-foreground transition-colors placeholder:text-muted-foreground"
                                     />
                                 </div>
 
                                 <Button
                                     type="submit"
-                                    fullWidth
-                                    className="bg-[#FF0000] border-[#FF0000] hover:bg-[#CC0000] text-white rounded font-bold normal-case text-base py-3"
+                                    className="w-full bg-[#78350f] border-[#78350f] hover:bg-[#451a03] text-white rounded font-bold normal-case text-lg py-4 shadow-lg transition-all active:scale-[0.98]"
                                 >
                                     Crear cuenta
                                 </Button>
