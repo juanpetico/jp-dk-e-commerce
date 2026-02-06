@@ -9,6 +9,7 @@ import { useUser } from '../../store/UserContext';
 import { Search, User, ShoppingBag, Menu, X, ChevronDown, LayoutDashboard, Package, Settings, LogOut, LogIn, UserPlus } from 'lucide-react';
 import SearchOverlay from './SearchOverlay';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface MenuItem {
     id: string;
@@ -33,7 +34,7 @@ const Navbar: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    const isProfileRoute = ['/profile', '/orders', '/settings', '/admin'].some(route => pathname?.startsWith(route));
+    const isProfileRoute = ['/profile', '/orders', '/settings', '/admin', '/superadmin', '/checkout'].some(route => pathname?.startsWith(route));
 
     // 0. State for categories
     const [categories, setCategories] = useState<{ label: string, path: string }[]>([]);
@@ -143,13 +144,16 @@ const Navbar: React.FC = () => {
             isMenuOpen ? "fixed top-0 left-0" : "sticky top-0"
         )}>
             {/* Marquee */}
-            <div className="bg-muted text-muted-foreground text-[10px] md:text-xs py-2 overflow-hidden border-b border-border relative z-50 transition-colors duration-300">
+            <div className="bg-white text-black dark:bg-black dark:text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-border relative z-50 transition-colors duration-300">
                 <div className="whitespace-nowrap animate-marquee inline-block">
                     <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
                     <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>
                 </div>
             </div>
 
@@ -208,21 +212,33 @@ const Navbar: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="py-1">
-                                                    {user.role === 'ADMIN' && (
-                                                        <Link href="/admin" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                    {(user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
+                                                        <Link
+                                                            href={user.role === 'SUPERADMIN' ? "/superadmin" : "/admin"}
+                                                            onClick={() => setIsUserDropdownOpen(false)}
+                                                            className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                                        >
                                                             <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                                                            Dashboard Admin
+                                                            Dashboard
                                                         </Link>
                                                     )}
                                                     <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
                                                         <User className="w-4 h-4 text-muted-foreground" />
                                                         Perfil
                                                     </Link>
-                                                    <Link href="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
-                                                        <Package className="w-4 h-4 text-muted-foreground" />
-                                                        Pedidos
-                                                    </Link>
-                                                    <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+
+                                                    {user.role !== 'SUPERADMIN' && (
+                                                        <Link href="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                            <Package className="w-4 h-4 text-muted-foreground" />
+                                                            Pedidos
+                                                        </Link>
+                                                    )}
+
+                                                    <Link
+                                                        href={user.role === 'SUPERADMIN' ? "/superadmin/settings" : "/profile"}
+                                                        onClick={() => setIsUserDropdownOpen(false)}
+                                                        className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                                    >
                                                         <Settings className="w-4 h-4 text-muted-foreground" />
                                                         Configuración
                                                     </Link>
@@ -257,11 +273,27 @@ const Navbar: React.FC = () => {
                                 onClick={toggleCart}
                                 className="text-foreground hover:text-muted-foreground p-2 transition-colors relative"
                             >
-                                <ShoppingBag className="w-6 h-6" />
+                                <motion.div
+                                    key={cartCount}
+                                    initial={{ scale: 1 }}
+                                    animate={{ scale: [1, 1.15, 1] }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <ShoppingBag className="w-6 h-6" />
+                                </motion.div>
                                 {cartCount > 0 && (
-                                    <span className="absolute top-0 right-0 bg-foreground text-background text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full animate-fade-in border border-foreground">
+                                    <motion.span
+                                        key={`badge-${cartCount}`}
+                                        initial={{ scale: 0.5, opacity: 0 }}
+                                        animate={{
+                                            scale: [1, 1.4, 1],
+                                            opacity: 1
+                                        }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute top-0 right-0 bg-foreground text-background text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-foreground z-10"
+                                    >
                                         {cartCount}
-                                    </span>
+                                    </motion.span>
                                 )}
                             </button>
                         </div>

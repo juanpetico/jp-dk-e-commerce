@@ -12,6 +12,7 @@ datasource db {
 enum Role {
   CLIENT
   ADMIN
+  SUPERADMIN
 }
 
 model User {
@@ -25,6 +26,7 @@ model User {
   updatedAt DateTime  @updatedAt
   orders    Order[]
   addresses Address[]
+  cart      Cart?
 }
 
 // 1.1. Direcciones del Usuario
@@ -61,6 +63,7 @@ enum Size {
   L
   XL
   XXL
+  STD // Talla estándar para lentes y accesorios
 }
 
 model Category {
@@ -80,21 +83,33 @@ model Product {
   isNew           Boolean @default(true)
   isSale          Boolean @default(false)
   slug            String  @unique // SEO: /product/polera-shooters-pink-black
-  stock           Int     @default(0)
-  sizes           Size[] // Array de Enums (S, M, L, XL, XXL)
   isPublished     Boolean @default(false)
 
   // Relaciones
   categoryId String
-  category   Category       @relation(fields: [categoryId], references: [id])
+  category   Category         @relation(fields: [categoryId], references: [id])
   images     ProductImage[]
+  variants   ProductVariant[]
   orderItems OrderItem[]
+  cartItems  CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([categoryId])
   @@index([slug])
+}
+
+model ProductVariant {
+  id    String @id @default(cuid())
+  size  Size
+  stock Int    @default(0)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Asegura que no existan duplicados de la misma talla para un producto
+  @@unique([productId, size])
 }
 
 model ProductImage {
@@ -131,12 +146,35 @@ model Order {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  // Direcciones
+  // Direcciones (Relaciones Históricas - Mantener por compatibilidad o integridad referencial)
   shippingAddressId String
   shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
 
   billingAddressId String
   billingAddress   Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
+
+  // Snapshot de Cliente
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+
+  // Snapshot de Dirección de Envío/Despacho
+  shippingName    String?
+  shippingRut     String?
+  shippingStreet  String?
+  shippingComuna  String?
+  shippingRegion  String?
+  shippingZipCode String?
+  shippingPhone   String?
+
+  // Snapshot de Dirección de Facturación
+  billingName    String?
+  billingRut     String?
+  billingStreet  String?
+  billingComuna  String?
+  billingRegion  String?
+  billingZipCode String?
+  billingPhone   String?
 
   // Detalle de la compra
   items OrderItem[]
@@ -161,4 +199,29 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+// 4. Carrito de Compras
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique // Opcional para permitir carritos de invitados si se desea
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  size      Size
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Evita duplicados: si se agrega el mismo producto y talla, se actualiza la cantidad
+  @@unique([cartId, productId, size])
 }

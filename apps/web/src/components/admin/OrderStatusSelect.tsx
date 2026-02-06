@@ -62,7 +62,7 @@ export default function OrderStatusSelect({
     };
 
     return (
-        <div className="relative inline-block min-w-[140px]">
+        <div className="relative inline-block w-fit">
             {isUpdating && (
                 <div className="absolute inset-y-0 right-10 flex items-center pr-2 pointer-events-none z-10">
                     <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
@@ -75,7 +75,7 @@ export default function OrderStatusSelect({
             >
                 <SelectTrigger
                     className={cn(
-                        "w-full h-8 px-3 text-[10px] uppercase font-bold rounded-full border transition-all focus:ring-2 focus:ring-black dark:focus:ring-white",
+                        "flex items-center gap-2 h-7 px-2.5 text-[9px] uppercase font-black rounded-sm border transition-all focus:ring-1 focus:ring-primary/20",
                         getOrderStatusColor(localStatus),
                         (disabled || isUpdating) ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-95'
                     )}

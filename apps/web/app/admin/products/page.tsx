@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '../../../src/components/ui/Button';
 import { Plus, Edit, Trash2, Loader2, Package } from 'lucide-react';
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../../../src/services/productService';
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
+import TablePagination from '@/components/admin/TablePagination';
 
 const ProductTableSkeleton = () => (
     <div className="bg-white dark:bg-black rounded shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden relative">
@@ -38,7 +40,7 @@ const ProductTableSkeleton = () => (
         <div className="animate-pulse">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-gray-50 dark:bg-transparent border-b border-gray-200 dark:border-gray-700">
+                    <thead className="border-b border-gray-100 dark:border-gray-800">
                         <tr>
                             {[1, 2, 3, 4, 5].map((i) => (
                                 <th key={i} className="px-6 py-4">
@@ -72,17 +74,29 @@ const ProductTableSkeleton = () => (
     </div>
 );
 
-export default function ProductsPage() {
+function ProductsPageContent() {
     const [products, setProducts] = useState<Product[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const searchParams = useSearchParams();
+
     useEffect(() => {
         setIsMounted(true);
         loadProducts();
-    }, []);
+
+        // Check for specific actions in URL
+        const action = searchParams.get('action');
+        if (action === 'new') {
+            openCreateModal();
+        }
+    }, [searchParams]);
 
     const loadProducts = async () => {
         try {
@@ -178,6 +192,17 @@ export default function ProductsPage() {
         }).format(price);
     };
 
+    // Calculate paginated products
+    const totalItems = products?.length || 0;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedProducts = products?.slice(startIndex, startIndex + itemsPerPage) || [];
+
+    // Reset to first page when itemsPerPage changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
+
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
@@ -217,7 +242,7 @@ export default function ProductsPage() {
                     <div className="bg-card rounded shadow-sm border border-border overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
                                     <TableHead className="w-[300px] text-xs font-bold uppercase tracking-wider pl-6">Producto</TableHead>
                                     <TableHead className="text-xs font-bold uppercase tracking-wider">SKU</TableHead>
                                     <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
@@ -228,7 +253,7 @@ export default function ProductsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {products?.map((product) => (
+                                {paginatedProducts.map((product) => (
                                     <TableRow key={product.id} className="group hover:bg-muted/50 transition-colors">
                                         <TableCell className="pl-6">
                                             <div className="flex items-center gap-4">
@@ -271,14 +296,19 @@ export default function ProductsPage() {
                                         </TableCell>
                                         <TableCell className="font-mono text-sm text-foreground font-bold">{formatPrice(product.price)}</TableCell>
                                         <TableCell>
-                                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${product.stock > 10
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : product.stock > 0
-                                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                }`}>
-                                                {product.stock}u
-                                            </span>
+                                            {(() => {
+                                                const totalStock = product.variants?.reduce((sum, v) => sum + v.stock, 0) || 0;
+                                                return (
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${totalStock >= 10
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                        : totalStock > 0
+                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                            : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900/30 dark:text-zinc-400'
+                                                        }`}>
+                                                        {totalStock}u
+                                                    </span>
+                                                );
+                                            })()}
                                         </TableCell>
                                         <TableCell className="text-right pr-6">
                                             <div className="flex justify-end gap-2 transition-opacity">
@@ -303,6 +333,15 @@ export default function ProductsPage() {
                             </TableBody>
                         </Table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    <TablePagination
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                    />
                 </div>
             )}
 
@@ -313,5 +352,13 @@ export default function ProductsPage() {
                 initialData={editingProduct}
             />
         </div>
+    );
+}
+
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<ProductTableSkeleton />}>
+            <ProductsPageContent />
+        </Suspense>
     );
 }

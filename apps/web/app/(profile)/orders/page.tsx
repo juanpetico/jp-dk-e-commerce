@@ -14,6 +14,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { generateOrderPDF } from "../../../src/services/orderReportService";
+import { Download } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
@@ -140,6 +142,15 @@ export default function OrdersPage() {
 
     const filteredOrders = getFilteredAndSortedOrders();
 
+    const isFilterActive = dateFilter !== 'all' || statusFilter !== 'all';
+
+    const resetFilters = () => {
+        setSortBy('date-desc');
+        setDateFilter('all');
+        setStatusFilter('all');
+        setDateRange(undefined);
+    };
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {/* Top Navigation Removed - Handled by Layout */}
@@ -209,7 +220,7 @@ export default function OrdersPage() {
             )}
 
             {/* Filter Modal - desliza desde la derecha */}
-            <div className={`fixed top-0 right-0 h-full w-96 bg-background shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out border-l border-border ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed top-0 right-0 h-full w-96 bg-background shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out border-l border-gray-300 ${showFilter ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex flex-col h-full">
                     {/* Header con pestañas */}
                     <div className="flex border-b border-border">
@@ -378,21 +389,34 @@ export default function OrdersPage() {
             <div className="flex flex-col lg:flex-row gap-8 relative">                {/* Orders List */}
                 <div className="flex-1">
                     {(!filteredOrders || filteredOrders.length === 0) ? (
-                        <div className="flex flex-col items-center justify-center py-16 bg-card rounded-lg border border-border">
+                        <div className="flex flex-col items-center justify-center py-16 bg-card rounded-lg border border-gray-300">
                             <div className="bg-muted p-4 rounded-full mb-4">
                                 <Grid3x3 className="w-8 h-8 text-muted-foreground" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2 text-foreground">No tienes pedidos aún</h3>
+                            <h3 className="text-xl font-bold mb-2 text-foreground">
+                                {isFilterActive ? 'No se encontraron pedidos con estos filtros' : 'No tienes pedidos aún'}
+                            </h3>
                             <p className="text-muted-foreground mb-6 text-center max-w-sm">
-                                Parece que no has realizado ninguna compra todavía. ¡Explora nuestro catálogo!.
+                                {isFilterActive
+                                    ? 'Intenta ajustar los criterios de búsqueda o limpiar los filtros seleccionados.'
+                                    : 'Parece que no has realizado ninguna compra todavía. ¡Explora nuestro catálogo!.'}
                             </p>
-                            <Link href="/catalog">
+                            {isFilterActive ? (
                                 <Button
+                                    onClick={resetFilters}
                                     className="px-8 rounded py-3 bg-[var(--color-amber-900)] text-white hover:bg-[var(--color-amber-900)]/90 normal-case font-bold"
                                 >
-                                    Ver Catálogo
+                                    Limpiar Filtros
                                 </Button>
-                            </Link>
+                            ) : (
+                                <Link href="/catalog">
+                                    <Button
+                                        className="px-8 rounded py-3 bg-[var(--color-amber-900)] text-white hover:bg-[var(--color-amber-900)]/90 normal-case font-bold"
+                                    >
+                                        Ver Catálogo
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     ) : viewMode === 'gallery' ? (
                         // Vista Galería - Grid responsive
@@ -406,7 +430,7 @@ export default function OrdersPage() {
                                         href={`/orders/${order.id}`}
                                         className="block"
                                     >
-                                        <div className="bg-card text-card-foreground border border-border rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                                        <div className="bg-card text-card-foreground border border-gray-300 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="mb-6 inline-flex items-center gap-2">
                                                 <span className="text-foreground">✓</span>
                                                 <div>
@@ -426,8 +450,15 @@ export default function OrdersPage() {
                                                 </div>
                                             )}
 
-                                            <div className="border-t border-border pt-4">
-                                                <p className="text-sm font-bold mb-1 text-foreground">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</p>
+                                            <div className="border-t border-gray-200 pt-4">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="text-sm font-bold text-foreground">Cantidad: {order.items.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                                                    {order.items.reduce((acc, item) => acc + ((item.product.originalPrice || item.product.price) - item.price) * item.quantity, 0) > 0 && (
+                                                        <span className="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">
+                                                            Ahorraste {formatPrice(order.items.reduce((acc, item) => acc + ((item.product.originalPrice || item.product.price) - item.price) * item.quantity, 0))}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-muted-foreground mb-4">Pedido #{order.id}</p>
 
                                                 <p className="text-lg font-bold mb-6 text-foreground">{formatPrice(order.total)}</p>
@@ -446,7 +477,7 @@ export default function OrdersPage() {
                         </div>
                     ) : (
                         // Vista Lista - Table
-                        <div className="bg-card rounded-md border border-border overflow-hidden">
+                        <div className="bg-card rounded-md border border-gray-300 overflow-hidden">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted hover:bg-muted">
@@ -471,7 +502,7 @@ export default function OrdersPage() {
                                                         )}
                                                         <div>
                                                             <span className="font-bold text-sm text-foreground block">#{order.id}</span>
-                                                            <span className="text-xs text-muted-foreground">{order.items.length} artículo{order.items.length !== 1 ? 's' : ''}</span>
+                                                            <span className="text-xs text-muted-foreground">Cantidad: {order.items.reduce((acc, item) => acc + item.quantity, 0)}</span>
                                                         </div>
                                                     </div>
                                                 </TableCell>
@@ -488,6 +519,19 @@ export default function OrdersPage() {
                                                 </TableCell>
                                                 <TableCell className="text-center pr-6">
                                                     <div className="flex justify-center gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 p-0 hover:text-[var(--color-amber-900)]"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                generateOrderPDF(order);
+                                                            }}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                            <span className="sr-only">Descargar boleta</span>
+                                                        </Button>
                                                         <Link href={`/orders/${order.id}`}>
                                                             <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                                                                 <Eye className="w-4 h-4" />

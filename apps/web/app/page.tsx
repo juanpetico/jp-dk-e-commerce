@@ -280,10 +280,27 @@ const HomePage: React.FC = () => {
 
 // Internal Component for Lookbook Card
 const LookbookCard = ({ product }: { product: Product }) => {
-  const { addToCart } = useCart();
+  const { addToCart, toggleCart, cart } = useCart();
+  const [selectedSize, setSelectedSize] = useState<string>(() => {
+    // Get first available size
+    const available = product.variants?.find(v => v.stock > 0);
+    return available ? available.size : (product.variants?.[0]?.size || '');
+  });
+
+  const isInCart = cart.some(item => item.id === product.id);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);
+  };
+
+  const handleAddToCart = () => {
+    if (isInCart) {
+      toggleCart();
+      return;
+    }
+    if (selectedSize) {
+      addToCart(product, selectedSize);
+    }
   };
 
   return (
@@ -312,7 +329,9 @@ const LookbookCard = ({ product }: { product: Product }) => {
 
       <div className="flex flex-col gap-2">
         <Link href={`/product/${product.slug}`}>
-          <h3 className="font-display font-bold uppercase text-sm tracking-widest">{product.name}</h3>
+          <h3 className="font-display font-bold uppercase text-sm tracking-widest group-hover:underline transition-all">
+            {product.name}
+          </h3>
         </Link>
         <div className="flex items-center gap-2">
           {product.originalPrice && (
@@ -322,22 +341,38 @@ const LookbookCard = ({ product }: { product: Product }) => {
         </div>
 
         {/* Sizes */}
-        <div className="flex gap-1 my-1">
-          {product.sizes.map(size => (
-            <div key={size} className="border border-white/20 w-6 h-6 flex items-center justify-center text-[10px] text-gray-300 hover:border-white hover:text-white hover:scale-110 transition-all duration-200 cursor-pointer">
-              {size}
-            </div>
-          ))}
+        <div className="flex wrap gap-1 my-1">
+          {product.variants?.map((variant) => {
+            const isOutOfStock = variant.stock <= 0;
+            return (
+              <button
+                key={variant.size}
+                disabled={isOutOfStock}
+                onClick={() => !isOutOfStock && setSelectedSize(variant.size)}
+                className={`w-8 h-8 flex items-center justify-center text-[10px] transition-all duration-200 border rounded-sm ${selectedSize === variant.size
+                  ? 'bg-white text-black border-white font-bold'
+                  : isOutOfStock
+                    ? 'border-neutral-800 text-neutral-600 cursor-not-allowed opacity-50'
+                    : 'border-white/20 text-gray-400 hover:border-white hover:text-white'
+                  }`}
+              >
+                {variant.size}
+              </button>
+            );
+          })}
         </div>
 
         {/* Add Button */}
-        <div className="mt-2">
+        <div className="mt-2 text-left">
           <Button
             variant="outline"
-            className="rounded-full bg-white text-black hover:bg-gray-200 border-none text-xs px-6 py-2 h-auto"
-            onClick={() => addToCart(product, product.sizes[0] || '')}
+            className={`rounded-full shadow-md text-xs px-8 py-2.5 h-auto font-bold uppercase tracking-widest transition-all ${isInCart
+              ? 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500 scale-105'
+              : 'bg-white text-black border-none hover:bg-gray-200 active:scale-95'
+              }`}
+            onClick={handleAddToCart}
           >
-            Añadir al carrito
+            {isInCart ? 'Ver Carrito' : 'Añadir al Carrito'}
           </Button>
         </div>
       </div>

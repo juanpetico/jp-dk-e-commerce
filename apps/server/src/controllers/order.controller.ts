@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { orderService } from "../services/order.service.js";
+import { cartService } from "../services/cart.service.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 import { body, validationResult } from "express-validator";
 import { AppError } from "../middleware/error-handler.js";
@@ -38,8 +39,11 @@ export const orderController = {
                 throw new AppError("Authentication required", 401);
             }
 
-            const { items } = req.body;
-            const order = await orderService.createOrder(req.user.id, items);
+            const { items, shippingAddressId, billingAddressId } = req.body;
+            const order = await orderService.createOrder(req.user.id, items, shippingAddressId, billingAddressId);
+
+            // Clear cart after successful order creation
+            await cartService.clearCart(req.user.id);
 
             res.status(201).json({
                 success: true,

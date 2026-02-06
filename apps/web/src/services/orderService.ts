@@ -195,3 +195,27 @@ export const getOrderStatusColor = (status: OrderStatus): string => {
     };
     return colors[status] || colors.PENDING;
 };
+
+/**
+ * Crear una nueva orden
+ */
+export const createOrder = async (items: { productId: string; quantity: number; size: string }[], shippingAddressId?: string, billingAddressId?: string): Promise<Order> => {
+    try {
+        const res = await fetch(`${API_URL}/orders`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ items, shippingAddressId, billingAddressId }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to create order');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error creating order:', error);
+        throw error;
+    }
+};

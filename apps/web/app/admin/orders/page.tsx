@@ -5,12 +5,14 @@ import { Eye, Loader2, FileSpreadsheet } from 'lucide-react';
 import {
     fetchAllOrders,
     updateOrderStatus,
-    ORDER_STATUS_LABELS
-} from '../../../src/services/orderService';
-import { Order, OrderStatus } from '../../../src/types';
-import OrderDetailModal from '../../../src/components/admin/OrderDetailModal';
-import OrderFilters from '../../../src/components/admin/OrderFilters';
-import OrderStatusSelect from '../../../src/components/admin/OrderStatusSelect';
+    ORDER_STATUS_LABELS,
+    getOrderStatusColor
+} from '@/services/orderService';
+import { Order, OrderStatus } from '@/types';
+import OrderDetailModal from '@/components/admin/OrderDetailModal';
+import OrderFilters from '@/components/admin/OrderFilters';
+import OrderStatusSelect from '@/components/admin/OrderStatusSelect';
+import TablePagination from '@/components/admin/TablePagination';
 import { toast } from 'sonner';
 import {
     Table,
@@ -20,6 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const OrderTableSkeleton = () => (
     <div className="bg-card rounded shadow-sm border border-border overflow-hidden relative">
@@ -65,6 +68,10 @@ export default function OrdersPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
     useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -97,6 +104,7 @@ export default function OrdersPage() {
 
     const handleFilterChange = (newFilters: any) => {
         setFilters(newFilters);
+        setCurrentPage(1); // Reset to first page when filtering
         // loadOrders se ejecutará automáticamente por el useEffect
     };
 
@@ -195,6 +203,17 @@ export default function OrdersPage() {
 
     const activeFiltersCount = Object.values(filters).filter(v => v !== undefined && v !== '').length;
 
+    // Calculate paginated orders
+    const totalItems = orders?.length || 0;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedOrders = orders?.slice(startIndex, startIndex + itemsPerPage) || [];
+
+    // Reset to first page when itemsPerPage changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
+
     return (
         <div className="space-y-6 animate-fade-in pb-10">
             <div className="flex justify-between items-end">
@@ -269,7 +288,7 @@ export default function OrdersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {orders?.map((order) => (
+                                {paginatedOrders.map((order) => (
                                     <TableRow key={order.id} className="group hover:bg-muted/50 transition-colors">
                                         <TableCell className="pl-6">
                                             <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -318,9 +337,9 @@ export default function OrdersPage() {
                                         <TableCell className="text-right pr-6">
                                             <button
                                                 onClick={() => handleViewOrder(order)}
-                                                className="inline-flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-all shadow-sm border border-foreground"
+                                                className="inline-flex items-center gap-2 bg-background border border-border px-3 py-1.5 rounded text-[9px] font-black uppercase tracking-widest hover:bg-muted transition-all text-foreground shadow-sm"
                                             >
-                                                VER <Eye className="w-3 h-3" />
+                                                Ver <Eye className="w-3.5 h-3.5" />
                                             </button>
                                         </TableCell>
                                     </TableRow>
@@ -328,6 +347,15 @@ export default function OrdersPage() {
                             </TableBody>
                         </Table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    <TablePagination
+                        currentPage={currentPage}
+                        totalItems={totalItems}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                    />
                 </div>
             )}
 

@@ -30,6 +30,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from "../ui/dialog";
+import { Label } from '../ui/label';
 
 
 
@@ -41,15 +42,18 @@ interface AdminProductFormProps {
     initialData?: Product;
 }
 
-const SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'STD'];
 
-// Local interface for form state where images are just URLs (strings)
-// Added separate string fields for price and stock to handle formatting inputs
-interface FormProduct extends Omit<Partial<Product>, 'images' | 'price' | 'stock' | 'originalPrice' | 'discountPercent'> {
+interface VariantState {
+    size: string;
+    stock: string | number;
+}
+
+interface FormProduct extends Omit<Partial<Product>, 'images' | 'price' | 'originalPrice' | 'variants' | 'discountPercent'> {
     images: string[];
     price: string | number;
     originalPrice?: string | number;
-    stock: string | number;
+    variants: VariantState[];
     helperDiscount?: string | number; // Visual helper field for percentage input
     discountPercent?: number; // Actual stored discount percentage
     isPublished: boolean;
@@ -62,10 +66,9 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
         slug: '',
         price: '',
         originalPrice: '',
-        stock: '',
         category: undefined,
         categoryId: '',
-        sizes: [],
+        variants: [],
         images: [],
         description: '',
         isNew: true,
@@ -105,9 +108,12 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                 // Format initial price and stock only if they exist and are numbers
                 price: initialData.price ? new Intl.NumberFormat('es-CL').format(initialData.price) : '',
                 originalPrice: initialData.originalPrice ? new Intl.NumberFormat('es-CL').format(initialData.originalPrice) : '',
-                stock: initialData.stock ? new Intl.NumberFormat('es-CL').format(initialData.stock) : '',
                 categoryId: initialData.categoryId || (initialData.category as any)?.id || '',
                 images: initialData.images ? initialData.images.map((img: any) => typeof img === 'string' ? img : img.url) : [],
+                variants: initialData.variants ? initialData.variants.map((v: any) => ({
+                    size: v.size,
+                    stock: new Intl.NumberFormat('es-CL').format(v.stock)
+                })) : [],
                 helperDiscount: initialData.discountPercent || '',
                 discountPercent: initialData.discountPercent
             });
@@ -117,8 +123,7 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                 slug: '',
                 price: '',
                 originalPrice: '',
-                stock: '',
-                sizes: [],
+                variants: [],
                 images: [],
                 description: '',
                 isNew: true,
@@ -148,7 +153,7 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
 
         let processedValue: any = value;
 
-        if (name === 'price' || name === 'stock' || name === 'originalPrice' || name === 'helperDiscount') {
+        if (name === 'price' || name === 'originalPrice' || name === 'helperDiscount') {
             // Special handling for formatted inputs
             processedValue = formatNumberInput(value);
         } else if (type === 'checkbox') {
@@ -278,13 +283,22 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
 
     const toggleSize = (size: string) => {
         setFormData(prev => {
-            const currentSizes = prev.sizes || [];
-            if (currentSizes.includes(size)) {
-                return { ...prev, sizes: currentSizes.filter(s => s !== size) };
+            const currentVariants = prev.variants || [];
+            const exists = currentVariants.find(v => v.size === size);
+            if (exists) {
+                return { ...prev, variants: currentVariants.filter(v => v.size !== size) };
             } else {
-                return { ...prev, sizes: [...currentSizes, size] };
+                return { ...prev, variants: [...currentVariants, { size, stock: '' }] };
             }
         });
+    };
+
+    const handleVariantStockChange = (size: string, value: string) => {
+        const processedValue = formatNumberInput(value);
+        setFormData(prev => ({
+            ...prev,
+            variants: prev.variants.map(v => v.size === size ? { ...v, stock: processedValue } : v)
+        }));
     };
 
     const openImageUrlModal = (index: number | null = null) => {
@@ -337,17 +351,18 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
             ? parseInt(formData.originalPrice.replace(/\./g, ''))
             : formData.originalPrice;
 
-        const rawStock = typeof formData.stock === 'string'
-            ? parseInt(formData.stock.replace(/\./g, ''))
-            : formData.stock;
+        // Parse variant stocks
+        const parsedVariants = formData.variants.map(v => ({
+            size: v.size,
+            stock: typeof v.stock === 'string' ? parseInt(v.stock.replace(/\./g, '')) || 0 : v.stock
+        }));
 
         if (!formData.name) newErrors.name = 'El nombre es obligatorio';
         if (!formData.slug) newErrors.slug = 'El slug es obligatorio';
         if (!rawPrice || rawPrice <= 0) newErrors.price = 'El precio debe ser mayor a 0';
         else if (rawPrice < 1000) newErrors.price = 'El precio debe ser al menos $1.000 (Valores menores requieren autorización)';
 
-        if (rawStock === undefined || rawStock < 0) newErrors.stock = 'El stock no puede ser negativo';
-        if (!formData.sizes || formData.sizes.length === 0) newErrors.sizes = 'Selecciona al menos una talla';
+        if (!formData.variants || formData.variants.length === 0) newErrors.variants = 'Selecciona al menos una talla';
         if (!formData.categoryId) newErrors.categoryId = 'Selecciona una categoría';
 
         // Validate discount fields when isSale is true
@@ -388,7 +403,7 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
             ...formData,
             price: rawPrice,
             originalPrice: (typeof rawOriginalPrice === 'number' && rawOriginalPrice > 0) ? rawOriginalPrice : null,
-            stock: rawStock,
+            variants: parsedVariants,
             discountPercent: (typeof formData.discountPercent === 'number' && formData.discountPercent > 0) ? formData.discountPercent : null
         };
 
@@ -415,118 +430,121 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                         {/* Basic Info */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-muted-foreground">Nombre</label>
-                                <input
+                                <Label htmlFor="name" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                    Nombre <span className="text-red-500 ml-1">*</span>
+                                </Label>
+                                <Input
+                                    id="name"
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className={`w-full border-zinc-300 dark:border-transparent rounded-lg p-3 text-sm focus:ring-2 transition-all ${errors.name
-                                        ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                        : 'bg-muted/50 focus:ring-primary focus:bg-background'
-                                        }`}
+                                    className={cn(
+                                        "bg-muted/50 focus:ring-primary focus:bg-background h-11",
+                                        errors.name && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
+                                    )}
                                     placeholder="Nombre del producto"
                                 />
-                                {errors.name && <p className="text-destructive text-xs">{errors.name}</p>}
+                                {errors.name && <p className="text-destructive text-xs font-medium">{errors.name}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-muted-foreground">Slug (URL)</label>
-                                <input
+                                <Label htmlFor="slug" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                    Slug (URL) <span className="text-red-500 ml-1">*</span>
+                                </Label>
+                                <Input
+                                    id="slug"
                                     type="text"
                                     name="slug"
                                     value={formData.slug}
                                     onChange={handleChange}
-                                    className={`w-full border-zinc-300 dark:border-transparent rounded-lg p-3 text-sm focus:ring-2 transition-all font-mono text-muted-foreground ${errors.slug
-                                        ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                        : 'bg-muted/50 focus:ring-primary focus:bg-background'
-                                        }`}
+                                    className={cn(
+                                        "bg-muted/50 focus:ring-primary focus:bg-background h-11 font-mono text-muted-foreground",
+                                        errors.slug && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
+                                    )}
                                     placeholder="slug-del-producto"
                                 />
-                                {errors.slug && <p className="text-destructive text-xs">{errors.slug}</p>}
+                                {errors.slug && <p className="text-destructive text-xs font-medium">{errors.slug}</p>}
                             </div>
                         </div>
 
                         {/* Pricing & Stock */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-muted-foreground">Precio</label>
+                                <Label htmlFor="price" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                    Precio <span className="text-red-500 ml-1">*</span>
+                                </Label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                                    <input
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono">$</span>
+                                    <Input
+                                        id="price"
                                         type="text"
                                         name="price"
                                         value={formData.price}
                                         onChange={handleChange}
-                                        className={`w-full border-zinc-300 dark:border-transparent rounded-lg pl-8 p-3 text-sm focus:ring-2 transition-all font-mono ${errors.price
-                                            ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                            : 'bg-muted/50 focus:ring-primary focus:bg-background'
-                                            }`}
+                                        className={cn(
+                                            "pl-8 bg-muted/50 focus:ring-primary focus:bg-background h-11 font-mono",
+                                            errors.price && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
+                                        )}
                                         placeholder="0"
                                     />
                                 </div>
-                                {errors.price && <p className="text-destructive text-xs">{errors.price}</p>}
+                                {errors.price && <p className="text-destructive text-xs font-medium">{errors.price}</p>}
                             </div>
 
                             {formData.isSale && (
                                 <>
                                     <div className="space-y-2 animate-fade-in">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Precio Original</label>
+                                        <Label htmlFor="originalPrice" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                            Precio Original <span className="text-red-500 ml-1">*</span>
+                                        </Label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                                            <input
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono">$</span>
+                                            <Input
+                                                id="originalPrice"
                                                 type="text"
                                                 name="originalPrice"
                                                 value={formData.originalPrice || ''}
                                                 onChange={handleChange}
-                                                className={`w-full border-zinc-300 dark:border-transparent rounded-lg pl-8 p-3 text-sm focus:ring-2 transition-all font-mono ${errors.originalPrice
-                                                    ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                                    : 'bg-muted/50 focus:ring-primary'
-                                                    }`}
+                                                className={cn(
+                                                    "pl-8 bg-muted/50 focus:ring-primary focus:bg-background h-11 font-mono",
+                                                    errors.originalPrice && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
+                                                )}
                                                 placeholder="0"
                                             />
                                         </div>
-                                        {errors.originalPrice && <p className="text-destructive text-xs">{errors.originalPrice}</p>}
+                                        {errors.originalPrice && <p className="text-destructive text-xs font-medium">{errors.originalPrice}</p>}
                                     </div>
                                     <div className="space-y-2 animate-fade-in">
-                                        <label className="text-xs font-bold uppercase text-muted-foreground">Descuento (%)</label>
+                                        <Label htmlFor="helperDiscount" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                            Descuento (%) <span className="text-red-500 ml-1">*</span>
+                                        </Label>
                                         <div className="relative">
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-                                            <input
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono">%</span>
+                                            <Input
+                                                id="helperDiscount"
                                                 type="text"
                                                 name="helperDiscount"
                                                 value={formData.helperDiscount || ''}
                                                 onChange={handleChange}
-                                                className={`w-full border-zinc-300 dark:border-transparent rounded-lg pr-8 p-3 text-sm focus:ring-2 transition-all font-mono ${errors.helperDiscount
-                                                    ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                                    : 'bg-muted/50 focus:ring-primary'
-                                                    }`}
+                                                className={cn(
+                                                    "pr-8 bg-muted/50 focus:ring-primary focus:bg-background h-11 font-mono",
+                                                    errors.helperDiscount && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
+                                                )}
                                                 placeholder="0"
                                             />
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground">Auto-calcula el precio</p>
+                                        <p className="text-[10px] text-muted-foreground">Auto-calcula el precio final</p>
                                     </div>
                                 </>
                             )}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase text-muted-foreground">Stock</label>
-                                <input
-                                    type="text"
-                                    name="stock"
-                                    value={formData.stock}
-                                    onChange={handleChange}
-                                    className={`w-full border-zinc-300 dark:border-transparent rounded-lg p-3 text-sm focus:ring-2 transition-all font-mono ${errors.stock
-                                        ? 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10'
-                                        : 'bg-muted/50 focus:ring-primary focus:bg-background'
-                                        }`}
-                                    placeholder="0"
-                                />
-                                {errors.stock && <p className="text-destructive text-xs">{errors.stock}</p>}
-                            </div>
+                            {/* Stock removed from here, now in variants */}
                         </div>
 
                         {/* Category - Combobox */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase text-muted-foreground">Categoría</label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                Categoría <span className="text-red-500 ml-1">*</span>
+                            </Label>
                             <div className="flex gap-2 items-center">
                                 <div className="relative flex-1 min-w-0">
                                     <Popover>
@@ -596,30 +614,74 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                             {errors.categoryId && <p className="text-destructive text-xs">{errors.categoryId}</p>}
                         </div>
 
-                        {/* Sizes */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase text-muted-foreground">Tallas Disponibles</label>
-                            <div className="flex gap-2 flex-wrap">
-                                {SIZES.map(size => (
-                                    <button
-                                        key={size}
-                                        type="button"
-                                        onClick={() => toggleSize(size)}
-                                        className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${(formData.sizes || []).includes(size)
-                                            ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                                            } ${errors.sizes && !(formData.sizes || []).includes(size) ? 'ring-1 ring-destructive bg-destructive/10' : ''}`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                        {/* Variant Selection */}
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                    Tallas Disponibles <span className="text-red-500 ml-1">*</span>
+                                </Label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {SIZES.map(size => {
+                                        const isSelected = !!formData.variants.find(v => v.size === size);
+                                        return (
+                                            <button
+                                                key={size}
+                                                type="button"
+                                                onClick={() => toggleSize(size)}
+                                                className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${isSelected
+                                                    ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                                                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                                                    } ${errors.variants && !isSelected ? 'ring-1 ring-destructive bg-destructive/10' : ''}`}
+                                            >
+                                                {size}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {errors.variants && <p className="text-destructive text-xs">{errors.variants}</p>}
                             </div>
-                            {errors.sizes && <p className="text-destructive text-xs">{errors.sizes}</p>}
+
+                            {/* Variant Inventory */}
+                            {formData.variants.length > 0 && (
+                                <div className="space-y-3 bg-muted/20 p-4 rounded-xl border border-border/50 animate-in fade-in slide-in-from-top-2">
+                                    <Label className="text-xs font-bold uppercase text-muted-foreground block mb-2 text-center">Inventario por Talla</Label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        {[...formData.variants]
+                                            .sort((a, b) => SIZES.indexOf(a.size) - SIZES.indexOf(b.size))
+                                            .map((variant) => (
+                                                <div key={variant.size} className="space-y-1">
+                                                    <div className="flex justify-center items-center px-1">
+                                                        <span className="text-xs font-bold text-foreground">{variant.size}</span>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <Input
+                                                            type="text"
+                                                            value={variant.stock}
+                                                            onChange={(e) => handleVariantStockChange(variant.size, e.target.value)}
+                                                            className={cn(
+                                                                "h-10 text-sm font-mono text-center bg-background border-border focus:ring-1",
+                                                                (variant.stock === '0' || variant.stock === 0) && "border-amber-500 ring-amber-500 focus:ring-amber-500"
+                                                            )}
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    {(variant.stock === '0' || variant.stock === 0) && (
+                                                        <p className="text-[10px] text-amber-600 dark:text-amber-500 text-center leading-tight animate-in fade-in slide-in-from-top-1">
+                                                            Deselecciona si es 0
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Images */}
                         <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase text-muted-foreground">Imágenes</label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center">
+                                Imágenes
+                            </Label>
 
                             <div className="flex flex-wrap gap-4">
                                 {formData.images?.map((img, idx) => (
@@ -666,12 +728,12 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                                         setFormData(prev => ({ ...prev, isNew: checked === true }));
                                     }}
                                 />
-                                <label
+                                <Label
                                     htmlFor="isNew"
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                 >
                                     Nuevo Producto
-                                </label>
+                                </Label>
                             </div>
 
                             <div className="flex items-center space-x-2">
@@ -704,12 +766,12 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                                         });
                                     }}
                                 />
-                                <label
+                                <Label
                                     htmlFor="isSale"
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                 >
                                     En Oferta
-                                </label>
+                                </Label>
                             </div>
 
                             <div className="flex items-center space-x-2">
@@ -720,12 +782,12 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                                         setFormData(prev => ({ ...prev, isPublished: checked === true }));
                                     }}
                                 />
-                                <label
+                                <Label
                                     htmlFor="isPublished"
                                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:peer-disabled:opacity-70 cursor-pointer"
                                 >
                                     Publicado
-                                </label>
+                                </Label>
                             </div>
                         </div>
 
@@ -762,10 +824,11 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                         </DialogTitle>
                     </DialogHeader>
                     <div className="py-6">
-                        <label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">
-                            URL de la Imagen
-                        </label>
+                        <Label htmlFor="imageUrl" className="text-xs font-bold uppercase text-muted-foreground flex items-center mb-2">
+                            URL de la Imagen <span className="text-red-500 ml-1">*</span>
+                        </Label>
                         <Input
+                            id="imageUrl"
                             autoFocus
                             placeholder="https://ejemplo.com/imagen.jpg"
                             value={imageUrlModal.url}

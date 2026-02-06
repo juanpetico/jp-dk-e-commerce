@@ -19,32 +19,32 @@ router.get("/products/category/:categoryId", productController.getProductsByCate
 router.post(
     "/products",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     productValidation,
     productController.createProduct
 );
 router.put(
     "/products/:id",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     productController.updateProduct
 );
 router.delete(
     "/products/:id",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     productController.deleteProduct
 );
 router.post(
     "/products/:id/images",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     productController.addProductImages
 );
 router.delete(
     "/products/images/:imageId",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     productController.removeProductImage
 );
 

@@ -23,6 +23,34 @@ interface OrderDetailModalProps {
 export default function OrderDetailModal({ isOpen, onClose, order, onStatusChange }: OrderDetailModalProps) {
     if (!isOpen || !order) return null;
 
+    // Snapshot logic: prefer snapshot fields, fall back to relations
+    const shipping = {
+        name: order.shippingName || order.shippingAddress?.name || 'N/A',
+        rut: order.shippingRut || order.shippingAddress?.rut || 'N/A',
+        street: order.shippingStreet || order.shippingAddress?.street,
+        comuna: order.shippingComuna || order.shippingAddress?.comuna,
+        region: order.shippingRegion || order.shippingAddress?.region,
+        zipCode: order.shippingZipCode || order.shippingAddress?.zipCode,
+        phone: order.shippingPhone || order.shippingAddress?.phone || 'N/A',
+        method: order.shippingMethod || 'Estándar', // Snapshot method usually matches order
+    };
+
+    const billing = {
+        name: order.billingName || order.billingAddress?.name || 'N/A',
+        rut: order.billingRut || order.billingAddress?.rut || 'N/A',
+        street: order.billingStreet || order.billingAddress?.street,
+        comuna: order.billingComuna || order.billingAddress?.comuna,
+        region: order.billingRegion || order.billingAddress?.region,
+        zipCode: order.billingZipCode || order.billingAddress?.zipCode,
+        phone: order.billingPhone || order.billingAddress?.phone,
+    };
+
+    const customer = {
+        name: order.customerName || order.user?.name || 'Invitado',
+        email: order.customerEmail || order.user?.email || 'N/A',
+        phone: order.customerPhone || order.user?.phone || 'N/A', // Using user phone or specialized snapshot if available
+    };
+
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -123,8 +151,8 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                     Cliente
                                 </h3>
                                 <div>
-                                    <p className="font-bold text-foreground text-lg leading-tight">{order.user?.name || 'Invitado'}</p>
-                                    <p className="text-muted-foreground text-sm mt-1">{order.user?.email || 'N/A'}</p>
+                                    <p className="font-bold text-foreground text-lg leading-tight">{customer.name}</p>
+                                    <p className="text-muted-foreground text-sm mt-1">{customer.email}</p>
                                 </div>
                             </div>
                             {/* Right: Contacto */}
@@ -134,7 +162,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                     Contacto
                                 </h3>
                                 <div>
-                                    <p className="font-bold text-foreground text-lg leading-tight">{order.shippingAddress?.phone || 'N/A'}</p>
+                                    <p className="font-bold text-foreground text-lg leading-tight">{shipping.phone}</p>
                                     <p className="text-muted-foreground text-[10px] uppercase font-black tracking-widest mt-1">Móvil Verificado</p>
                                 </div>
                             </div>
@@ -151,16 +179,17 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                 <h3 className="font-display font-bold uppercase tracking-wider text-xs">Dirección de Envío</h3>
                             </div>
                             <div className="space-y-1 text-sm text-muted-foreground">
-                                <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{order.shippingAddress?.name}</p>
-                                <p>{order.shippingAddress?.street}</p>
-                                <p>{order.shippingAddress?.comuna}, {order.shippingAddress?.region}</p>
-                                <p>{order.shippingAddress?.country || 'Chile'}</p>
-                                {order.shippingAddress?.zipCode && <p className="mt-2 font-mono text-xs">CP: {order.shippingAddress.zipCode}</p>}
-                                <p className="text-xs">Tel: {order.shippingAddress?.phone}</p>
+                                <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{shipping.name}</p>
+                                <p>{shipping.street}</p>
+                                <p>{shipping.comuna}, {shipping.region}</p>
+                                <p>{'Chile'}</p>
+                                {shipping.zipCode && <p className="mt-2 font-mono text-xs">CP: {shipping.zipCode}</p>}
+                                {shipping.rut && <p className="font-mono text-xs">RUT: {shipping.rut}</p>}
+                                <p className="text-xs">Tel: {shipping.phone}</p>
                                 <div className="mt-4 pt-4 border-t border-dashed border-zinc-300 dark:border-border text-[10px] flex justify-between items-center">
                                     <span className="font-black text-foreground uppercase tracking-widest">Método</span>
                                     <span className="bg-muted text-foreground px-2 py-1 rounded font-black uppercase tracking-tighter">
-                                        {order.shippingMethod || 'Estándar'}
+                                        {shipping.method}
                                     </span>
                                 </div>
                             </div>
@@ -173,12 +202,12 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                 <h3 className="font-display font-bold uppercase tracking-wider text-xs">Dirección de Facturación</h3>
                             </div>
                             <div className="space-y-1 text-sm text-muted-foreground">
-                                <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{order.billingAddress?.name}</p>
-                                <p>{order.billingAddress?.street}</p>
-                                <p>{order.billingAddress?.comuna}, {order.billingAddress?.region}</p>
-                                <p>{order.billingAddress?.country || 'Chile'}</p>
-                                <p className="mt-2 font-mono text-xs">RUT: {order.billingAddress?.rut || 'N/A'}</p>
-                                <p className="text-xs">Tel: {order.billingAddress?.phone}</p>
+                                <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{billing.name}</p>
+                                <p>{billing.street}</p>
+                                <p>{billing.comuna}, {billing.region}</p>
+                                <p>{'Chile'}</p>
+                                <p className="mt-2 font-mono text-xs">RUT: {billing.rut}</p>
+                                <p className="text-xs">Tel: {billing.phone}</p>
                             </div>
                         </div>
                     </div>

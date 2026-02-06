@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, Tags } from 'lucide-react';
 import { useUser } from '../../store/UserContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -60,7 +60,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, href, isActive, onClick,
 
 export default function AdminSidebar() {
     const pathname = usePathname();
-    const { logout } = useUser();
+    const { logout, user } = useUser();
     const router = useRouter();
 
     // Sidebar State
@@ -135,6 +135,10 @@ export default function AdminSidebar() {
         }
     };
 
+    // Determine base path based on role or current path
+    const isSuperAdmin = user?.role === 'SUPERADMIN';
+    const basePath = isSuperAdmin ? '/superadmin' : '/admin';
+
     return (
         <aside
             ref={sidebarRef}
@@ -172,29 +176,63 @@ export default function AdminSidebar() {
                 <NavItem
                     icon={<LayoutDashboard className="w-5 h-5" />}
                     label="Dashboard"
-                    href="/admin/dashboard"
-                    isActive={pathname === '/admin/dashboard'}
+                    href={`${basePath}/dashboard`}
+                    isActive={pathname === `${basePath}/dashboard` || pathname === basePath}
                     isCollapsed={isCollapsed}
                 />
+
+                {isSuperAdmin && (
+                    <>
+                        <NavItem
+                            icon={<Users className="w-5 h-5" />}
+                            label="Usuarios"
+                            href="/superadmin/users"
+                            isActive={pathname?.startsWith('/superadmin/users') || false}
+                            isCollapsed={isCollapsed}
+                        />
+                        <NavItem
+                            icon={<Settings className="w-5 h-5" />}
+                            label="Auditoría"
+                            href="/superadmin/audit"
+                            isActive={pathname?.startsWith('/superadmin/audit') || false}
+                            isCollapsed={isCollapsed}
+                        />
+                    </>
+                )}
+
                 <NavItem
                     icon={<Package className="w-5 h-5" />}
                     label="Productos"
-                    href="/admin/products"
-                    isActive={pathname?.startsWith('/admin/products') || false}
+                    href={`${basePath}/products`}
+                    isActive={pathname?.startsWith(`${basePath}/products`) || false}
                     isCollapsed={isCollapsed}
                 />
                 <NavItem
                     icon={<ShoppingBag className="w-5 h-5" />}
                     label="Pedidos"
-                    href="/admin/orders"
-                    isActive={pathname?.startsWith('/admin/orders') || false}
+                    href={`${basePath}/orders`}
+                    isActive={pathname?.startsWith(`${basePath}/orders`) || false}
+                    isCollapsed={isCollapsed}
+                />
+                <NavItem
+                    icon={<Users className="w-5 h-5" />}
+                    label="Clientes"
+                    href={`${basePath}/customers`}
+                    isActive={pathname?.startsWith(`${basePath}/customers`) || false}
+                    isCollapsed={isCollapsed}
+                />
+                <NavItem
+                    icon={<Tags className="w-5 h-5" />}
+                    label="Marketing"
+                    href={`${basePath}/marketing`}
+                    isActive={pathname?.startsWith(`${basePath}/marketing`) || false}
                     isCollapsed={isCollapsed}
                 />
                 <NavItem
                     icon={<Settings className="w-5 h-5" />}
                     label="Configuración"
-                    href="/admin/settings"
-                    isActive={pathname === '/admin/settings'}
+                    href={`${basePath}/settings`}
+                    isActive={pathname === `${basePath}/settings`}
                     isCollapsed={isCollapsed}
                 />
 

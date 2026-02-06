@@ -8,6 +8,7 @@ import userRoutes from "./routes/user.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import orderRoutes from "./routes/order.routes.js";
+import cartRoutes from "./routes/cart.routes.js";
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ const createServer = (): Express => {
     app.use("/api", categoryRoutes);
     app.use("/api", productRoutes);
     app.use("/api", orderRoutes);
+    app.use("/api/cart", cartRoutes);
 
     // 404 handler
     app.use((req, res) => {

@@ -7,9 +7,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 25990,
         images: [{ id: 'img1', url: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80', productId: '1' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L'],
+        variants: [
+            { id: 'v1s', size: 'S', stock: 10, productId: '1' },
+            { id: 'v1m', size: 'M', stock: 20, productId: '1' },
+            { id: 'v1l', size: 'L', stock: 20, productId: '1' }
+        ],
         isNew: true,
-        stock: 50,
         slug: 'polera-shooters-pink-black',
         isPublished: true
     },
@@ -19,8 +22,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 25990,
         images: [{ id: 'img2', url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80', productId: '2' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L', 'XL'],
-        stock: 35,
+        variants: [
+            { id: 'v2s', size: 'S', stock: 5, productId: '2' },
+            { id: 'v2m', size: 'M', stock: 15, productId: '2' },
+            { id: 'v2l', size: 'L', stock: 10, productId: '2' },
+            { id: 'v2xl', size: 'XL', stock: 5, productId: '2' }
+        ],
         slug: 'polera-shooters-blue-black',
         isPublished: true
     },
@@ -30,8 +37,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 23990,
         images: [{ id: 'img3', url: 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&w=800&q=80', productId: '3' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L', 'XL'],
-        stock: 20,
+        variants: [
+            { id: 'v3s', size: 'S', stock: 5, productId: '3' },
+            { id: 'v3m', size: 'M', stock: 5, productId: '3' },
+            { id: 'v3l', size: 'L', stock: 5, productId: '3' },
+            { id: 'v3xl', size: 'XL', stock: 5, productId: '3' }
+        ],
         slug: 'polera-shooters-blue-white',
         isPublished: true
     },
@@ -42,9 +53,12 @@ const MOCK_PRODUCTS: Product[] = [
         originalPrice: 25990,
         images: [{ id: 'img4', url: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=800&q=80', productId: '4' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L'],
+        variants: [
+            { id: 'v4s', size: 'S', stock: 5, productId: '4' },
+            { id: 'v4m', size: 'M', stock: 5, productId: '4' },
+            { id: 'v4l', size: 'L', stock: 5, productId: '4' }
+        ],
         isSale: true,
-        stock: 15,
         slug: 'polera-shooters-pink-white',
         isPublished: true
     },
@@ -54,8 +68,10 @@ const MOCK_PRODUCTS: Product[] = [
         price: 34990,
         images: [{ id: 'img5', url: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80', productId: '5' }],
         category: { id: 'c2', name: 'Polerones', slug: 'polerones' },
-        sizes: ['M', 'L'],
-        stock: 10,
+        variants: [
+            { id: 'v5m', size: 'M', stock: 5, productId: '5' },
+            { id: 'v5l', size: 'L', stock: 5, productId: '5' }
+        ],
         slug: 'poleron-shooters-ultra-pink',
         isPublished: true
     },
@@ -65,8 +81,11 @@ const MOCK_PRODUCTS: Product[] = [
         price: 34990,
         images: [{ id: 'img6', url: 'https://images.unsplash.com/photo-1618354691438-25bc04584c23?auto=format&fit=crop&w=800&q=80', productId: '6' }],
         category: { id: 'c2', name: 'Polerones', slug: 'polerones' },
-        sizes: ['M', 'L', 'XL'],
-        stock: 45,
+        variants: [
+            { id: 'v6m', size: 'M', stock: 15, productId: '6' },
+            { id: 'v6l', size: 'L', stock: 15, productId: '6' },
+            { id: 'v6xl', size: 'XL', stock: 15, productId: '6' }
+        ],
         slug: 'poleron-shooters-ultra-melange',
         isPublished: true
     },
@@ -76,8 +95,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 25990,
         images: [{ id: 'img7', url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80', productId: '7' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L', 'XL'],
-        stock: 100,
+        variants: [
+            { id: 'v7s', size: 'S', stock: 25, productId: '7' },
+            { id: 'v7m', size: 'M', stock: 25, productId: '7' },
+            { id: 'v7l', size: 'L', stock: 25, productId: '7' },
+            { id: 'v7xl', size: 'XL', stock: 25, productId: '7' }
+        ],
         slug: 'polera-jp-signature-white',
         isPublished: true
     },
@@ -87,8 +110,12 @@ const MOCK_PRODUCTS: Product[] = [
         price: 28990,
         images: [{ id: 'img8', url: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=800&q=80', productId: '8' }],
         category: { id: 'c1', name: 'Poleras', slug: 'poleras' },
-        sizes: ['S', 'M', 'L', 'XL'],
-        stock: 60,
+        variants: [
+            { id: 'v8s', size: 'S', stock: 15, productId: '8' },
+            { id: 'v8m', size: 'M', stock: 15, productId: '8' },
+            { id: 'v8l', size: 'L', stock: 15, productId: '8' },
+            { id: 'v8xl', size: 'XL', stock: 15, productId: '8' }
+        ],
         slug: 'polera-graphic-oversize',
         isPublished: true
     }

@@ -14,6 +14,7 @@ interface UserContextType {
     addAddress: (address: Omit<Address, 'id'>) => Promise<boolean>;
     updateAddress: (id: string, address: Partial<Address>) => Promise<boolean>;
     deleteAddress: (id: string) => Promise<boolean>;
+    refreshUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -264,7 +265,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateProfile,
             addAddress,
             updateAddress,
-            deleteAddress
+            deleteAddress,
+            refreshUser: checkAuth
         }}>
             {!isLoading && children}
         </UserContext.Provider>

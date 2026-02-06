@@ -20,16 +20,23 @@ export interface Product {
     images: ProductImage[];
     category: Category;
     categoryId?: string; // Optional for now to avoid breaking other components
-    sizes: string[];
     isNew?: boolean;
     isSale?: boolean;
     description?: string;
-    stock: number;
+    variants: ProductVariant[];
     slug: string;
     isPublished: boolean;
 }
 
+export interface ProductVariant {
+    id: string;
+    size: string;
+    stock: number;
+    productId: string;
+}
+
 export interface CartItem extends Product {
+    cartItemId?: string; // ID from backend
     selectedSize: string;
     quantity: number;
 }
@@ -42,6 +49,7 @@ export interface Address {
     comuna: string;
     region: string;
     zipCode?: string; // Código postal
+    city?: string;
     country: string;
     phone: string;
     isDefault: boolean;
@@ -82,6 +90,27 @@ export interface Order {
     };
     createdAt: string; // DateTime del backend
     updatedAt: string; // Última actualización
+
+    // Snapshot fields
+    customerName?: string | null;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+
+    shippingName?: string | null;
+    shippingRut?: string | null;
+    shippingStreet?: string | null;
+    shippingComuna?: string | null;
+    shippingRegion?: string | null;
+    shippingZipCode?: string | null;
+    shippingPhone?: string | null;
+
+    billingName?: string | null;
+    billingRut?: string | null;
+    billingStreet?: string | null;
+    billingComuna?: string | null;
+    billingRegion?: string | null;
+    billingZipCode?: string | null;
+    billingPhone?: string | null;
 }
 
 export interface User {

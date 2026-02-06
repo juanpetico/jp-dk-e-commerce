@@ -2,7 +2,12 @@ import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 
 // Type definition until Prisma generates types
-type Size = "S" | "M" | "L" | "XL" | "XXL";
+type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
+
+interface ProductVariantInput {
+    size: Size;
+    stock: number;
+}
 
 // Helper function to generate slug from name
 const generateSlug = (name: string): string => {
@@ -21,9 +26,8 @@ interface CreateProductData {
     price: number;
     originalPrice?: number;
     discountPercent?: number;
-    stock: number;
     categoryId: string;
-    sizes: Size[];
+    variants: ProductVariantInput[];
     isNew?: boolean;
     isSale?: boolean;
     images?: string[];
@@ -62,7 +66,7 @@ export const productService = {
             }
         }
 
-        // Create product with images
+        // Create product with images and variants
         const product = await prisma.product.create({
             data: {
                 name: data.name,
@@ -70,9 +74,7 @@ export const productService = {
                 price: data.price,
                 originalPrice: data.originalPrice ?? null,
                 discountPercent: data.discountPercent ?? null,
-                stock: data.stock,
                 categoryId: data.categoryId,
-                sizes: data.sizes,
                 isNew: data.isNew ?? true,
                 isSale: data.isSale ?? false,
                 isPublished: data.isPublished ?? false,
@@ -84,10 +86,17 @@ export const productService = {
                         },
                     }
                     : {}),
+                variants: {
+                    create: data.variants.map((v) => ({
+                        size: v.size,
+                        stock: v.stock,
+                    })),
+                },
             },
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -113,8 +122,11 @@ export const productService = {
         }
 
         if (filters?.size) {
-            where.sizes = {
-                has: filters.size,
+            where.variants = {
+                some: {
+                    size: filters.size,
+                    stock: { gt: 0 }
+                },
             };
         }
 
@@ -142,6 +154,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
             orderBy: {
                 createdAt: "desc",
@@ -158,6 +171,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -174,6 +188,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -231,7 +246,6 @@ export const productService = {
                 ...(productData.price !== undefined ? { price: productData.price } : {}),
                 ...(productData.originalPrice !== undefined ? { originalPrice: productData.originalPrice } : {}),
                 ...(productData.discountPercent !== undefined ? { discountPercent: productData.discountPercent } : {}),
-                ...(productData.stock !== undefined ? { stock: productData.stock } : {}),
                 ...(productData.categoryId
                     ? {
                         category: {
@@ -239,7 +253,6 @@ export const productService = {
                         },
                     }
                     : {}),
-                ...(productData.sizes !== undefined ? { sizes: productData.sizes } : {}),
                 ...(productData.isNew !== undefined ? { isNew: productData.isNew } : {}),
                 ...(productData.isSale !== undefined ? { isSale: productData.isSale } : {}),
                 ...(productData.isPublished !== undefined ? { isPublished: productData.isPublished } : {}),
@@ -252,10 +265,22 @@ export const productService = {
                         },
                     }
                     : {}),
+                ...(productData.variants !== undefined
+                    ? {
+                        variants: {
+                            deleteMany: {},
+                            create: productData.variants.map((v) => ({
+                                size: v.size,
+                                stock: v.stock,
+                            })),
+                        },
+                    }
+                    : {}),
             },
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -295,6 +320,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
             orderBy: {
                 createdAt: "desc",
