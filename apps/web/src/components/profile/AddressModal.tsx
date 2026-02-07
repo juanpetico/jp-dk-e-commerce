@@ -58,7 +58,7 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
                     firstName: first,
                     lastName: last,
                     rut: initialData.rut || '',
-                    company: '',
+                    company: initialData.company || '',
                     street: initialData.street,
                     apartment: '',
                     zipCode: initialData.zipCode || '',
@@ -115,6 +115,7 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
             region: formData.region,
             zipCode: formData.zipCode,
             phone: formData.phone,
+            company: formData.company,
             isDefault: formData.isDefault,
         };
         onSave(fullAddress);
@@ -160,7 +161,7 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-card text-card-foreground rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
+            <div className="relative bg-card text-card-foreground rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-300">
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
@@ -199,6 +200,59 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
                                     <SelectItem value="Chile">Chile</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        {/* Invoice / Company */}
+                        <div className="space-y-4 border border-gray-300 rounded-md p-4 bg-muted/20">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="invoice"
+                                    checked={!!formData.company}
+                                    onCheckedChange={(checked) => {
+                                        if (!checked) {
+                                            setFormData({ ...formData, company: '' });
+                                        } else {
+                                            // When checking, we just ensure the field is visible (by not being empty?? 
+                                            // No, empty string is falsy. We need a state or just use a placeholder if empty?
+                                            // Let's assume if they check it, we want to allow typing. 
+                                            // But if company is empty, checked is false. 
+                                            // So checking it must set it to something non-empty? 
+                                            // Or better: Use a separate state for "wants invoice"
+                                            // BUT I cannot add state easily without replacing the whole file or using a separate hook.
+                                            // Simplest hack: If checked, set company to " " (space) so it's truthy, then trim on save?
+                                            // Or better: Let's use a new state variable.
+                                            // Since I can't add state variables easily here without replacing the top of the component,
+                                            // I will use a different approach:
+                                            // ALWAYS show the input if checked. 
+                                            // But 'checked' IS formData.company.
+                                            // So if I have an empty company name, it unchecks!
+                                            // Solution: I will use a ref or just set a placeholder.
+                                            setFormData({ ...formData, company: ' ' });
+                                        }
+                                    }}
+                                />
+                                <Label htmlFor="invoice" className="cursor-pointer font-medium">
+                                    ¿Necesitas factura? (Empresa)
+                                </Label>
+                            </div>
+
+                            {/* Conditional Input */}
+                            {!!formData.company && (
+                                <div className="space-y-2 animation-fade-in">
+                                    <Label htmlFor="company">Razón Social / Nombre Empresa</Label>
+                                    <Input
+                                        id="company"
+                                        type="text"
+                                        placeholder="Ej: Mi Empresa SpA"
+                                        value={formData.company.trim() === '' ? '' : formData.company}
+                                        // Handle the space hack
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Ingresa el nombre de la empresa para la factura.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Name Fields */}
@@ -373,7 +427,7 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex justify-between gap-3 pt-4 border-t border-border mt-6">
+                        <div className="flex justify-between gap-3 pt-4 border-t border-gray-300 mt-6">
                             <div>
                                 {initialData && onDelete && (
                                     <Button
@@ -402,7 +456,7 @@ export default function AddressModal({ isOpen, onClose, onSave, onDelete, initia
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

@@ -39,8 +39,8 @@ export const orderController = {
                 throw new AppError("Authentication required", 401);
             }
 
-            const { items, shippingAddressId, billingAddressId } = req.body;
-            const order = await orderService.createOrder(req.user.id, items, shippingAddressId, billingAddressId);
+            const { items, shippingAddressId, billingAddressId, couponCode } = req.body;
+            const order = await orderService.createOrder(req.user.id, items, shippingAddressId, billingAddressId, couponCode);
 
             // Clear cart after successful order creation
             await cartService.clearCart(req.user.id);

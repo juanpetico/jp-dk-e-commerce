@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import { ProductImage } from '../../types';
 import { ChevronLeft, ChevronRight, Package, Image as ImageIcon } from 'lucide-react';

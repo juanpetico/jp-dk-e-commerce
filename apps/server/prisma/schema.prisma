@@ -1,4 +1,3 @@
-// Configuración básica
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,220 +7,260 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. Usuarios y Roles
+model Address {
+  id                                     String   @id
+  name                                   String
+  rut                                    String?
+  street                                 String
+  comuna                                 String
+  region                                 String
+  zipCode                                String?
+  country                                String   @default("Chile")
+  phone                                  String
+  isDefault                              Boolean  @default(false)
+  isActive                               Boolean  @default(true)
+  userId                                 String
+  createdAt                              DateTime @default(now())
+  updatedAt                              DateTime
+  company                                String?
+  User                                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order_Order_billingAddressIdToAddress  Order[]  @relation("Order_billingAddressIdToAddress")
+  Order_Order_shippingAddressIdToAddress Order[]  @relation("Order_shippingAddressIdToAddress")
+
+  @@index([userId])
+}
+
+model Cart {
+  id        String     @id
+  userId    String?    @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  User      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CartItem  CartItem[]
+}
+
+model CartItem {
+  id        String   @id
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  size      Size
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  Product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId, size])
+}
+
+model Category {
+  id      String    @id
+  name    String    @unique
+  slug    String    @unique
+  Product Product[]
+}
+
+model Coupon {
+  id             String       @id
+  code           String       @unique
+  description    String?
+  type           DiscountType
+  value          Int
+  minAmount      Int          @default(0)
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  maxUsesPerUser Int          @default(1)
+  startDate      DateTime     @default(now())
+  endDate        DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime
+  isPublic       Boolean      @default(true)
+  Order          Order[]
+  UserCoupon     UserCoupon[]
+}
+
+model Order {
+  id                                       String      @id
+  date                                     String
+  total                                    Int
+  subtotal                                 Int
+  shippingCost                             Int
+  taxes                                    Int
+  taxRate                                  Float
+  shippingMethod                           String?
+  status                                   OrderStatus @default(PENDING)
+  isPaid                                   Boolean     @default(false)
+  paidAt                                   DateTime?
+  confirmedAt                              DateTime?
+  userId                                   String
+  shippingAddressId                        String
+  billingAddressId                         String
+  customerName                             String?
+  customerEmail                            String?
+  customerPhone                            String?
+  shippingName                             String?
+  shippingRut                              String?
+  shippingStreet                           String?
+  shippingComuna                           String?
+  shippingRegion                           String?
+  shippingZipCode                          String?
+  shippingPhone                            String?
+  billingName                              String?
+  billingRut                               String?
+  billingStreet                            String?
+  billingComuna                            String?
+  billingRegion                            String?
+  billingZipCode                           String?
+  billingPhone                             String?
+  createdAt                                DateTime    @default(now())
+  updatedAt                                DateTime
+  billingCompany                           String?
+  couponId                                 String?
+  discountAmount                           Int         @default(0)
+  Address_Order_billingAddressIdToAddress  Address     @relation("Order_billingAddressIdToAddress", fields: [billingAddressId], references: [id])
+  Coupon                                   Coupon?     @relation(fields: [couponId], references: [id])
+  Address_Order_shippingAddressIdToAddress Address     @relation("Order_shippingAddressIdToAddress", fields: [shippingAddressId], references: [id])
+  User                                     User        @relation(fields: [userId], references: [id])
+  OrderItem                                OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String  @id
+  quantity  Int
+  price     Int
+  size      Size
+  orderId   String
+  productId String
+  Order     Order   @relation(fields: [orderId], references: [id])
+  Product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Product {
+  id              String           @id
+  name            String
+  description     String?
+  price           Int
+  originalPrice   Int?
+  discountPercent Int?
+  isNew           Boolean          @default(true)
+  isSale          Boolean          @default(false)
+  slug            String           @unique
+  isPublished     Boolean          @default(false)
+  categoryId      String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime
+  CartItem        CartItem[]
+  OrderItem       OrderItem[]
+  Category        Category         @relation(fields: [categoryId], references: [id])
+  ProductImage    ProductImage[]
+  ProductVariant  ProductVariant[]
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model ProductImage {
+  id        String  @id
+  url       String
+  productId String
+  Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVariant {
+  id        String  @id
+  size      Size
+  stock     Int     @default(0)
+  productId String
+  Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size])
+}
+
+model StoreConfig {
+  id String @id @default("default")
+
+  // Módulo de Recompensas (Fidelización)
+  welcomeCouponCode String @default("BIENVENIDA")
+  vipThreshold      Int    @default(100000)
+  vipCouponCode     String @default("VIP_GANG")
+  vipRewardMessage  String @default("¡Felicidades! Por tu compra sobre $100.000 has ganado un 15% de descuento.")
+
+  // Módulo de Logística (Chile)
+  freeShippingThreshold Int @default(50000)
+  baseShippingCost      Int @default(3500)
+
+  // Reglas de Negocio y Alertas
+  defaultTaxRate    Float @default(0.19) // IVA Chile
+  lowStockThreshold Int   @default(5)
+
+  // Branding e Identidad
+  storeName       String  @default("JP DK")
+  supportEmail    String  @default("soporte@jpdk.cl")
+  maintenanceMode Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id         String       @id
+  name       String?
+  email      String       @unique
+  password   String
+  phone      String?
+  role       Role         @default(CLIENT)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  Address    Address[]
+  Cart       Cart?
+  Order      Order[]
+  UserCoupon UserCoupon[]
+}
+
+model UserCoupon {
+  id         String    @id
+  userId     String
+  couponId   String
+  isUsed     Boolean   @default(false)
+  usedAt     DateTime?
+  assignedAt DateTime  @default(now())
+  Coupon     Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, couponId])
+  @@index([couponId])
+  @@index([userId])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 enum Role {
   CLIENT
   ADMIN
   SUPERADMIN
 }
 
-model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String    @unique
-  password  String
-  phone     String?
-  role      Role      @default(CLIENT)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  orders    Order[]
-  addresses Address[]
-  cart      Cart?
-}
-
-// 1.1. Direcciones del Usuario
-model Address {
-  id        String  @id @default(cuid())
-  name      String
-  rut       String?
-  street    String
-  comuna    String
-  region    String
-  zipCode   String? // Código postal
-  country   String  @default("Chile")
-  phone     String
-  isDefault Boolean @default(false)
-  isActive  Boolean @default(true) // Para soft delete y mantener historial en órdenes
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Relaciones inversa para Orders
-  shippingOrders Order[] @relation("ShippingAddress")
-  billingOrders  Order[] @relation("BillingAddress")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-}
-
-// 2. Productos y Categorías
 enum Size {
   S
   M
   L
   XL
   XXL
-  STD // Talla estándar para lentes y accesorios
-}
-
-model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique // Para URLs amigables (ej: /category/poleras)
-  products Product[]
-}
-
-model Product {
-  id              String  @id @default(cuid())
-  name            String
-  description     String?
-  price           Int // Usamos Int para evitar problemas de redondeo (ej: 25990)
-  originalPrice   Int? // Precio original (para ofertas)
-  discountPercent Int? // Porcentaje de descuento (ej: 20 para 20%)
-  isNew           Boolean @default(true)
-  isSale          Boolean @default(false)
-  slug            String  @unique // SEO: /product/polera-shooters-pink-black
-  isPublished     Boolean @default(false)
-
-  // Relaciones
-  categoryId String
-  category   Category         @relation(fields: [categoryId], references: [id])
-  images     ProductImage[]
-  variants   ProductVariant[]
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([categoryId])
-  @@index([slug])
-}
-
-model ProductVariant {
-  id    String @id @default(cuid())
-  size  Size
-  stock Int    @default(0)
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  // Asegura que no existan duplicados de la misma talla para un producto
-  @@unique([productId, size])
-}
-
-model ProductImage {
-  id        String  @id @default(cuid())
-  url       String
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-}
-
-// 3. Sistema de Órdenes (Ventas Reales)
-enum OrderStatus {
-  PENDING // Pendiente
-  CONFIRMED // Confirmado (equivalente a PAID)
-  SHIPPED // Enviado
-  DELIVERED // Entregado
-  CANCELLED // Cancelado
-}
-
-model Order {
-  id             String      @id @default(cuid())
-  date           String // Fecha formato string para frontend
-  total          Int
-  subtotal       Int // Subtotal antes de impuestos y envío
-  shippingCost   Int // Costo de envío
-  taxes          Int // Impuestos aplicados
-  taxRate        Float // Tasa de impuesto (ej: 0.19 para 19%)
-  shippingMethod String? // Descripción del método de envío
-  status         OrderStatus @default(PENDING)
-  isPaid         Boolean     @default(false)
-  paidAt         DateTime?
-  confirmedAt    DateTime? // Fecha de confirmación
-
-  // Relación con el cliente
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Direcciones (Relaciones Históricas - Mantener por compatibilidad o integridad referencial)
-  shippingAddressId String
-  shippingAddress   Address @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-
-  billingAddressId String
-  billingAddress   Address @relation("BillingAddress", fields: [billingAddressId], references: [id])
-
-  // Snapshot de Cliente
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-
-  // Snapshot de Dirección de Envío/Despacho
-  shippingName    String?
-  shippingRut     String?
-  shippingStreet  String?
-  shippingComuna  String?
-  shippingRegion  String?
-  shippingZipCode String?
-  shippingPhone   String?
-
-  // Snapshot de Dirección de Facturación
-  billingName    String?
-  billingRut     String?
-  billingStreet  String?
-  billingComuna  String?
-  billingRegion  String?
-  billingZipCode String?
-  billingPhone   String?
-
-  // Detalle de la compra
-  items OrderItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model OrderItem {
-  id       String @id @default(cuid())
-  quantity Int
-  price    Int // Guardamos el precio del momento de la compra
-  size     Size
-
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id])
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-
-  @@index([orderId])
-  @@index([productId])
-}
-
-// 4. Carrito de Compras
-model Cart {
-  id        String     @id @default(cuid())
-  userId    String?    @unique // Opcional para permitir carritos de invitados si se desea
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
-
-model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      @default(1)
-  size      Size
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Evita duplicados: si se agrega el mismo producto y talla, se actualiza la cantidad
-  @@unique([cartId, productId, size])
+  STD
 }

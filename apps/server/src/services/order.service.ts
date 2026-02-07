@@ -1,5 +1,7 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import { couponService } from "./coupon.service.js";
+import { shopConfigService } from "./shop-config.service.js";
 
 // Type definitions until Prisma generates types
 type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
@@ -12,7 +14,7 @@ interface OrderItemInput {
 }
 
 export const orderService = {
-    async createOrder(userId: string, items: OrderItemInput[], shippingAddressId?: string, billingAddressId?: string) {
+    async createOrder(userId: string, items: OrderItemInput[], shippingAddressId?: string, billingAddressId?: string, couponCode?: string) {
         if (!items || items.length === 0) {
             throw new AppError("Order must contain at least one item", 400);
         }
@@ -81,6 +83,51 @@ export const orderService = {
                 });
             }
 
+            // --- Coupon Logic ---
+            let discountAmount = 0;
+            let couponId: string | undefined = undefined;
+
+            if (couponCode) {
+                // Pasamos la transacción actual (tx) para asegurar concurrencia
+                const coupon = await couponService.validateCoupon(couponCode, userId, total, tx);
+
+                if (coupon.type === "PERCENTAGE") {
+                    // Redondeo CLP estándar
+                    discountAmount = Math.round(total * (coupon.value / 100));
+                } else if (coupon.type === "FIXED_AMOUNT") {
+                    discountAmount = Math.min(coupon.value, total);
+                }
+
+                couponId = coupon.id;
+
+                // Incremento atómico del uso del cupón dentro de la misma transacción
+                await tx.coupon.update({
+                    where: { id: coupon.id },
+                    data: { usedCount: { increment: 1 } }
+                });
+
+                // Marcar como usado en la billetera (si existe)
+                await tx.userCoupon.updateMany({
+                    where: {
+                        userId,
+                        couponId: coupon.id,
+                        isUsed: false
+                    },
+                    data: {
+                        isUsed: true,
+                        usedAt: new Date()
+                    }
+                });
+            }
+            // ---------------------
+
+            // Aplicar lógica de impuestos: Sin impuestos por solicitud del usuario
+            const netAmount = total - discountAmount;
+            const taxRate = 0; // Sin impuestos
+            const taxes = 0;
+            const shippingCost = 3990; // Monto fijo según CheckoutPage
+            const finalTotal = netAmount + shippingCost;
+
             // Fetch user details for snapshot
             const user = await tx.user.findUnique({
                 where: { id: userId },
@@ -116,11 +163,13 @@ export const orderService = {
                 data: {
                     userId,
                     date: new Date().toISOString(),
-                    total,
+                    total: finalTotal,
                     subtotal: total,
-                    shippingCost: 0,
-                    taxes: 0,
-                    taxRate: 0,
+                    discountAmount: discountAmount,
+                    couponId: couponId,
+                    shippingCost: shippingCost,
+                    taxes: taxes,
+                    taxRate: taxRate,
                     status: "PENDING",
                     isPaid: false,
                     shippingAddressId: shippingAddr.id,
@@ -147,7 +196,9 @@ export const orderService = {
                     billingComuna: billingAddr.comuna,
                     billingRegion: billingAddr.region,
                     billingZipCode: billingAddr.zipCode,
+
                     billingPhone: billingAddr.phone,
+                    billingCompany: billingAddr.company,
 
                     items: {
                         create: orderItemsData,
@@ -170,12 +221,31 @@ export const orderService = {
                             id: true,
                             email: true,
                             name: true,
+                            phone: true,
                         },
                     },
+                    coupon: true,
                 },
             });
 
-            return newOrder;
+            // 5. Verificar si califica para Cupón VIP (Basado en el total de esta compra)
+            const storeConfig = await shopConfigService.getConfig();
+            let earnedCoupon = null;
+
+            if (total >= storeConfig.vipThreshold) {
+                const vipResult = await couponService.assignCouponToUser(userId, storeConfig.vipCouponCode, tx);
+                if (vipResult) {
+                    earnedCoupon = {
+                        code: storeConfig.vipCouponCode,
+                        message: storeConfig.vipRewardMessage
+                    };
+                }
+            }
+
+            return {
+                ...newOrder,
+                earnedCoupon
+            };
         });
 
         return order;
@@ -201,6 +271,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
             },
@@ -232,6 +303,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
             },
@@ -337,6 +409,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
                 // Include relations just in case, though we rely on snapshots now
@@ -372,6 +445,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
                 shippingAddress: true,
@@ -407,6 +481,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
                 shippingAddress: true,
@@ -414,7 +489,24 @@ export const orderService = {
             },
         });
 
+        // TRIGGER: Cupones por gasto (VIP)
+        await this.checkAndAssignVIPCoupon(order);
+
         return order;
+    },
+
+    /**
+     * Helper para verificar y asignar cupones VIP
+     */
+    async checkAndAssignVIPCoupon(order: any) {
+        const VIP_THRESHOLD = 100000; // Configurable en el futuro
+        if (order.status === "CONFIRMED" && order.total >= VIP_THRESHOLD) {
+            try {
+                await couponService.assignCouponToUser(order.userId, "VIP_GANG");
+            } catch (error) {
+                console.error("Error asignando cupón VIP:", error);
+            }
+        }
     },
 
     async cancelOrder(orderId: string, userId?: string) {

@@ -47,7 +47,7 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, initialData 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-card text-card-foreground rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-border">
+            <div className="relative bg-card text-card-foreground rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-300">
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
@@ -104,7 +104,7 @@ export default function ProfileEditModal({ isOpen, onClose, onSave, initialData 
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-300">
                             <Button
                                 type="button"
                                 variant="ghost"

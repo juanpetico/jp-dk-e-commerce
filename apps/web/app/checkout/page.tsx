@@ -6,8 +6,10 @@ import { useUser } from '../../src/store/UserContext';
 import { Button } from '../../src/components/ui/Button';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createOrder } from '../../src/services/orderService';
-import { ArrowLeft, Edit2, ShieldCheck, CreditCard, Truck, Check } from 'lucide-react';
+import { createOrder, validateCoupon } from '../../src/services/orderService';
+import { fetchMyCoupons } from '../../src/services/couponService';
+import { Coupon } from '../../src/types';
+import { ArrowLeft, Edit2, ShieldCheck, CreditCard, Truck, Check, Ticket, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CheckoutPage() {
@@ -17,6 +19,12 @@ export default function CheckoutPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
+    const [earnedCoupon, setEarnedCoupon] = useState<{ code: string; message: string } | null>(null);
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    const [userCoupons, setUserCoupons] = useState<any[]>([]);
+    const [showWallet, setShowWallet] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
     const isBuyNow = searchParams.get('buyNow') === 'true';
@@ -26,6 +34,17 @@ export default function CheckoutPage() {
         if (!isAuthenticated && !user) {
             const redirectUrl = isBuyNow ? '/checkout?buyNow=true' : '/checkout';
             router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+        } else if (isAuthenticated) {
+            // Cargar cupones de la billetera si el usuario está autenticado
+            const loadWallet = async () => {
+                try {
+                    const data = await fetchMyCoupons();
+                    setUserCoupons(data);
+                } catch (error) {
+                    console.error("Error loading wallet coupons:", error);
+                }
+            };
+            loadWallet();
         }
     }, [isAuthenticated, user, router, isBuyNow]);
 
@@ -49,10 +68,44 @@ export default function CheckoutPage() {
         ? buyNowItem.price * buyNowItem.quantity
         : cartTotal;
 
-    const finalTotal = effectiveTotal + shippingCost;
+    // Coupon discount calculation
+    let couponDiscount = 0;
+    if (appliedCoupon) {
+        if (appliedCoupon.type === 'PERCENTAGE') {
+            // CLP Standard rounding
+            couponDiscount = Math.round(effectiveTotal * (appliedCoupon.value / 100));
+        } else {
+            couponDiscount = Math.min(appliedCoupon.value, effectiveTotal);
+        }
+    }
+
+    const netAmount = effectiveTotal - couponDiscount;
+    const taxes = 0;
+    const finalTotal = netAmount + taxes + shippingCost;
 
     const displayCart = effectiveItems;
     const displayTotal = effectiveTotal;
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+
+        setIsValidatingCoupon(true);
+        try {
+            const coupon = await validateCoupon(couponCode, effectiveTotal);
+            setAppliedCoupon(coupon);
+            toast.success(`Cupón "${coupon.code}" aplicado correctamente`);
+        } catch (error: any) {
+            setAppliedCoupon(null);
+            toast.error(error.message || "Cupón inválido");
+        } finally {
+            setIsValidatingCoupon(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode('');
+    };
 
     const handlePayment = async () => {
         if (effectiveItems.length === 0) {
@@ -75,12 +128,24 @@ export default function CheckoutPage() {
             }));
 
             // Create Order
-            const order = await createOrder(orderItems, shippingAddressId, billingAddressId);
+            const order = await createOrder(
+                orderItems,
+                shippingAddressId,
+                billingAddressId,
+                appliedCoupon?.code
+            );
 
             // Refresh user to get the new order in the list
             await refreshUser();
 
             setOrderId(order.id);
+            if (order.earnedCoupon) {
+                setEarnedCoupon(order.earnedCoupon);
+                toast.success(order.earnedCoupon.message, {
+                    duration: 6000,
+                    icon: '🎉'
+                });
+            }
             setIsSuccess(true);
             toast.success("Pedido creado exitosamente");
 
@@ -118,6 +183,18 @@ export default function CheckoutPage() {
                             <span className="text-muted-foreground font-medium">Total pagado</span>
                             <span className="font-bold font-mono">${finalTotal.toLocaleString('es-CL')}</span>
                         </div>
+                        {earnedCoupon && (
+                            <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg animate-bounce-subtle">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Ticket className="w-5 h-5 text-primary" />
+                                    <span className="font-bold text-primary">¡RECOMPENSA DESBLOQUEADA!</span>
+                                </div>
+                                <p className="text-xs font-medium text-foreground">{earnedCoupon.message}</p>
+                                <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                    CÓDIGO: <span className="text-primary">{earnedCoupon.code}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -306,9 +383,93 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Discount */}
-                    <div className="flex gap-3 mb-8 border-b border-border pb-8">
-                        <input type="text" placeholder="Código de descuento" className="flex-1 bg-background border border-border rounded-none border-t-0 border-r-0 border-l-0 border-b-2 px-0 py-2 text-sm focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground/70" />
-                        <Button variant="outline" className="font-bold border-2" disabled>Usar</Button>
+                    <div className="mb-8 border-b border-border pb-8">
+                        {!appliedCoupon ? (
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="Código de descuento"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                    className="flex-1 bg-background border border-border rounded-none border-t-0 border-r-0 border-l-0 border-b-2 px-0 py-2 text-sm focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground/70"
+                                />
+                                <Button
+                                    variant="outline"
+                                    className="font-bold border-2"
+                                    onClick={handleApplyCoupon}
+                                    disabled={isValidatingCoupon || !couponCode.trim()}
+                                >
+                                    {isValidatingCoupon ? '...' : 'Usar'}
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 p-3 rounded-md">
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck className="w-4 h-4 text-primary" />
+                                    <div>
+                                        <p className="text-sm font-bold text-primary">{appliedCoupon.code}</p>
+                                        <p className="text-[11px] font-medium text-primary/80">
+                                            {appliedCoupon.type === 'PERCENTAGE'
+                                                ? `${appliedCoupon.value}% OFF`
+                                                : `$${appliedCoupon.value.toLocaleString('es-CL')} OFF`
+                                            }
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground">{appliedCoupon.description || 'Descuento aplicado'}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleRemoveCoupon}
+                                    className="text-muted-foreground hover:text-destructive transition-colors text-xs font-bold underline"
+                                >
+                                    Quitar
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Wallet Selector */}
+                        {!appliedCoupon && userCoupons.length > 0 && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setShowWallet(!showWallet)}
+                                    className="flex items-center gap-2 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
+                                >
+                                    <Ticket className="w-4 h-4" />
+                                    {showWallet ? 'Ocultar mis cupones' : 'Ver mis cupones disponibles'}
+                                    {showWallet ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </button>
+
+                                {showWallet && (
+                                    <div className="mt-3 space-y-2 animate-in slide-in-from-top-1 duration-200">
+                                        {userCoupons.map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setCouponCode(item.coupon.code);
+                                                    setShowWallet(false);
+                                                    // Auto-apply: we can trigger it immediately if we modify handleApplyCoupon to accept a code
+                                                    // or just trust the user will click "Usar". 
+                                                    // Re-reading: "llenar automáticamente el campo".
+                                                    // But to be "Inteligente", let's make it apply.
+                                                }}
+                                                className="w-full text-left p-3 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-xs font-black tracking-tight">{item.coupon.code}</p>
+                                                        <p className="text-[10px] text-muted-foreground">
+                                                            {item.coupon.type === 'PERCENTAGE' ? `${item.coupon.value}%` : `$${item.coupon.value.toLocaleString('es-CL')}`} de descuento
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        SELECCIONAR
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Totals */}
@@ -321,6 +482,14 @@ export default function CheckoutPage() {
                             <span className="flex items-center gap-1">Envío</span>
                             <span className="font-medium text-foreground">${shippingCost.toLocaleString('es-CL')}</span>
                         </div>
+
+                        {appliedCoupon && (
+                            <div className="flex justify-between text-primary font-bold">
+                                <span className="flex items-center gap-1">Descuento ({appliedCoupon.code})</span>
+                                <span>-${couponDiscount.toLocaleString('es-CL')}</span>
+                            </div>
+                        )}
+
 
                         {/* Savings Display */}
                         {displayCart.reduce((acc, item) => acc + ((item.originalPrice || item.price) - item.price) * item.quantity, 0) > 0 && (

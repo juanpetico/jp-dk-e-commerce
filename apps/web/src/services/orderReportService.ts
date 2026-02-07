@@ -57,11 +57,23 @@ export const generateOrderPDF = async (order: Order) => {
 
     // Billing Info (Customer)
     const billing = order.billingAddress;
-    doc.text(`${billing.name}`, margin, yPos);
-    doc.text(`RUT: ${billing.rut || 'N/A'}`, margin, yPos + 5);
-    doc.text(`${billing.street}`, margin, yPos + 10);
-    doc.text(`${billing.comuna}, ${billing.region}`, margin, yPos + 15);
-    doc.text(`Tel: ${billing.phone}`, margin, yPos + 20);
+    let billingY = yPos;
+
+    doc.text(`${billing.name}`, margin, billingY);
+    billingY += 5;
+
+    if (order.billingCompany || billing.company) {
+        doc.text(`${order.billingCompany || billing.company}`, margin, billingY);
+        billingY += 5;
+    }
+
+    doc.text(`RUT: ${billing.rut || 'N/A'}`, margin, billingY);
+    billingY += 5;
+    doc.text(`${billing.street}`, margin, billingY);
+    billingY += 5;
+    doc.text(`${billing.comuna}, ${billing.region}`, margin, billingY);
+    billingY += 5;
+    doc.text(`Tel: ${billing.phone}`, margin, billingY);
 
     // Shipping Info
     const shipping = order.shippingAddress;

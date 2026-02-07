@@ -87,6 +87,7 @@ export default function OrderDetailsPage() {
     const billing = {
         name: order.billingName || order.billingAddress?.name || 'N/A',
         rut: order.billingRut || order.billingAddress?.rut || 'N/A',
+        company: order.billingCompany,
         street: order.billingStreet || order.billingAddress?.street,
         comuna: order.billingComuna || order.billingAddress?.comuna,
         region: order.billingRegion || order.billingAddress?.region,
@@ -166,6 +167,9 @@ export default function OrderDetailsPage() {
                                 <h3 className="font-bold text-sm mb-4 text-foreground">Dirección de facturación</h3>
                                 <div className="text-sm text-muted-foreground space-y-1">
                                     <p>{billing.name}</p>
+                                    {billing.company && (
+                                        <p className="text-sm">{billing.company}</p>
+                                    )}
                                     <p>{billing.rut}</p>
                                     <p>{billing.street}</p>
                                     <p>{billing.comuna}, {billing.region}</p>

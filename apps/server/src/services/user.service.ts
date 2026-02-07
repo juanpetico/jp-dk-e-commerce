@@ -28,32 +28,38 @@ const userInclude = {
 const mapUserToResponse = (user: any) => {
     const { password, ...userWithoutPassword } = user;
 
-    // Transform orders to match frontend expectation (flattening product into item)
+    // Calculate stats if orders are included
     if (userWithoutPassword.orders) {
+        // Filter orders that are considered "valid" for spending (CONFIRMED is usually PAID in this app)
+        const validOrders = userWithoutPassword.orders.filter(
+            (o: any) => o.status === "CONFIRMED" || o.status === "DELIVERED" || o.status === "SHIPPED" || o.isPaid
+        );
+
+        userWithoutPassword.totalSpent = validOrders.reduce((sum: number, o: any) => sum + o.total, 0);
+        userWithoutPassword.ordersCount = validOrders.length;
+
+        // Get last order date
+        if (validOrders.length > 0) {
+            const sortedByDate = [...validOrders].sort(
+                (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            userWithoutPassword.lastOrder = sortedByDate[0].date;
+        } else {
+            userWithoutPassword.lastOrder = "-";
+        }
+
+        // Default status to Active for now as there's no isDeactivated field in schema
+        userWithoutPassword.status = "Active";
+
+        // Transform orders to match frontend expectation (flattening product into item)
         userWithoutPassword.orders = userWithoutPassword.orders.map((order: any) => ({
             ...order,
             items: order.items.map((item: any) => ({
                 ...item,
                 ...item.product, // Flatten product details (name, images, etc.)
-                id: item.id, // Preserve OrderItem ID or Product ID? Usually OrderItem ID for lists, but CartItem might need Product ID.
-                // item.product.id is available if needed.
-                // Let's assume frontend treats this item as "CartItem" which extends "Product".
-                // Product has 'id' (the product id). CartItem usually has 'id' (the product id) or 'productId'.
-                // If we overwrite 'id' with OrderItem.id, we lose product.id.
-                // item.productId is on OrderItem.
-                // Let's keep item.id as OrderItem ID, and ensure product id is available?
-                // Frontend CartItem extends Product, so it has .id (product ID).
-                // If we allow "...item.product" to overwrite "...item", product.id overwrites item.id.
-                // This is probably what we want for "Product-like" behavior.
-                // But for "Order Entry" reference, we might need item.id.
-                // Let's check overlap.
-                // OrderItem: id, quantity, price, size.
-                // Product: id, name, price, etc.
-                // Conflict: id, price (OrderItem.price is historical, Product.price is current).
-                // We definitely want HISTORICAL price for the order.
+                id: item.id,
                 price: item.price, // Keep historical price
                 productId: item.productId, // Explicitly keep reference
-                // If we want product.images, we get them from ...item.product
             })),
         }));
     }
@@ -160,18 +166,19 @@ export const userService = {
 
     // Address Management
     async addAddress(userId: string, data: any) {
+        // Check if this is the first address, if so force default
+        const count = await prisma.address.count({ where: { userId, isActive: true } });
+
+        if (count === 0) {
+            data.isDefault = true;
+        }
+
         // If this new address is set to default, unset others first
         if (data.isDefault) {
             await prisma.address.updateMany({
-                where: { userId },
+                where: { userId, isActive: true },
                 data: { isDefault: false },
             });
-        } else {
-            // Optional: If it's the first address, force it to be default
-            const count = await prisma.address.count({ where: { userId } });
-            if (count === 0) {
-                data.isDefault = true;
-            }
         }
 
         const address = await prisma.address.create({
@@ -202,7 +209,8 @@ export const userService = {
             await prisma.address.updateMany({
                 where: {
                     userId,
-                    id: { not: addressId } // Don't touch current one yet (optimization, though update below handles it)
+                    id: { not: addressId },
+                    isActive: true
                 },
                 data: { isDefault: false },
             });

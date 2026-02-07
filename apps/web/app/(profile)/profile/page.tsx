@@ -81,7 +81,7 @@ export default function ProfilePage() {
                 <h1 className="font-display text-3xl font-bold mb-8 text-foreground">Perfil</h1>
 
                 {/* Personal Information */}
-                <div className="bg-card text-card-foreground rounded-lg border border-border p-6 mb-8 shadow-sm relative">
+                <div className="bg-card text-card-foreground rounded-lg border border-gray-300 p-6 mb-8 shadow-sm relative">
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
                         className="absolute top-6 right-6 text-muted-foreground hover:text-foreground transition-colors p-1.5"
@@ -120,7 +120,7 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {(!user.addresses || user.addresses.length === 0) ? (
-                            <div className="md:col-span-2 flex flex-col items-center justify-center py-12 bg-card text-card-foreground rounded-lg border border-border">
+                            <div className="md:col-span-2 flex flex-col items-center justify-center py-12 bg-card text-card-foreground rounded-lg border border-gray-300">
                                 <div className="bg-muted p-4 rounded-full mb-4">
                                     <span className="text-3xl">📍</span>
                                 </div>
@@ -137,7 +137,7 @@ export default function ProfilePage() {
                             </div>
                         ) : (
                             [...(user.addresses || [])].sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1)).map((addr, index) => (
-                                <div key={addr.id} className={`bg-card text-card-foreground rounded-lg border ${addr.isDefault ? 'border-[var(--color-amber-900)] ring-1 ring-[var(--color-amber-900)]' : 'border-border'} p-6 shadow-sm relative group`}>
+                                <div key={addr.id} className={`bg-card text-card-foreground rounded-lg border ${addr.isDefault ? 'border-[var(--color-amber-900)] ring-1 ring-[var(--color-amber-900)]' : 'border-gray-300'} p-6 shadow-sm relative group`}>
                                     {/* Action Buttons */}
                                     <div className="absolute top-6 right-6 flex items-center gap-1">
                                         <button
@@ -167,6 +167,7 @@ export default function ProfilePage() {
 
                                     <div className="text-sm text-foreground space-y-1 mb-4">
                                         <p className="font-bold">{addr.name}</p>
+                                        {addr.company && <p className="text-primary font-semibold">{addr.company}</p>}
                                         {addr.rut && <p>{addr.rut}</p>}
                                         <p>{addr.street}</p>
                                         <p>{addr.comuna}, {addr.region}</p>
@@ -175,14 +176,7 @@ export default function ProfilePage() {
                                     </div>
 
                                     {/* Button to make default (only if not default/first) */}
-                                    {(!addr.isDefault) && (
-                                        <button
-                                            onClick={() => handleSaveAddress({ ...addr, isDefault: true })}
-                                            className="w-full text-xs font-medium text-muted-foreground hover:text-foreground border border-input rounded py-2 hover:border-foreground/20 transition-colors"
-                                        >
-                                            Esta es mi dirección predeterminada
-                                        </button>
-                                    )}
+
                                 </div>
                             ))
                         )}

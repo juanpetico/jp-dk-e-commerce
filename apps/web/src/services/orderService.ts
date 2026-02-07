@@ -197,14 +197,43 @@ export const getOrderStatusColor = (status: OrderStatus): string => {
 };
 
 /**
+ * Validar un cupón
+ */
+export const validateCoupon = async (code: string, total: number): Promise<any> => {
+    try {
+        const res = await fetch(`${API_URL}/coupons/validate`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ code, total }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Cupón inválido');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        // No loguear errores de validación, ya que son manejados en la UI
+        throw error;
+    }
+};
+
+/**
  * Crear una nueva orden
  */
-export const createOrder = async (items: { productId: string; quantity: number; size: string }[], shippingAddressId?: string, billingAddressId?: string): Promise<Order> => {
+export const createOrder = async (
+    items: { productId: string; quantity: number; size: string }[],
+    shippingAddressId?: string,
+    billingAddressId?: string,
+    couponCode?: string
+): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ items, shippingAddressId, billingAddressId }),
+            body: JSON.stringify({ items, shippingAddressId, billingAddressId, couponCode }),
         });
 
         if (!res.ok) {

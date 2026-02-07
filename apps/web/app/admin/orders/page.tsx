@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const OrderTableSkeleton = () => (
-    <div className="bg-card rounded shadow-sm border border-border overflow-hidden relative">
+    <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden relative">
         <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] z-10 flex items-center justify-center">
             <div className="bg-background p-4 rounded-full shadow-xl border border-border">
                 <Loader2 className="w-6 h-6 animate-spin text-foreground" />
@@ -274,7 +274,7 @@ export default function OrdersPage() {
                             </div>
                         </div>
                     )}
-                    <div className="bg-card rounded shadow-sm border border-border overflow-hidden">
+                    <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">

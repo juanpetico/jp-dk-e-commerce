@@ -59,6 +59,15 @@ export default function ProfileLayout({
                                     Perfil
                                 </Link>
                                 <Link
+                                    href="/coupons"
+                                    className={`text-sm font-medium transition-colors ${isActive('/coupons')
+                                        ? 'text-foreground font-bold'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                >
+                                    Cupones
+                                </Link>
+                                <Link
                                     href="/settings"
                                     className={`text-sm font-medium transition-colors ${isActive('/settings')
                                         ? 'text-foreground font-bold'

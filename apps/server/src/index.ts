@@ -9,6 +9,8 @@ import categoryRoutes from "./routes/category.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
+import couponRoutes from "./routes/coupon.routes.js";
+import shopConfigRoutes from "./routes/shop-config.routes.js";
 
 dotenv.config();
 
@@ -17,7 +19,7 @@ const createServer = (): Express => {
     // Middleware
     app.use(
         cors({
-            origin: ["http://localhost:3000", "http://localhost:3001"],
+            origin: ["http://localhost:3000", "http://localhost:3001", "https://wide-cycles-nail.loca.lt"],
             credentials: true,
         })
     );
@@ -41,6 +43,8 @@ const createServer = (): Express => {
     app.use("/api", productRoutes);
     app.use("/api", orderRoutes);
     app.use("/api/cart", cartRoutes);
+    app.use("/api/coupons", couponRoutes);
+    app.use("/api/shop-config", shopConfigRoutes);
 
     // 404 handler
     app.use((req, res) => {

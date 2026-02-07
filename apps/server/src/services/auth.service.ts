@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { userService } from "./user.service.js";
+import { couponService } from "./coupon.service.js";
+import { shopConfigService } from "./shop-config.service.js";
 import { AppError } from "../middleware/error-handler.js";
 
 export const authService = {
@@ -13,6 +15,15 @@ export const authService = {
 
         // Create user
         const user = await userService.createUser(data);
+
+        // TRIGGER: Asignar cupón de bienvenida (Billetera de Descuentos)
+        try {
+            const storeConfig = await shopConfigService.getConfig();
+            await couponService.assignCouponToUser(user.id, storeConfig.welcomeCouponCode);
+        } catch (error) {
+            console.error("Error asignando cupón de bienvenida:", error);
+            // No bloqueamos el registro si falla la asignación del cupón
+        }
 
         // Generate token
         const token = this.generateToken({

@@ -5,6 +5,23 @@ export interface Category {
     description?: string;
 }
 
+export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export interface Coupon {
+    id: string;
+    code: string;
+    description?: string;
+    type: DiscountType;
+    value: number;
+    minAmount: number;
+    maxUses?: number | null;
+    usedCount: number;
+    maxUsesPerUser: number;
+    startDate: string | Date;
+    endDate?: string | Date | null;
+    isActive: boolean;
+}
+
 export interface ProductImage {
     id: string;
     url: string;
@@ -52,6 +69,7 @@ export interface Address {
     city?: string;
     country: string;
     phone: string;
+    company?: string;
     isDefault: boolean;
 }
 
@@ -87,9 +105,11 @@ export interface Order {
         id: string;
         name: string | null;
         email: string;
+        phone?: string | null;
     };
     createdAt: string; // DateTime del backend
     updatedAt: string; // Última actualización
+    earnedCoupon?: { code: string; message: string } | null;
 
     // Snapshot fields
     customerName?: string | null;
@@ -111,6 +131,12 @@ export interface Order {
     billingRegion?: string | null;
     billingZipCode?: string | null;
     billingPhone?: string | null;
+    billingCompany?: string | null;
+
+    // Coupon fields
+    couponId?: string | null;
+    coupon?: Coupon | null;
+    discountAmount: number;
 }
 
 export interface User {
@@ -121,6 +147,10 @@ export interface User {
     role: string;
     addresses: Address[];
     orders: Order[];
+    totalSpent?: number;
+    ordersCount?: number;
+    lastOrder?: string;
+    status?: string;
 }
 
 export interface CartState {

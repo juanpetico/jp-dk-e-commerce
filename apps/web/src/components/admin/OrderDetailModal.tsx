@@ -42,7 +42,9 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
         comuna: order.billingComuna || order.billingAddress?.comuna,
         region: order.billingRegion || order.billingAddress?.region,
         zipCode: order.billingZipCode || order.billingAddress?.zipCode,
+
         phone: order.billingPhone || order.billingAddress?.phone,
+        company: order.billingCompany,
     };
 
     const customer = {
@@ -162,7 +164,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                     Contacto
                                 </h3>
                                 <div>
-                                    <p className="font-bold text-foreground text-lg leading-tight">{shipping.phone}</p>
+                                    <p className="font-bold text-foreground text-lg leading-tight">{customer.phone}</p>
                                     <p className="text-muted-foreground text-[10px] uppercase font-black tracking-widest mt-1">Móvil Verificado</p>
                                 </div>
                             </div>
@@ -203,6 +205,9 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                             </div>
                             <div className="space-y-1 text-sm text-muted-foreground">
                                 <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{billing.name}</p>
+                                {billing.company && (
+                                    <p className="font-bold text-primary text-sm mb-1">{billing.company}</p>
+                                )}
                                 <p>{billing.street}</p>
                                 <p>{billing.comuna}, {billing.region}</p>
                                 <p>{'Chile'}</p>
@@ -246,6 +251,12 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                                 <span>Subtotal</span>
                                 <span className="font-mono text-foreground text-sm">{formatPrice(order.subtotal)}</span>
                             </div>
+                            {order.coupon && (
+                                <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter text-primary px-1">
+                                    <span>Cupón: {order.coupon.code}</span>
+                                    <span className="font-mono text-sm">-{formatPrice(order.discountAmount)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter text-muted-foreground px-1">
                                 <span>Envío</span>
                                 <span className="font-mono text-foreground text-sm">{formatPrice(order.shippingCost)}</span>
