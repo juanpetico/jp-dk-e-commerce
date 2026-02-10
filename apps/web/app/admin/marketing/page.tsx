@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '../../../src/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye } from 'lucide-react';
-import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '../../../src/services/couponService';
-import { fetchAllOrders } from '../../../src/services/orderService';
-import { Coupon, Order } from '../../../src/types';
+import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
+import { fetchAllOrders } from '@/services/orderService';
+import { Coupon, Order } from '@/types';
 import { toast } from 'sonner';
-import CouponModal from '../../../src/components/admin/CouponModal';
-import { confirm } from '../../../src/utils/confirm';
-import { TriggersConfigCard } from '../../../src/components/admin/TriggersConfigCard';
+import CouponModal from '@/components/admin/CouponModal';
+import TriggersConfigCard from '@/components/admin/TriggersConfigCard';
+import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
+import SonnerConfirm from '@/components/ui/SonnerConfirm'; // Import SonnerConfirm
 
 export default function MarketingPage() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -17,16 +18,27 @@ export default function MarketingPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+    const [config, setConfig] = useState<StoreConfig | null>(null);
+
+    // Confirmation Dialog State
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        title: '',
+        description: '',
+        onConfirm: () => { }
+    });
 
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [couponsData, ordersData] = await Promise.all([
+            const [couponsData, ordersData, configData] = await Promise.all([
                 fetchAllCoupons(),
-                fetchAllOrders()
+                fetchAllOrders(),
+                shopConfigService.getConfig()
             ]);
             setCoupons(couponsData);
             setOrders(ordersData);
+            setConfig(configData);
         } catch (error) {
             console.error('Error loading marketing data:', error);
             toast.error('Error al cargar datos de marketing');
@@ -47,7 +59,6 @@ export default function MarketingPage() {
         const couponOrders = orders.filter(o => o.couponId === couponId);
         const revenue = couponOrders.reduce((sum, o) => sum + o.total, 0);
         const totalDiscount = couponOrders.reduce((sum, o) => sum + o.discountAmount, 0);
-        // ROI = Revenue generated / Cost of discount
         const roi = totalDiscount > 0 ? (revenue / totalDiscount).toFixed(1) : '0';
 
         return {
@@ -58,13 +69,41 @@ export default function MarketingPage() {
         };
     };
 
-    const handleSaveCoupon = async (couponData: Partial<Coupon>) => {
+    const handleSaveCoupon = async (couponData: Partial<Coupon> & { vipThreshold?: number; vipRewardMessage?: string }) => {
         try {
+            // Extract VIP specific fields to avoid sending them to the Coupon API
+            const { vipThreshold, vipRewardMessage, ...cleanCouponData } = couponData;
+
             if (editingCoupon) {
-                await updateCoupon(editingCoupon.id, couponData);
+                await updateCoupon(editingCoupon.id, cleanCouponData);
+
+                // Sync with Shop Config if it's a Fidelity Coupon
+                if (config) {
+                    const isWelcome = config.welcomeCouponCode && editingCoupon.code.toUpperCase() === config.welcomeCouponCode.toUpperCase();
+                    const isVIP = config.vipCouponCode && editingCoupon.code.toUpperCase() === config.vipCouponCode.toUpperCase();
+
+                    if (isWelcome) {
+                        await shopConfigService.updateConfig({
+                            welcomeCouponCode: cleanCouponData.code?.toUpperCase(),
+                            welcomeCouponType: cleanCouponData.type,
+                            welcomeCouponValue: cleanCouponData.value
+                        });
+                        toast.info('Configuración de bienvenida actualizada');
+                    } else if (isVIP) {
+                        await shopConfigService.updateConfig({
+                            vipCouponCode: cleanCouponData.code?.toUpperCase(),
+                            vipCouponType: cleanCouponData.type,
+                            vipCouponValue: cleanCouponData.value,
+                            vipThreshold: vipThreshold,
+                            vipRewardMessage: vipRewardMessage
+                        });
+                        toast.info('Configuración VIP actualizada');
+                    }
+                }
+
                 toast.success('Cupón actualizado');
             } else {
-                await createCoupon(couponData);
+                await createCoupon(cleanCouponData);
                 toast.success('Cupón creado exitosamente');
             }
             loadData();
@@ -74,21 +113,25 @@ export default function MarketingPage() {
         }
     };
 
-    const handleDeleteCoupon = async (id: string, code: string) => {
-        const isConfirmed = await confirm(
-            '¿Eliminar cupón?',
-            `¿Estás seguro de que deseas eliminar el cupón "${code}"? Esta acción no se puede deshacer.`
-        );
-
-        if (isConfirmed) {
-            try {
-                await deleteCoupon(id);
-                toast.success('Cupón eliminado');
-                loadData();
-            } catch (error) {
-                toast.error('No se pudo eliminar el cupón');
-            }
+    const confirmDelete = async (id: string) => {
+        try {
+            await deleteCoupon(id);
+            toast.success('Cupón eliminado');
+            loadData();
+        } catch (error) {
+            toast.error('No se pudo eliminar el cupón');
+        } finally {
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         }
+    };
+
+    const handleDeleteCoupon = (id: string, code: string) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: '¿Eliminar cupón?',
+            description: `¿Estás seguro de que deseas eliminar el cupón "${code}"? Esta acción no se puede deshacer.`,
+            onConfirm: () => confirmDelete(id)
+        });
     };
 
     if (loading && coupons.length === 0) {
@@ -101,7 +144,7 @@ export default function MarketingPage() {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in text-foreground pb-20">
+        <div className=" animate-fade-in text-foreground pb-20">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Marketing</h1>
@@ -131,13 +174,12 @@ export default function MarketingPage() {
                         <div
                             key={coupon.id}
                             onClick={(e) => {
-                                // Prevent modal open if user is selecting text
                                 if (window.getSelection()?.toString().length === 0) {
                                     setEditingCoupon(coupon);
                                     setIsModalOpen(true);
                                 }
                             }}
-                            className={`bg-card group hover:shadow-md transition-all cursor-pointer rounded-xl overflow-hidden relative border ${status === 'ACTIVO' ? 'border-gray-300 shadow-sm' : 'border-gray-300 opacity-80'}`}
+                            className={`bg-card group hover:shadow-md transition-all cursor-pointer rounded-xl overflow-hidden relative border border-border ${status === 'ACTIVO' ? 'shadow-sm' : 'opacity-80'}`}
                         >
                             <div className="p-6 bg-card">
                                 <div className="flex justify-between items-start mb-4">
@@ -162,7 +204,6 @@ export default function MarketingPage() {
                                     </p>
                                 </div>
 
-                                {/* Marketing ROI Metrics */}
                                 <div className="grid grid-cols-2 gap-3 mb-6">
                                     <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                                         <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -247,6 +288,27 @@ export default function MarketingPage() {
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveCoupon}
                 initialData={editingCoupon}
+                automationType={
+                    editingCoupon && config
+                        ? (config.welcomeCouponCode && editingCoupon.code.toUpperCase() === config.welcomeCouponCode.toUpperCase())
+                            ? 'WELCOME'
+                            : (config.vipCouponCode && editingCoupon.code.toUpperCase() === config.vipCouponCode.toUpperCase())
+                                ? 'VIP'
+                                : null
+                        : null
+                }
+                vipConfig={config ? {
+                    threshold: config.vipThreshold,
+                    message: config.vipRewardMessage
+                } : undefined}
+            />
+
+            <SonnerConfirm
+                isOpen={confirmDialog.isOpen}
+                title={confirmDialog.title}
+                description={confirmDialog.description}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
             />
         </div>
     );

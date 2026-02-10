@@ -17,7 +17,11 @@ import {
     ChevronDown,
     Check
 } from 'lucide-react';
-import { CartItem } from '../../types';
+import { CartItem, Coupon } from '../../types';
+import { fetchMyCoupons } from '../../services/couponService';
+import { validateCoupon } from '../../services/orderService';
+import { useUser } from '../../store/UserContext';
+import { toast } from 'sonner';
 import {
     Command,
     CommandInput,
@@ -37,11 +41,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AVAILABLE_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'STD'];
 
 const CartDrawer: React.FC = () => {
-    const { isOpen, toggleCart, cart, removeFromCart, updateQuantity, addToCart, cartTotal } = useCart();
+    const { isOpen, toggleCart, cart, removeFromCart, updateQuantity, addToCart, cartTotal, appliedCoupon, setAppliedCoupon } = useCart();
+    const { isAuthenticated } = useUser();
 
     // State for Discount
     const [showDiscountInput, setShowDiscountInput] = useState(false);
     const [discountCode, setDiscountCode] = useState('');
+    const [isValidating, setIsValidating] = useState(false);
+    const [userCoupons, setUserCoupons] = useState<any[]>([]);
+    const [showWallet, setShowWallet] = useState(false);
 
     const FREE_SHIPPING_THRESHOLD = 50000;
     const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
@@ -54,9 +62,21 @@ const CartDrawer: React.FC = () => {
     React.useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            if (isAuthenticated) {
+                const loadCoupons = async () => {
+                    try {
+                        const coupons = await fetchMyCoupons();
+                        setUserCoupons(coupons);
+                    } catch (error) {
+                        console.error("Failed to load coupons", error);
+                    }
+                };
+                loadCoupons();
+            }
         } else {
             document.body.style.overflow = 'unset';
             setShowDiscountInput(false);
+            setShowWallet(false);
         }
 
         return () => {
@@ -70,6 +90,33 @@ const CartDrawer: React.FC = () => {
             addToCart(item, newSize);
         }
     };
+
+    const handleApplyCoupon = async () => {
+        if (!discountCode.trim()) return;
+
+        setIsValidating(true);
+        try {
+            const coupon = await validateCoupon(discountCode, cartTotal);
+            setAppliedCoupon(coupon);
+            toast.success(`Cupón "${coupon.code}" aplicado`);
+            setShowDiscountInput(false);
+            setDiscountCode('');
+        } catch (error: any) {
+            toast.error(error.message || "Cupón inválido");
+        } finally {
+            setIsValidating(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+    };
+
+    const couponDiscount = appliedCoupon
+        ? (appliedCoupon.type === 'PERCENTAGE'
+            ? Math.round(cartTotal * (appliedCoupon.value / 100))
+            : Math.min(appliedCoupon.value, cartTotal))
+        : 0;
 
     return (
         <AnimatePresence>
@@ -250,7 +297,23 @@ const CartDrawer: React.FC = () => {
                             <div className="border-t border-border bg-background border-gray-300">
                                 {/* Discount Code */}
                                 <div className="border-b border-gray-300">
-                                    {!showDiscountInput ? (
+                                    {appliedCoupon ? (
+                                        <div className="p-4 bg-primary/5 border-b border-gray-300 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Ticket className="w-4 h-4 text-primary" />
+                                                <div>
+                                                    <p className="text-xs font-bold text-primary uppercase">{appliedCoupon.code}</p>
+                                                    <p className="text-[10px] text-muted-foreground">Descuento aplicado</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleRemoveCoupon}
+                                                className="text-[10px] font-bold text-destructive hover:underline uppercase"
+                                            >
+                                                Quitar
+                                            </button>
+                                        </div>
+                                    ) : !showDiscountInput ? (
                                         <button
                                             onClick={() => setShowDiscountInput(true)}
                                             className="w-full flex items-center justify-center gap-2 py-4 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors text-sm font-medium"
@@ -263,19 +326,57 @@ const CartDrawer: React.FC = () => {
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    placeholder="Código de descuento"
-                                                    className="flex-1 border border-input rounded px-3 py-2 text-sm bg-background"
+                                                    placeholder="CÓDIGO"
+                                                    className="flex-1 border border-input rounded px-3 py-2 text-xs font-bold uppercase bg-background"
                                                     value={discountCode}
-                                                    onChange={(e) => setDiscountCode(e.target.value)}
+                                                    onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
                                                     autoFocus
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
                                                 />
-                                                <Button size="sm" className="bg-black text-white dark:bg-white dark:text-black">
-                                                    Aplicar
+                                                <Button
+                                                    size="sm"
+                                                    onClick={handleApplyCoupon}
+                                                    disabled={isValidating || !discountCode.trim()}
+                                                    className="bg-black text-white dark:bg-white dark:text-black font-bold h-9"
+                                                >
+                                                    {isValidating ? '...' : 'OK'}
                                                 </Button>
                                             </div>
+
+                                            {/* Wallet Toggle */}
+                                            {isAuthenticated && userCoupons.length > 0 && (
+                                                <div className="mt-3">
+                                                    <button
+                                                        onClick={() => setShowWallet(!showWallet)}
+                                                        className="text-[10px] font-bold text-primary hover:underline uppercase flex items-center gap-1"
+                                                    >
+                                                        {showWallet ? 'Ocultar mis cupones' : 'Ver mis cupones'}
+                                                        <ChevronDown className={cn("w-3 h-3 transition-transform", showWallet && "rotate-180")} />
+                                                    </button>
+                                                    {showWallet && (
+                                                        <div className="mt-2 space-y-1 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                                                            {userCoupons.map((item) => (
+                                                                <button
+                                                                    key={item.id}
+                                                                    onClick={() => setDiscountCode(item.coupon.code)}
+                                                                    className="w-full text-left p-2 border border-border rounded hover:bg-muted transition-colors text-[10px]"
+                                                                >
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="font-bold">{item.coupon.code}</span>
+                                                                        <span className="text-muted-foreground">
+                                                                            {item.coupon.type === 'PERCENTAGE' ? `${item.coupon.value}%` : `$${item.coupon.value.toLocaleString('es-CL')}`}
+                                                                        </span>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <button
                                                 onClick={() => setShowDiscountInput(false)}
-                                                className="text-xs text-muted-foreground mt-2 hover:underline"
+                                                className="text-[10px] text-muted-foreground mt-3 hover:underline uppercase font-bold"
                                             >
                                                 Cancelar
                                             </button>
@@ -286,17 +387,15 @@ const CartDrawer: React.FC = () => {
                                 <div className="p-6 space-y-4 border-t-red-600">
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-muted-foreground">Descuento</span>
-                                        <span className="flex items-center gap-1 text-foreground font-medium">
-                                            <ChevronDown className="w-3 h-3" />
-                                            {/* Placeholder for discount amount */}
-                                            $0
+                                        <span className="text-green-600 dark:text-green-400 font-bold">
+                                            -{formatPrice(couponDiscount)}
                                         </span>
                                     </div>
 
                                     <div className="flex justify-between items-end">
-                                        <span className="text-lg font-bold">Subtotal</span>
+                                        <span className="text-lg font-bold">Total</span>
                                         <div className="text-right">
-                                            <span className="text-xl font-bold">{formatPrice(cartTotal)}</span>
+                                            <span className="text-xl font-bold">{formatPrice(cartTotal - couponDiscount)}</span>
                                         </div>
                                     </div>
 

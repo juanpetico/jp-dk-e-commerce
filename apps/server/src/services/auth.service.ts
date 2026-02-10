@@ -7,55 +7,54 @@ import { AppError } from "../middleware/error-handler.js";
 
 export const authService = {
     async register(data: { email: string; password: string; name?: string }) {
-        // Check if user already exists
         const existingUser = await userService.getUserByEmail(data.email);
         if (existingUser) {
             throw new AppError("User already exists", 400);
         }
 
-        // Create user
         const user = await userService.createUser(data);
 
-        // TRIGGER: Asignar cupón de bienvenida (Billetera de Descuentos)
+        let welcomeCoupon = null;
         try {
             const storeConfig = await shopConfigService.getConfig();
-            await couponService.assignCouponToUser(user.id, storeConfig.welcomeCouponCode);
+            const result = await couponService.assignCouponToUser(user.id, storeConfig.welcomeCouponCode);
+
+            if (result?.isNew) {
+                welcomeCoupon = {
+                    code: storeConfig.welcomeCouponCode,
+                    message: "¡Bienvenido! Tienes un nuevo cupón en tu perfil"
+                };
+            }
         } catch (error) {
             console.error("Error asignando cupón de bienvenida:", error);
-            // No bloqueamos el registro si falla la asignación del cupón
         }
 
-        // Generate token
         const token = this.generateToken({
             id: user.id,
             email: user.email,
             role: user.role,
         });
 
-        return { user, token };
+        return { user, token, welcomeCoupon };
     },
 
     async login(email: string, password: string) {
-        // Find user
         const user = await userService.getUserByEmailWithPassword(email);
         if (!user) {
             throw new AppError("Invalid credentials", 401);
         }
 
-        // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             throw new AppError("Invalid credentials", 401);
         }
 
-        // Generate token
         const token = this.generateToken({
             id: user.id,
             email: user.email,
             role: user.role,
         });
 
-        // Return user without password
         const { password: _, ...userWithoutPassword } = user;
 
         return { user: userWithoutPassword, token };

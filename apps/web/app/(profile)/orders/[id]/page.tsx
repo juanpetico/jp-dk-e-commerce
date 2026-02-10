@@ -243,6 +243,12 @@ export default function OrderDetailsPage() {
                                 <span className="text-muted-foreground">Envío</span>
                                 <span className="text-foreground">{formatPrice(order.shippingCost)}</span>
                             </div>
+                            {order.discountAmount > 0 && (
+                                <div className="flex justify-between text-sm text-green-600 dark:text-green-400 font-medium">
+                                    <span>Descuento</span>
+                                    <span>-{formatPrice(order.discountAmount)}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-between items-baseline mb-2">

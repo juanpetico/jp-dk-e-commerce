@@ -162,7 +162,7 @@ export const orderService = {
             const newOrder = await tx.order.create({
                 data: {
                     userId,
-                    date: new Date().toISOString(),
+                    date: new Date(),
                     total: finalTotal,
                     subtotal: total,
                     discountAmount: discountAmount,
@@ -233,8 +233,9 @@ export const orderService = {
             let earnedCoupon = null;
 
             if (total >= storeConfig.vipThreshold) {
-                const vipResult = await couponService.assignCouponToUser(userId, storeConfig.vipCouponCode, tx);
-                if (vipResult) {
+                const result = await couponService.assignCouponToUser(userId, storeConfig.vipCouponCode, tx);
+                // Solo informamos si es un cupón NUEVO (primera vez que entra al umbral)
+                if (result?.isNew) {
                     earnedCoupon = {
                         code: storeConfig.vipCouponCode,
                         message: storeConfig.vipRewardMessage
@@ -313,16 +314,7 @@ export const orderService = {
             throw new AppError("Order not found", 404);
         }
 
-        // If userId is provided, verify ownership
-        if (userId && order.userId !== userId && userId !== 'ADMIN') { // Added generic check, logic might vary
-            // Note: Controller logic uses explicit check. Here logic was `if (userId && order.userId !== userId)`.
-            // If caller is admin, they might pass undefined or a specific logic.
-            // Original code: if (userId && order.userId !== userId) { throw ... }
-            // We should keep original logic.
-        }
-
         if (userId && order.userId !== userId) {
-            // Exception: if the passed userId is intended to be checked against order owner.
             throw new AppError("Access denied", 403);
         }
 
@@ -335,15 +327,12 @@ export const orderService = {
         endDate?: Date;
         search?: string;
     }) {
-        // Construir el objeto where dinámicamente
         const where: any = {};
 
-        // Filtro por estado
         if (filters?.status) {
             where.status = filters.status;
         }
 
-        // Filtro por rango de fechas
         if (filters?.startDate || filters?.endDate) {
             where.createdAt = {};
             if (filters.startDate) {
@@ -354,7 +343,6 @@ export const orderService = {
             }
         }
 
-        // Búsqueda por ID de orden o nombre de cliente
         if (filters?.search) {
             where.OR = [
                 {
@@ -412,7 +400,6 @@ export const orderService = {
                         phone: true,
                     },
                 },
-                // Include relations just in case, though we rely on snapshots now
                 shippingAddress: true,
                 billingAddress: true,
             },
@@ -489,28 +476,10 @@ export const orderService = {
             },
         });
 
-        // TRIGGER: Cupones por gasto (VIP)
-        await this.checkAndAssignVIPCoupon(order);
-
         return order;
     },
 
-    /**
-     * Helper para verificar y asignar cupones VIP
-     */
-    async checkAndAssignVIPCoupon(order: any) {
-        const VIP_THRESHOLD = 100000; // Configurable en el futuro
-        if (order.status === "CONFIRMED" && order.total >= VIP_THRESHOLD) {
-            try {
-                await couponService.assignCouponToUser(order.userId, "VIP_GANG");
-            } catch (error) {
-                console.error("Error asignando cupón VIP:", error);
-            }
-        }
-    },
-
     async cancelOrder(orderId: string, userId?: string) {
-        // Get order first to verify and restore stock
         const order = await this.getOrderById(orderId, userId);
 
         if (order.status === "CANCELLED") {
@@ -521,9 +490,7 @@ export const orderService = {
             throw new AppError("Cannot cancel delivered order", 400);
         }
 
-        // Use transaction to restore stock and update order
         const updatedOrder = await prisma.$transaction(async (tx: any) => {
-            // Restore stock for each item
             for (const item of order.items) {
                 await tx.productVariant.update({
                     where: {
@@ -540,7 +507,6 @@ export const orderService = {
                 });
             }
 
-            // Update order status
             const cancelled = await tx.order.update({
                 where: { id: orderId },
                 data: { status: "CANCELLED" },

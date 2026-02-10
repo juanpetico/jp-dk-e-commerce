@@ -14,8 +14,12 @@ const getAuthHeaders = (): HeadersInit => {
 export interface StoreConfig {
     id: string;
     welcomeCouponCode: string;
+    welcomeCouponType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+    welcomeCouponValue: number;
     vipThreshold: number;
     vipCouponCode: string;
+    vipCouponType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+    vipCouponValue: number;
     vipRewardMessage: string;
     updatedAt: string;
 }

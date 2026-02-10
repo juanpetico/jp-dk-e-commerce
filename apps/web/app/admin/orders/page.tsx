@@ -278,9 +278,9 @@ export default function OrdersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">ID</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">Cliente</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Fecha</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest">Cliente</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest">ID</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-center">Productos</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Total</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Estado</TableHead>
@@ -291,29 +291,36 @@ export default function OrdersPage() {
                                 {paginatedOrders.map((order) => (
                                     <TableRow key={order.id} className="group hover:bg-muted/50 transition-colors">
                                         <TableCell className="pl-6">
-                                            <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                                #{order.id.slice(0, 8)}
-                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-foreground uppercase tracking-tight">
+                                                    {order.customerName || order.user?.name || 'Invitado'}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">
+                                                    {order.customerEmail || order.user?.email}
+                                                </span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-foreground">
-                                                    {formatDate(order.createdAt)}
+                                                    {new Date(order.date || order.createdAt).toLocaleDateString('es-CL', {
+                                                        day: '2-digit',
+                                                        month: '2-digit',
+                                                        year: 'numeric'
+                                                    })}
                                                 </span>
                                                 <span className="text-[9px] text-muted-foreground uppercase font-black">
-                                                    {new Date(order.createdAt).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' })}
+                                                    {new Date(order.date || order.createdAt).toLocaleTimeString('es-CL', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
                                                 </span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-foreground uppercase tracking-tight">
-                                                    {order.user?.name || 'Invitado'}
-                                                </span>
-                                                <span className="text-[10px] text-muted-foreground font-mono">
-                                                    {order.user?.email}
-                                                </span>
-                                            </div>
+                                            <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                                #{order.id.slice(0, 8)}
+                                            </span>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex items-center justify-center gap-1">

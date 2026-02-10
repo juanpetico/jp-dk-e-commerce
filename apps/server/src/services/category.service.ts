@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
-import slugify from "slugify";
+import _slugify from "slugify";
+const slugify = (_slugify as any).default || _slugify;
 
 // Helper function to generate slug from name
 const generateSlug = async (name: string, excludeId?: string): Promise<string> => {

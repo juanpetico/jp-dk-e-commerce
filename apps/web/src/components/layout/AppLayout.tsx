@@ -10,7 +10,7 @@ import { Toaster } from 'sonner';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isAdminRoute = pathname?.startsWith('/admin');
-    const isProfileRoute = ['/profile', '/orders', '/settings'].some(route => pathname?.startsWith(route));
+    const isProfileRoute = ['/profile', '/orders', '/settings', '/coupons'].some(route => pathname?.startsWith(route));
     const shouldShowNavbar = !isAdminRoute && !isProfileRoute;
 
     return (

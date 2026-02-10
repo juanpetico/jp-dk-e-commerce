@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../../src/store/UserContext';
 import { Button } from '../../../src/components/ui/Button';
-import { Grid3x3, Filter, List, MoreVertical, Eye } from 'lucide-react';
+import { Grid3x3, Filter, List, MoreVertical, Eye, XCircle, CheckCircle2, Clock, Truck, Package, CreditCard, AlertCircle } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -61,6 +61,19 @@ export default function OrdersPage() {
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);
+    };
+
+    const getStatusIcon = (status: string) => {
+        switch (status.toUpperCase()) {
+            case 'PENDING': return <Clock className="w-3.5 h-3.5" />;
+            case 'CONFIRMED': return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />;
+            case 'PROCESSING': return <Package className="w-3.5 h-3.5" />;
+            case 'PAID': return <CreditCard className="w-3.5 h-3.5 text-green-500" />;
+            case 'SHIPPED': return <Truck className="w-3.5 h-3.5" />;
+            case 'DELIVERED': return <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />;
+            case 'CANCELLED': return <XCircle className="w-3.5 h-3.5 text-destructive" />;
+            default: return <AlertCircle className="w-3.5 h-3.5" />;
+        }
     };
 
     const translateStatus = (status: string) => {
@@ -194,6 +207,21 @@ export default function OrdersPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Botón Borrar Filtros */}
+                    {isFilterActive && (
+                        <div className="relative group">
+                            <button
+                                onClick={resetFilters}
+                                className="bg-destructive/10 text-destructive hover:bg-destructive/20 p-2 rounded transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground border border-border text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap shadow-sm">
+                                Borrar filtros
+                            </div>
+                        </div>
+                    )}
 
                     {/* Botón Filtrar con Tooltip */}
                     <div className="relative group">
@@ -432,7 +460,7 @@ export default function OrdersPage() {
                                     >
                                         <div className="bg-card text-card-foreground border border-gray-300 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                                             <div className="mb-6 inline-flex items-center gap-2">
-                                                <span className="text-foreground">✓</span>
+                                                {getStatusIcon(order.status)}
                                                 <div>
                                                     <p className="text-xs font-bold text-foreground uppercase">{translateStatus(order.status)}</p>
                                                     <p className="text-xs text-muted-foreground">{order.date}</p>
@@ -461,14 +489,7 @@ export default function OrdersPage() {
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mb-4">Pedido #{order.id}</p>
 
-                                                <p className="text-lg font-bold mb-6 text-foreground">{formatPrice(order.total)}</p>
-
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full rounded border-border text-[var(--color-amber-900)] hover:text-[var(--color-amber-900)]/80 hover:border-[var(--color-amber-900)] hover:bg-transparent normal-case font-bold"
-                                                >
-                                                    Volver a comprar
-                                                </Button>
+                                                <p className="text-lg font-bold text-foreground">{formatPrice(order.total)}</p>
                                             </div>
                                         </div>
                                     </Link>
@@ -501,15 +522,18 @@ export default function OrdersPage() {
                                                             </div>
                                                         )}
                                                         <div>
-                                                            <span className="font-bold text-sm text-foreground block">#{order.id}</span>
-                                                            <span className="text-xs text-muted-foreground">Cantidad: {order.items.reduce((acc, item) => acc + item.quantity, 0)}</span>
+                                                            <span className="font-bold text-sm text-foreground block truncate max-w-[200px]">{firstItem?.product.name || `Pedido #${order.id.slice(0, 8)}`}</span>
+                                                            <span className="text-xs text-muted-foreground">ID: #{order.id.slice(0, 8)} | Cantidad: {order.items.reduce((acc, item) => acc + item.quantity, 0)}</span>
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className="text-sm text-foreground">
-                                                        {translateStatus(order.status)}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {getStatusIcon(order.status)}
+                                                        <span className="text-sm text-foreground">
+                                                            {translateStatus(order.status)}
+                                                        </span>
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground text-sm">
                                                     {order.date}

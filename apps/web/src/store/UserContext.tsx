@@ -7,7 +7,7 @@ import { User, Address } from '../types';
 interface UserContextType {
     user: User | null;
     login: (email: string, password: string) => Promise<{ success: boolean; role?: string }>;
-    register: (email: string, password: string, name: string, phone?: string) => Promise<boolean>;
+    register: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; welcomeCoupon?: any }>;
     logout: () => void;
     isAuthenticated: boolean;
     updateProfile: (data: Partial<User>) => Promise<boolean>;
@@ -90,7 +90,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const register = async (email: string, password: string, name: string, phone?: string): Promise<boolean> => {
+    const register = async (email: string, password: string, name: string, phone?: string): Promise<{ success: boolean; welcomeCoupon?: any }> => {
         try {
             const trimmedEmail = email.trim();
             console.log("Sending register data:", { email: trimmedEmail, password, name, phone });
@@ -105,7 +105,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Error al registrarse');
+                toast.error(data.message || 'Error al registrarse');
+                return { success: false };
             }
 
             if (data.success) {
@@ -113,13 +114,13 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
                 setUser(data.data.user);
                 toast.success('Registro exitoso');
-                return true;
+                return { success: true, welcomeCoupon: data.data.welcomeCoupon };
             }
-            return false;
+            return { success: false };
         } catch (error: any) {
             toast.error(error.message || 'Ocurrió un error inesperado');
             console.error('Register error:', error);
-            return false;
+            return { success: false };
         }
     };
 

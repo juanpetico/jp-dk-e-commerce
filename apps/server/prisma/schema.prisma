@@ -8,60 +8,60 @@ datasource db {
 }
 
 model Address {
-  id                                     String   @id
-  name                                   String
-  rut                                    String?
-  street                                 String
-  comuna                                 String
-  region                                 String
-  zipCode                                String?
-  country                                String   @default("Chile")
-  phone                                  String
-  isDefault                              Boolean  @default(false)
-  isActive                               Boolean  @default(true)
-  userId                                 String
-  createdAt                              DateTime @default(now())
-  updatedAt                              DateTime
-  company                                String?
-  User                                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Order_Order_billingAddressIdToAddress  Order[]  @relation("Order_billingAddressIdToAddress")
-  Order_Order_shippingAddressIdToAddress Order[]  @relation("Order_shippingAddressIdToAddress")
+  id             String   @id @default(cuid())
+  name           String
+  rut            String?
+  street         String
+  comuna         String
+  region         String
+  zipCode        String?
+  country        String   @default("Chile")
+  phone          String
+  isDefault      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  userId         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  company        String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingOrders  Order[]  @relation("BillingAddress")
+  shippingOrders Order[]  @relation("ShippingAddress")
 
   @@index([userId])
 }
 
 model Cart {
-  id        String     @id
+  id        String     @id @default(cuid())
   userId    String?    @unique
   createdAt DateTime   @default(now())
-  updatedAt DateTime
-  User      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  CartItem  CartItem[]
+  updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
 }
 
 model CartItem {
-  id        String   @id
+  id        String   @id @default(cuid())
   cartId    String
   productId String
   quantity  Int      @default(1)
   size      Size
   createdAt DateTime @default(now())
-  updatedAt DateTime
-  Cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  Product   Product  @relation(fields: [productId], references: [id])
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
 
   @@unique([cartId, productId, size])
 }
 
 model Category {
-  id      String    @id
-  name    String    @unique
-  slug    String    @unique
-  Product Product[]
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
 }
 
 model Coupon {
-  id             String       @id
+  id             String       @id @default(cuid())
   code           String       @unique
   description    String?
   type           DiscountType
@@ -74,75 +74,75 @@ model Coupon {
   endDate        DateTime?
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime     @updatedAt
   isPublic       Boolean      @default(true)
-  Order          Order[]
-  UserCoupon     UserCoupon[]
+  orders         Order[]
+  userCoupons    UserCoupon[]
 }
 
 model Order {
-  id                                       String      @id
-  date                                     String
-  total                                    Int
-  subtotal                                 Int
-  shippingCost                             Int
-  taxes                                    Int
-  taxRate                                  Float
-  shippingMethod                           String?
-  status                                   OrderStatus @default(PENDING)
-  isPaid                                   Boolean     @default(false)
-  paidAt                                   DateTime?
-  confirmedAt                              DateTime?
-  userId                                   String
-  shippingAddressId                        String
-  billingAddressId                         String
-  customerName                             String?
-  customerEmail                            String?
-  customerPhone                            String?
-  shippingName                             String?
-  shippingRut                              String?
-  shippingStreet                           String?
-  shippingComuna                           String?
-  shippingRegion                           String?
-  shippingZipCode                          String?
-  shippingPhone                            String?
-  billingName                              String?
-  billingRut                               String?
-  billingStreet                            String?
-  billingComuna                            String?
-  billingRegion                            String?
-  billingZipCode                           String?
-  billingPhone                             String?
-  createdAt                                DateTime    @default(now())
-  updatedAt                                DateTime
-  billingCompany                           String?
-  couponId                                 String?
-  discountAmount                           Int         @default(0)
-  Address_Order_billingAddressIdToAddress  Address     @relation("Order_billingAddressIdToAddress", fields: [billingAddressId], references: [id])
-  Coupon                                   Coupon?     @relation(fields: [couponId], references: [id])
-  Address_Order_shippingAddressIdToAddress Address     @relation("Order_shippingAddressIdToAddress", fields: [shippingAddressId], references: [id])
-  User                                     User        @relation(fields: [userId], references: [id])
-  OrderItem                                OrderItem[]
+  id                String      @id @default(cuid())
+  date              DateTime    @default(now())
+  total             Int
+  subtotal          Int
+  shippingCost      Int
+  taxes             Int
+  taxRate           Float
+  shippingMethod    String?
+  status            OrderStatus @default(PENDING)
+  isPaid            Boolean     @default(false)
+  paidAt            DateTime?
+  confirmedAt       DateTime?
+  userId            String
+  shippingAddressId String
+  billingAddressId  String
+  customerName      String?
+  customerEmail     String?
+  customerPhone     String?
+  shippingName      String?
+  shippingRut       String?
+  shippingStreet    String?
+  shippingComuna    String?
+  shippingRegion    String?
+  shippingZipCode   String?
+  shippingPhone     String?
+  billingName       String?
+  billingRut        String?
+  billingStreet     String?
+  billingComuna     String?
+  billingRegion     String?
+  billingZipCode    String?
+  billingPhone      String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  billingCompany    String?
+  couponId          String?
+  discountAmount    Int         @default(0)
+  billingAddress    Address     @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  coupon            Coupon?     @relation(fields: [couponId], references: [id])
+  shippingAddress   Address     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  user              User        @relation(fields: [userId], references: [id])
+  items             OrderItem[]
 
   @@index([userId])
 }
 
 model OrderItem {
-  id        String  @id
+  id        String  @id @default(cuid())
   quantity  Int
   price     Int
   size      Size
   orderId   String
   productId String
-  Order     Order   @relation(fields: [orderId], references: [id])
-  Product   Product @relation(fields: [productId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
 }
 
 model Product {
-  id              String           @id
+  id              String           @id @default(cuid())
   name            String
   description     String?
   price           Int
@@ -154,30 +154,30 @@ model Product {
   isPublished     Boolean          @default(false)
   categoryId      String
   createdAt       DateTime         @default(now())
-  updatedAt       DateTime
-  CartItem        CartItem[]
-  OrderItem       OrderItem[]
-  Category        Category         @relation(fields: [categoryId], references: [id])
-  ProductImage    ProductImage[]
-  ProductVariant  ProductVariant[]
+  updatedAt       DateTime         @updatedAt
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  category        Category         @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  variants        ProductVariant[]
 
   @@index([categoryId])
   @@index([slug])
 }
 
 model ProductImage {
-  id        String  @id
+  id        String  @id @default(cuid())
   url       String
   productId String
-  Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model ProductVariant {
-  id        String  @id
+  id        String  @id @default(cuid())
   size      Size
   stock     Int     @default(0)
   productId String
-  Product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, size])
 }
@@ -186,10 +186,14 @@ model StoreConfig {
   id String @id @default("default")
 
   // Módulo de Recompensas (Fidelización)
-  welcomeCouponCode String @default("BIENVENIDA")
-  vipThreshold      Int    @default(100000)
-  vipCouponCode     String @default("VIP_GANG")
-  vipRewardMessage  String @default("¡Felicidades! Por tu compra sobre $100.000 has ganado un 15% de descuento.")
+  welcomeCouponCode  String       @default("BIENVENIDA")
+  welcomeCouponType  DiscountType @default(PERCENTAGE)
+  welcomeCouponValue Int          @default(10)
+  vipThreshold       Int          @default(100000)
+  vipCouponCode      String       @default("VIP_GANG")
+  vipCouponType      DiscountType @default(PERCENTAGE)
+  vipCouponValue     Int          @default(15)
+  vipRewardMessage   String       @default("¡Felicidades! Por tu compra sobre $100.000 has ganado un 15% de descuento.")
 
   // Módulo de Logística (Chile)
   freeShippingThreshold Int @default(50000)
@@ -208,29 +212,29 @@ model StoreConfig {
 }
 
 model User {
-  id         String       @id
-  name       String?
-  email      String       @unique
-  password   String
-  phone      String?
-  role       Role         @default(CLIENT)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime
-  Address    Address[]
-  Cart       Cart?
-  Order      Order[]
-  UserCoupon UserCoupon[]
+  id          String       @id @default(cuid())
+  name        String?
+  email       String       @unique
+  password    String
+  phone       String?
+  role        Role         @default(CLIENT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  addresses   Address[]
+  cart        Cart?
+  orders      Order[]
+  userCoupons UserCoupon[]
 }
 
 model UserCoupon {
-  id         String    @id
+  id         String    @id @default(cuid())
   userId     String
   couponId   String
   isUsed     Boolean   @default(false)
   usedAt     DateTime?
   assignedAt DateTime  @default(now())
-  Coupon     Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
-  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon     Coupon    @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, couponId])
   @@index([couponId])

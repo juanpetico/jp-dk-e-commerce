@@ -17,7 +17,7 @@ export const createOrderValidation = [
         .isInt({ min: 1 })
         .withMessage("Quantity must be at least 1"),
     body("items.*.size")
-        .isIn(["S", "M", "L", "XL", "XXL"])
+        .isIn(["S", "M", "L", "XL", "XXL", "STD"])
         .withMessage("Invalid size"),
 ];
 

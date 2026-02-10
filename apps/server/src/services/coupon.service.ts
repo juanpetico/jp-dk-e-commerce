@@ -1,18 +1,14 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import { shopConfigService } from "./shop-config.service.js";
 
 export const couponService = {
-    /**
-     * Valida un cupón basándose en el código, el usuario y el monto de la compra.
-     * Soporta transacciones de Prisma opcionalmente para asegurar consistencia.
-     */
     async validateCoupon(code: string, userId: string, currentTotal: number, tx?: any) {
         const db = tx || prisma;
         const coupon = await db.coupon.findUnique({
             where: { code: code.toUpperCase() },
         });
 
-        // 1. Si el cupón existe y está activo
         if (!coupon) {
             throw new AppError("El cupón no existe", 404);
         }
@@ -21,7 +17,6 @@ export const couponService = {
             throw new AppError("El cupón no está activo", 400);
         }
 
-        // 2. Rango de fechas
         const now = new Date();
         if (now < coupon.startDate) {
             throw new AppError("El cupón aún no es válido", 400);
@@ -31,12 +26,10 @@ export const couponService = {
             throw new AppError("El cupón ha expirado", 400);
         }
 
-        // 3. Límite de usos totales (usedCount < maxUses)
         if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
             throw new AppError("El cupón ha alcanzado su límite de usos", 400);
         }
 
-        // 4. Límite por usuario (maxUsesPerUser)
         const userOrdersWithCoupon = await db.order.count({
             where: {
                 userId,
@@ -49,12 +42,10 @@ export const couponService = {
             throw new AppError("Ya has usado este cupón el máximo de veces permitido", 400);
         }
 
-        // 5. Monto mínimo (currentTotal >= minAmount)
         if (currentTotal < coupon.minAmount) {
             throw new AppError(`El monto mínimo de compra para este cupón es $${coupon.minAmount}`, 400);
         }
 
-        // 6. Validación de Privacidad (Billetera)
         if (!coupon.isPublic) {
             const userCoupon = await db.userCoupon.findUnique({
                 where: {
@@ -77,18 +68,12 @@ export const couponService = {
         return coupon;
     },
 
-    /**
-     * Obtener todos los cupones
-     */
     async getAllCoupons() {
         return await prisma.coupon.findMany({
             orderBy: { createdAt: "desc" },
         });
     },
 
-    /**
-     * Crear un nuevo cupón
-     */
     async createCoupon(data: any) {
         const startDate = data.startDate ? new Date(data.startDate) : new Date();
         startDate.setHours(0, 0, 0, 0);
@@ -108,9 +93,6 @@ export const couponService = {
         });
     },
 
-    /**
-     * Actualizar un cupón existente
-     */
     async updateCoupon(id: string, data: any) {
         const updateData: any = { ...data };
 
@@ -128,28 +110,30 @@ export const couponService = {
             updateData.endDate = null;
         }
 
-        return await prisma.coupon.update({
+        const oldCoupon = await prisma.coupon.findUnique({
+            where: { id }
+        });
+
+        const coupon = await prisma.coupon.update({
             where: { id },
             data: updateData,
         });
+
+        // Sync with shop config if this is an automated coupon
+        await shopConfigService.syncConfigFromCoupon(coupon, oldCoupon?.code);
+
+        return coupon;
     },
 
-    /**
-     * Eliminar un cupón
-     */
     async deleteCoupon(id: string) {
         return await prisma.coupon.delete({
             where: { id },
         });
     },
 
-    /**
-     * Asignar un cupón a la billetera de un usuario
-     */
     async assignCouponToUser(userId: string, couponCode: string, tx?: any) {
         const db = tx || prisma;
 
-        // 1. Buscar el cupón por código
         const coupon = await db.coupon.findUnique({
             where: { code: couponCode.toUpperCase() },
         });
@@ -159,7 +143,6 @@ export const couponService = {
             return null;
         }
 
-        // 2. Verificar si el usuario ya tiene este cupón asignado
         const existingAssignment = await db.userCoupon.findUnique({
             where: {
                 userId_couponId: {
@@ -170,23 +153,24 @@ export const couponService = {
         });
 
         if (existingAssignment) {
-            return existingAssignment; // Ya lo tiene, no hacemos nada (unicidad)
+            return { assignment: existingAssignment, isNew: false };
         }
 
-        // 3. Crear la relación en la billetera
-        return await db.userCoupon.create({
+        const newAssignment = await db.userCoupon.create({
             data: {
                 userId,
                 couponId: coupon.id,
                 isUsed: false,
                 assignedAt: new Date(),
             },
+            include: {
+                coupon: true
+            }
         });
+
+        return { assignment: newAssignment, isNew: true };
     },
 
-    /**
-     * Obtener los cupones disponibles en la billetera del usuario
-     */
     async getUserCoupons(userId: string) {
         const now = new Date();
 

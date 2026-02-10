@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '../../src/components/ui/Button';
-import { Input } from '../../src/components/ui/input';
-import { Label } from '../../src/components/ui/label';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useUser } from '../../src/store/UserContext';
+import { useUser } from '@/store/UserContext';
 import Link from 'next/link';
 import { Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { LoyaltyModal } from '@/components/ui/LoyaltyModal';
 
 export default function RegisterPage() {
     const [step, setStep] = useState<'email' | 'password' | 'complete'>('email');
@@ -19,6 +20,8 @@ export default function RegisterPage() {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [showLoyalty, setShowLoyalty] = useState(false);
+    const [couponInfo, setCouponInfo] = useState<{ code: string; message: string } | null>(null);
     const { register } = useUser();
     const router = useRouter();
 
@@ -76,14 +79,31 @@ export default function RegisterPage() {
         }
 
         setErrors({});
-        const success = await register(email, password, name, phone);
-        if (success) {
-            router.push('/profile');
+        const result = await register(email, password, name, phone);
+        if (result.success) {
+            if (result.welcomeCoupon) {
+                setCouponInfo(result.welcomeCoupon);
+                setShowLoyalty(true);
+            } else {
+                router.push('/profile');
+            }
         }
+    };
+
+    const handleLoyaltyClose = () => {
+        setShowLoyalty(false);
+        router.push('/profile');
     };
 
     return (
         <div className="min-h-[80vh] flex items-center justify-center bg-background px-4">
+            <LoyaltyModal
+                isOpen={showLoyalty}
+                onClose={handleLoyaltyClose}
+                type="WELCOME"
+                couponCode={couponInfo?.code || ''}
+                message={couponInfo?.message}
+            />
             <div className="max-w-md w-full bg-card p-8 rounded-lg shadow-sm border border-border">
                 <div className="text-center mb-8">
                     <h1 className="font-display text-4xl font-black italic tracking-tighter mb-6 transform -skew-x-12 inline-block border-4 border-black dark:border-white px-2">

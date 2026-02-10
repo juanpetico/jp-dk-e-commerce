@@ -125,13 +125,9 @@ export const couponController = {
             res.json({
                 success: true,
                 data: coupons.map(uc => ({
-                    id: uc.coupon.id,
-                    code: uc.coupon.code,
-                    type: uc.coupon.type,
-                    value: uc.coupon.value,
-                    description: uc.coupon.description,
+                    id: uc.id,
                     assignedAt: uc.assignedAt,
-                    endDate: uc.coupon.endDate,
+                    coupon: uc.coupon
                 })),
             });
         } catch (error) {

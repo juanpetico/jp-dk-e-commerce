@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { fetchMyCoupons } from '../../../src/services/couponService';
+import { fetchMyCoupons } from '@/services/couponService';
 import { Ticket, Calendar, Clock, ChevronRight, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -125,25 +125,6 @@ export default function MyCouponsPage() {
                         ))}
                     </div>
                 )}
-
-                {/* VIP Perks Banner */}
-                <div className="mt-12 p-8 bg-gradient-to-br from-[var(--color-amber-900)]/10 to-transparent rounded-3xl border border-[var(--color-amber-900)]/20 relative overflow-hidden">
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-black italic tracking-tighter mb-2">PROXIMAMENTE: NIVEL VIP</h2>
-                            <p className="text-muted-foreground text-sm max-w-md">
-                                Estamos trabajando en un sistema de niveles. Acumula puntos con tus compras y desbloquea descuentos permanentes, envíos gratis y acceso anticipado.
-                            </p>
-                        </div>
-                        <div className="bg-[var(--color-amber-900)] text-white px-6 py-3 rounded-xl font-black italic shadow-lg shadow-[var(--color-amber-900)]/20">
-                            PRONTO
-                        </div>
-                    </div>
-                    {/* Decorative Background Icon */}
-                    <div className="absolute -bottom-12 -right-12 opacity-5 scale-150 rotate-12">
-                        <Ticket size={200} />
-                    </div>
-                </div>
             </div>
         </div>
     );

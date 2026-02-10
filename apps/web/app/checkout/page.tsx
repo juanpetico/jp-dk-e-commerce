@@ -1,28 +1,35 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useCart } from '../../src/store/CartContext';
-import { useUser } from '../../src/store/UserContext';
-import { Button } from '../../src/components/ui/Button';
+import { useCart } from '@/store/CartContext';
+import { useUser } from '@/store/UserContext';
+import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createOrder, validateCoupon } from '../../src/services/orderService';
-import { fetchMyCoupons } from '../../src/services/couponService';
-import { Coupon } from '../../src/types';
+import { createOrder, validateCoupon, ORDER_STATUS_LABELS } from '@/services/orderService';
+import { fetchMyCoupons } from '@/services/couponService';
+import { Coupon, OrderStatus } from '@/types';
 import { ArrowLeft, Edit2, ShieldCheck, CreditCard, Truck, Check, Ticket, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoyaltyModal } from '@/components/ui/LoyaltyModal';
 
 export default function CheckoutPage() {
-    const { cart, cartTotal, buyNowItem } = useCart();
+    const { cart, cartTotal, buyNowItem, appliedCoupon, setAppliedCoupon, clearCart } = useCart();
     const { user, isAuthenticated, refreshUser } = useUser();
     const [paymentMethod, setPaymentMethod] = useState('mercadopago');
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
     const [earnedCoupon, setEarnedCoupon] = useState<{ code: string; message: string } | null>(null);
-    const [couponCode, setCouponCode] = useState('');
-    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [orderedItems, setOrderedItems] = useState<any[]>([]);
+    const [snapshotTotal, setSnapshotTotal] = useState(0);
+    const [snapshotDiscount, setSnapshotDiscount] = useState(0);
+    const [snapshotStatus, setSnapshotStatus] = useState<OrderStatus | null>(null);
+    const [couponCode, setCouponCode] = useState(appliedCoupon?.code || '');
+    // We already have appliedCoupon from context, but we keep a local setter for convenience in this page if needed, 
+    // although it's better to use the context one.
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    const [showVIPModal, setShowVIPModal] = useState(false);
     const [userCoupons, setUserCoupons] = useState<any[]>([]);
     const [showWallet, setShowWallet] = useState(false);
     const router = useRouter();
@@ -139,15 +146,20 @@ export default function CheckoutPage() {
             await refreshUser();
 
             setOrderId(order.id);
+            setOrderedItems(effectiveItems);
+            setSnapshotTotal(finalTotal);
+            setSnapshotDiscount(couponDiscount);
+            setSnapshotStatus(order.status);
+
             if (order.earnedCoupon) {
                 setEarnedCoupon(order.earnedCoupon);
-                toast.success(order.earnedCoupon.message, {
-                    duration: 6000,
-                    icon: '🎉'
-                });
+                setShowVIPModal(true);
             }
             setIsSuccess(true);
             toast.success("Pedido creado exitosamente");
+
+            // Clear cart and global coupon
+            clearCart();
 
         } catch (error: any) {
             console.error(error);
@@ -162,7 +174,14 @@ export default function CheckoutPage() {
     if (isSuccess) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center p-4">
-                <div className="max-w-md w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
+                <LoyaltyModal
+                    isOpen={showVIPModal}
+                    onClose={() => setShowVIPModal(false)}
+                    type="VIP"
+                    couponCode={earnedCoupon?.code || ''}
+                    message={earnedCoupon?.message}
+                />
+                <div className="max-w-xl w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
                     <div className="flex justify-center">
                         <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-4">
                             <Check className="w-16 h-16 text-green-600 dark:text-green-400" />
@@ -170,46 +189,88 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <h1 className="font-display text-3xl font-bold tracking-tight">¡Gracias por tu compra!</h1>
+                        <h1 className="font-display text-4xl font-bold tracking-tight uppercase italic">¡Gracias por tu compra!</h1>
                         <p className="text-muted-foreground font-medium">Tu pedido #{orderId} ha sido procesado con éxito.</p>
                     </div>
 
-                    <div className="bg-muted/30 rounded-xl p-6 border border-border text-left space-y-4">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">Estado</span>
-                            <span className="font-bold text-green-600 dark:text-green-400">Confirmado</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground font-medium">Total pagado</span>
-                            <span className="font-bold font-mono">${finalTotal.toLocaleString('es-CL')}</span>
-                        </div>
-                        {earnedCoupon && (
-                            <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg animate-bounce-subtle">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Ticket className="w-5 h-5 text-primary" />
-                                    <span className="font-bold text-primary">¡RECOMPENSA DESBLOQUEADA!</span>
-                                </div>
-                                <p className="text-xs font-medium text-foreground">{earnedCoupon.message}</p>
-                                <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                    CÓDIGO: <span className="text-primary">{earnedCoupon.code}</span>
-                                </div>
+                    {/* Enhanced Order Info Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-muted/30 rounded-xl p-6 border border-border text-left space-y-4">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Detalles del Pedido</h3>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground font-medium">Estado</span>
+                                <span className="font-bold text-amber-600 dark:text-amber-400 capitalize">
+                                    {snapshotStatus ? ORDER_STATUS_LABELS[snapshotStatus] : ''}
+                                </span>
                             </div>
-                        )}
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground font-medium">Total Pagado</span>
+                                <span className="font-bold font-mono">${snapshotTotal.toLocaleString('es-CL')}</span>
+                            </div>
+                            {snapshotDiscount > 0 && (
+                                <div className="flex justify-between text-sm text-primary font-bold">
+                                    <span>Descuento aplicado</span>
+                                    <span>-${snapshotDiscount.toLocaleString('es-CL')}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-muted/30 rounded-xl p-6 border border-border text-left">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Resumen de Productos</h3>
+                            <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                                {orderedItems.map(item => (
+                                    <div key={`${item.id}-${item.selectedSize}`} className="flex justify-between items-center gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-10 bg-muted rounded overflow-hidden flex-shrink-0 border border-border/50">
+                                                <img src={item.images?.[0]?.url} className="w-full h-full object-cover" alt="" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-bold text-foreground truncate max-w-[120px] uppercase">{item.name}</p>
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase">{item.selectedSize} x {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] font-mono font-bold">${(item.price * item.quantity).toLocaleString('es-CL')}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    {earnedCoupon && (
+                        <div className="p-5 bg-primary/10 border border-primary/20 rounded-xl animate-bounce-subtle flex flex-col items-center">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Ticket className="w-6 h-6 text-primary" />
+                                <span className="font-black text-primary tracking-tighter text-lg uppercase italic">¡NUEVO CUPÓN DESBLOQUEADO!</span>
+                            </div>
+                            <p className="text-sm font-medium text-foreground text-center mb-3">{earnedCoupon.message}</p>
+                            <div className="bg-background border-2 border-dashed border-primary/40 px-6 py-3 rounded-lg flex items-center gap-4">
+                                <span className="text-2xl font-black text-primary font-mono tracking-tighter">{earnedCoupon.code}</span>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(earnedCoupon.code);
+                                        toast.success("Código copiado al portapapeles");
+                                    }}
+                                    className="p-1 hover:text-primary transition-colors"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row gap-3">
                         <Button
-                            onClick={() => router.push(`/orders/${orderId}`)}
-                            className="w-full h-12 text-base font-bold uppercase tracking-wider shadow-lg hover:translate-y-0.5 transition-all"
+                            onClick={() => router.push('/orders')}
+                            className="flex-1 h-14 text-sm font-black uppercase tracking-widest shadow-xl hover:translate-y-0.5 transition-all"
                         >
-                            Ver detalles del pedido
+                            Ver mis pedidos
                         </Button>
                         <Button
                             variant="outline"
                             onClick={() => router.push('/')}
-                            className="w-full h-12 text-base font-bold uppercase tracking-wider border-2 hover:bg-muted/50 transition-colors"
+                            className="flex-1 h-14 text-sm font-black uppercase tracking-widest border-2 hover:bg-muted/50 transition-colors"
                         >
-                            Seguir comprando
+                            Volver a la Tienda
                         </Button>
                     </div>
                 </div>
@@ -446,10 +507,6 @@ export default function CheckoutPage() {
                                                 onClick={() => {
                                                     setCouponCode(item.coupon.code);
                                                     setShowWallet(false);
-                                                    // Auto-apply: we can trigger it immediately if we modify handleApplyCoupon to accept a code
-                                                    // or just trust the user will click "Usar". 
-                                                    // Re-reading: "llenar automáticamente el campo".
-                                                    // But to be "Inteligente", let's make it apply.
                                                 }}
                                                 className="w-full text-left p-3 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group"
                                             >

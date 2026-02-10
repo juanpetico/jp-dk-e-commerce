@@ -130,6 +130,14 @@ export const generateOrderPDF = async (order: Order) => {
     doc.text('Envío:', totalsX - 40, yPos);
     doc.text(formatPrice(order.shippingCost), totalsX, yPos, { align: 'right' });
 
+    if (order.discountAmount > 0) {
+        yPos += 6;
+        doc.setTextColor(34, 197, 94); // Green for discount
+        doc.text('Descuento:', totalsX - 40, yPos);
+        doc.text(`-${formatPrice(order.discountAmount)}`, totalsX, yPos, { align: 'right' });
+        doc.setTextColor(0, 0, 0); // Reset color
+    }
+
     if (order.taxes > 0) {
         yPos += 6;
         doc.text(`Impuestos (${(order.taxRate * 100).toFixed(0)}%):`, totalsX - 40, yPos);

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { toast } from 'sonner';
-import { CartItem, Product } from '../types';
+import { CartItem, Product, Coupon } from '../types';
 
 interface CartContextType {
     cart: CartItem[];
@@ -12,6 +12,9 @@ interface CartContextType {
     cartTotal: number;
     buyNowItem: CartItem | null;
     setBuyNowItem: (item: CartItem | null) => void;
+    appliedCoupon: Coupon | null;
+    setAppliedCoupon: (coupon: Coupon | null) => void;
+    clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,6 +28,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isOpen, setIsOpen] = useState(false);
     const [cartTotal, setCartTotal] = useState(0);
     const [buyNowItem, setBuyNowItem] = useState<CartItem | null>(null);
+    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+
+    // Persist coupon
+    useEffect(() => {
+        const savedCoupon = localStorage.getItem('appliedCoupon');
+        if (savedCoupon) {
+            try {
+                setAppliedCoupon(JSON.parse(savedCoupon));
+            } catch (e) {
+                console.error("Failed to parse appliedCoupon", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (appliedCoupon) {
+            localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
+        } else {
+            localStorage.removeItem('appliedCoupon');
+        }
+    }, [appliedCoupon]);
 
     // Persist buyNowItem
     useEffect(() => {
@@ -219,9 +243,31 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const toggleCart = () => setIsOpen((prev) => !prev);
 
+    const clearCart = () => {
+        setCart([]);
+        setAppliedCoupon(null);
+        setBuyNowItem(null);
+        localStorage.removeItem('cart');
+        localStorage.removeItem('appliedCoupon');
+        localStorage.removeItem('buyNowItem');
+    };
+
     return (
         <CartContext.Provider
-            value={{ cart, isOpen, addToCart, removeFromCart, updateQuantity, toggleCart, cartTotal, buyNowItem, setBuyNowItem }}
+            value={{
+                cart,
+                isOpen,
+                addToCart,
+                removeFromCart,
+                updateQuantity,
+                toggleCart,
+                cartTotal,
+                buyNowItem,
+                setBuyNowItem,
+                appliedCoupon,
+                setAppliedCoupon,
+                clearCart
+            }}
         >
             {children}
         </CartContext.Provider>

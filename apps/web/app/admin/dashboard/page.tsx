@@ -569,8 +569,8 @@ const AdminDashboardPage: React.FC = () => {
                     <table className="w-full text-left">
                         <thead className="bg-muted/50 dark:bg-muted/20">
                             <tr>
-                                <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ID Orden</th>
                                 <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Cliente</th>
+                                <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">ID Orden</th>
                                 <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total</th>
                                 <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estado</th>
                                 <th className="px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right">Acción</th>
@@ -579,11 +579,11 @@ const AdminDashboardPage: React.FC = () => {
                         <tbody className="divide-y divide-border dark:divide-border/50">
                             {paginatedOrders.map((order) => (
                                 <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                                    <td className="px-6 py-4 font-bold text-xs text-foreground">#{order.id.slice(0, 8)}</td>
                                     <td className="px-6 py-4">
-                                        <div className="text-xs font-bold text-foreground">{order.user?.name || 'Invitado'}</div>
-                                        <div className="text-[10px] text-muted-foreground">{order.items.length} items</div>
+                                        <div className="text-xs font-bold text-foreground">{order.customerName || order.user?.name || 'Invitado'}</div>
+                                        <div className="text-[10px] text-muted-foreground">{order.customerEmail || order.user?.email}</div>
                                     </td>
+                                    <td className="px-6 py-4 font-bold text-xs text-muted-foreground font-mono">#{order.id.slice(0, 8)}</td>
                                     <td className="px-6 py-4 text-xs font-mono text-foreground">{formatPrice(order.total)}</td>
                                     <td className="px-6 py-4">
                                         <span className={`text-[10px] uppercase font-black px-2.5 py-1 rounded-sm border shadow-sm ${getOrderStatusColor(order.status)}`}>

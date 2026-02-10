@@ -1,6 +1,7 @@
 import { PrismaClient, Role, Size, OrderStatus } from "@prisma/client";
 import bcrypt from "bcrypt";
-import slugify from "slugify";
+import _slugify from "slugify";
+const slugify = (_slugify as any).default || _slugify;
 
 const prisma = new PrismaClient();
 
@@ -211,7 +212,7 @@ async function main() {
                     taxRate: 0,
                     status: status,
                     isPaid: status !== OrderStatus.PENDING && status !== OrderStatus.CANCELLED,
-                    date: new Date().toISOString().split('T')[0],
+                    date: new Date(),
                     customerName: user.name,
                     customerEmail: user.email,
                     customerPhone: user.phone,
