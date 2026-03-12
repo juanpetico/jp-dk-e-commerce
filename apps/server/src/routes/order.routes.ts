@@ -19,8 +19,8 @@ router.get("/orders/:id", orderController.getOrderById);
 router.post("/orders/:id/cancel", orderController.cancelOrder);
 
 // Admin only routes
-router.get("/orders/all/admin", requireRole("ADMIN"), orderController.getAllOrders);
-router.put("/orders/:id/status", requireRole("ADMIN"), orderController.updateOrderStatus);
-router.post("/orders/:id/pay", requireRole("ADMIN"), orderController.markOrderAsPaid);
+router.get("/orders/all/admin", requireRole("ADMIN", "SUPERADMIN"), orderController.getAllOrders);
+router.put("/orders/:id/status", requireRole("ADMIN", "SUPERADMIN"), orderController.updateOrderStatus);
+router.post("/orders/:id/pay", requireRole("ADMIN", "SUPERADMIN"), orderController.markOrderAsPaid);
 
 export default router;

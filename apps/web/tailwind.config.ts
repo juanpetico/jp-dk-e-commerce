@@ -1,44 +1,108 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-    darkMode: 'class',
-    content: [
-        "./app/**/*.{js,ts,jsx,tsx,mdx}",
-        "./src/**/*.{js,ts,jsx,tsx,mdx}",
-        "../../packages/ui/src/**/*.{js,ts,jsx,tsx,mdx}",
-    ],
-    theme: {
-        extend: {
-            colors: {
-                background: "var(--background)",
-                foreground: "var(--foreground)",
-                accent: "#FBBF24", // Example accent color from original
-            },
-            fontFamily: {
-                display: ["var(--font-montserrat)", "system-ui", "sans-serif"],
-                sans: ["var(--font-montserrat)", "system-ui", "sans-serif"],
-            },
-            animation: {
-                'marquee': 'marquee 30s linear infinite',
-                'fade-in': 'fadeIn 0.5s ease-out',
-                'slide-in': 'slideIn 0.3s ease-out',
-            },
-            keyframes: {
-                marquee: {
-                    '0%': { transform: 'translateX(0)' },
-                    '100%': { transform: 'translateX(-50%)' },
-                },
-                fadeIn: {
-                    '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
-                },
-                slideIn: {
-                    '0%': { transform: 'translateX(100%)' },
-                    '100%': { transform: 'translateX(0)' },
-                }
-            }
-        },
-    },
-    plugins: [],
+	darkMode: 'class',
+	content: [
+		"./app/**/*.{js,ts,jsx,tsx,mdx}",
+		"./src/**/*.{js,ts,jsx,tsx,mdx}",
+		"../../packages/ui/src/**/*.{js,ts,jsx,tsx,mdx}",
+	],
+	theme: {
+		extend: {
+			colors: {
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
+				},
+				card: {
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--card-foreground))'
+				},
+				popover: {
+					DEFAULT: 'hsl(var(--popover))',
+					foreground: 'hsl(var(--popover-foreground))'
+				},
+				primary: {
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))'
+				},
+				secondary: {
+					DEFAULT: 'hsl(var(--secondary))',
+					foreground: 'hsl(var(--secondary-foreground))'
+				},
+				muted: {
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))'
+				},
+				destructive: {
+					DEFAULT: 'hsl(var(--destructive))',
+					foreground: 'hsl(var(--destructive-foreground))'
+				},
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+				chart: {
+					'1': 'hsl(var(--chart-1))',
+					'2': 'hsl(var(--chart-2))',
+					'3': 'hsl(var(--chart-3))',
+					'4': 'hsl(var(--chart-4))',
+					'5': 'hsl(var(--chart-5))'
+				}
+			},
+			fontFamily: {
+				display: [
+					'var(--font-montserrat)',
+					'system-ui',
+					'sans-serif'
+				],
+				sans: [
+					'var(--font-montserrat)',
+					'system-ui',
+					'sans-serif'
+				]
+			},
+			animation: {
+				marquee: 'marquee 30s linear infinite',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'slide-up': 'slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+			},
+			keyframes: {
+				marquee: {
+					'0%': {
+						transform: 'translateX(0)'
+					},
+					'100%': {
+						transform: 'translateX(-50%)'
+					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0'
+					},
+					'100%': {
+						opacity: '1'
+					}
+				},
+				'slide-up': {
+					'0%': {
+						transform: 'translateY(20px)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateY(0)',
+						opacity: '1'
+					}
+				}
+			},
+			borderRadius: {
+				lg: 'var(--radius)',
+				md: 'calc(var(--radius) - 2px)',
+				sm: 'calc(var(--radius) - 4px)'
+			}
+		}
+	},
+	plugins: [require("tailwindcss-animate")],
 };
 export default config;

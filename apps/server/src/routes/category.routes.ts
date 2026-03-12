@@ -18,21 +18,21 @@ router.get("/categories/slug/:slug", categoryController.getCategoryBySlug);
 router.post(
     "/categories",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     categoryValidation,
     categoryController.createCategory
 );
 router.put(
     "/categories/:id",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     categoryValidation,
     categoryController.updateCategory
 );
 router.delete(
     "/categories/:id",
     authenticate,
-    requireRole("ADMIN"),
+    requireRole("ADMIN", "SUPERADMIN"),
     categoryController.deleteCategory
 );
 

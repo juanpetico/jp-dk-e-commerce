@@ -31,6 +31,9 @@ export function middleware(request: NextRequest) {
             console.error('Middleware token parse error:', e)
             return NextResponse.redirect(new URL('/login', request.url))
         }
+        if (request.nextUrl.pathname === '/admin') {
+            return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+        }
     }
 
     return NextResponse.next()

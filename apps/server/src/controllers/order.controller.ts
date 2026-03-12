@@ -1,12 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import { orderService } from "../services/order.service.js";
+import { cartService } from "../services/cart.service.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 import { body, validationResult } from "express-validator";
 import { AppError } from "../middleware/error-handler.js";
 import { getParam } from "../utils/request.js";
 
 // Type definition until Prisma generates types
-type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 // Validation rules
 export const createOrderValidation = [
@@ -16,7 +17,7 @@ export const createOrderValidation = [
         .isInt({ min: 1 })
         .withMessage("Quantity must be at least 1"),
     body("items.*.size")
-        .isIn(["S", "M", "L", "XL", "XXL"])
+        .isIn(["S", "M", "L", "XL", "XXL", "STD"])
         .withMessage("Invalid size"),
 ];
 
@@ -38,8 +39,11 @@ export const orderController = {
                 throw new AppError("Authentication required", 401);
             }
 
-            const { items } = req.body;
-            const order = await orderService.createOrder(req.user.id, items);
+            const { items, shippingAddressId, billingAddressId, couponCode } = req.body;
+            const order = await orderService.createOrder(req.user.id, items, shippingAddressId, billingAddressId, couponCode);
+
+            // Clear cart after successful order creation
+            await cartService.clearCart(req.user.id);
 
             res.status(201).json({
                 success: true,
@@ -87,7 +91,48 @@ export const orderController = {
 
     async getAllOrders(req: Request, res: Response, next: NextFunction) {
         try {
-            const orders = await orderService.getAllOrders();
+            // Extraer query params
+            const { status, startDate, endDate, search } = req.query;
+
+            // Construir objeto de filtros
+            const filters: {
+                status?: OrderStatus;
+                startDate?: Date;
+                endDate?: Date;
+                search?: string;
+            } = {};
+
+            // Validar y añadir status si existe
+            if (status && typeof status === "string") {
+                const validStatuses: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+                if (validStatuses.includes(status as OrderStatus)) {
+                    filters.status = status as OrderStatus;
+                }
+            }
+
+            // Parsear fechas si existen
+            if (startDate && typeof startDate === "string") {
+                const parsedDate = new Date(startDate);
+                if (!isNaN(parsedDate.getTime())) {
+                    filters.startDate = parsedDate;
+                }
+            }
+
+            if (endDate && typeof endDate === "string") {
+                const parsedDate = new Date(endDate);
+                if (!isNaN(parsedDate.getTime())) {
+                    // Añadir 23:59:59 para incluir todo el día
+                    parsedDate.setHours(23, 59, 59, 999);
+                    filters.endDate = parsedDate;
+                }
+            }
+
+            // Añadir búsqueda si existe
+            if (search && typeof search === "string" && search.trim()) {
+                filters.search = search.trim();
+            }
+
+            const orders = await orderService.getAllOrders(filters);
 
             res.json({
                 success: true,
@@ -103,7 +148,7 @@ export const orderController = {
             const id = getParam(req, "id");
             const { status } = req.body;
 
-            const validStatuses: OrderStatus[] = ["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"];
+            const validStatuses: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
             if (!status || !validStatuses.includes(status)) {
                 throw new AppError("Invalid order status", 400);
             }

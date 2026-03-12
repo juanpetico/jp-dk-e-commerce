@@ -24,8 +24,8 @@ router.put("/users/address/:id", authenticate, userController.updateAddress);
 router.delete("/users/address/:id", authenticate, userController.deleteAddress);
 
 // Admin only routes
-router.get("/users", authenticate, requireRole("ADMIN"), userController.getAllUsers);
-router.get("/users/:id", authenticate, requireRole("ADMIN"), userController.getUserById);
-router.delete("/users/:id", authenticate, requireRole("ADMIN"), userController.deleteUser);
+router.get("/users", authenticate, requireRole("ADMIN", "SUPERADMIN"), userController.getAllUsers);
+router.get("/users/:id", authenticate, requireRole("ADMIN", "SUPERADMIN"), userController.getUserById);
+router.delete("/users/:id", authenticate, requireRole("SUPERADMIN"), userController.deleteUser);
 
 export default router;

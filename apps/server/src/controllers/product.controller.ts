@@ -5,7 +5,7 @@ import { AppError } from "../middleware/error-handler.js";
 import { getParam, getQuery } from "../utils/request.js";
 
 // Type definition until Prisma generates types
-type Size = "S" | "M" | "L" | "XL" | "XXL";
+type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
 
 // Validation rules
 export const productValidation = [
@@ -13,16 +13,16 @@ export const productValidation = [
     body("price")
         .isInt({ min: 0 })
         .withMessage("Price must be a positive integer"),
-    body("stock")
-        .isInt({ min: 0 })
-        .withMessage("Stock must be a positive integer"),
     body("categoryId").trim().notEmpty().withMessage("Category ID is required"),
-    body("sizes")
+    body("variants")
         .isArray({ min: 1 })
-        .withMessage("At least one size is required"),
-    body("sizes.*")
-        .isIn(["S", "M", "L", "XL", "XXL"])
+        .withMessage("At least one variant (size/stock) is required"),
+    body("variants.*.size")
+        .isIn(["S", "M", "L", "XL", "XXL", "STD"])
         .withMessage("Invalid size"),
+    body("variants.*.stock")
+        .isInt({ min: 0 })
+        .withMessage("Stock must be a non-negative integer"),
 ];
 
 export const productController = {
@@ -39,17 +39,20 @@ export const productController = {
                 );
             }
 
-            const { name, description, price, stock, categoryId, sizes, isNew, images } =
+            const { name, description, price, originalPrice, discountPercent, variants, categoryId, isNew, isSale, isPublished, images } =
                 req.body;
 
             const product = await productService.createProduct({
                 name,
                 description,
                 price,
-                stock,
+                originalPrice,
+                discountPercent,
+                variants,
                 categoryId,
-                sizes,
                 isNew,
+                isSale,
+                isPublished,
                 images,
             });
 
@@ -80,6 +83,7 @@ export const productController = {
                 size?: Size;
                 isNew?: boolean;
                 search?: string;
+                isPublished?: boolean;
             } = {};
 
             if (categoryId) filters.categoryId = categoryId;
@@ -88,6 +92,11 @@ export const productController = {
             if (sizeStr) filters.size = sizeStr as Size;
             if (isNewStr === "true") filters.isNew = true;
             else if (isNewStr === "false") filters.isNew = false;
+
+            const isPublishedStr = getQuery(req, "isPublished");
+            if (isPublishedStr === "true") filters.isPublished = true;
+            else if (isPublishedStr === "false") filters.isPublished = false;
+
             if (search) filters.search = search;
 
             const products = await productService.getAllProducts(filters);
@@ -132,17 +141,21 @@ export const productController = {
     async updateProduct(req: Request, res: Response, next: NextFunction) {
         try {
             const id = getParam(req, "id");
-            const { name, description, price, stock, categoryId, sizes, isNew } =
+            const { name, description, price, originalPrice, discountPercent, variants, categoryId, isNew, isSale, isPublished, images } =
                 req.body;
 
             const product = await productService.updateProduct(id, {
                 name,
                 description,
                 price,
-                stock,
+                originalPrice,
+                discountPercent,
+                variants,
                 categoryId,
-                sizes,
                 isNew,
+                isSale,
+                isPublished,
+                images,
             });
 
             res.json({

@@ -27,9 +27,9 @@ export default function ProfileLayout({
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
+        <div className="min-h-screen bg-background text-foreground">
             {/* Custom Profile Navbar */}
-            <nav className="border-b border-gray-200 dark:border-gray-800">
+            <nav className="border-b border-border">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         {/* Logo */}
@@ -43,8 +43,8 @@ export default function ProfileLayout({
                                 <Link
                                     href="/orders"
                                     className={`text-sm font-medium transition-colors ${isActive('/orders')
-                                        ? 'text-black dark:text-white font-bold'
-                                        : 'text-gray-500 hover:text-black dark:hover:text-white'
+                                        ? 'text-foreground font-bold'
+                                        : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                 >
                                     Pedidos
@@ -52,17 +52,26 @@ export default function ProfileLayout({
                                 <Link
                                     href="/profile"
                                     className={`text-sm font-medium transition-colors ${isActive('/profile')
-                                        ? 'text-black dark:text-white font-bold'
-                                        : 'text-gray-500 hover:text-black dark:hover:text-white'
+                                        ? 'text-foreground font-bold'
+                                        : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                 >
                                     Perfil
                                 </Link>
                                 <Link
+                                    href="/coupons"
+                                    className={`text-sm font-medium transition-colors ${isActive('/coupons')
+                                        ? 'text-foreground font-bold'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                >
+                                    Cupones
+                                </Link>
+                                <Link
                                     href="/settings"
                                     className={`text-sm font-medium transition-colors ${isActive('/settings')
-                                        ? 'text-black dark:text-white font-bold'
-                                        : 'text-gray-500 hover:text-black dark:hover:text-white'
+                                        ? 'text-foreground font-bold'
+                                        : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                 >
                                     Configuración
@@ -74,9 +83,9 @@ export default function ProfileLayout({
                         <div className="relative">
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                             >
-                                <div className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full border border-input flex items-center justify-center">
                                     <User className="w-5 h-5" />
                                 </div>
                                 <ChevronDown className="w-4 h-4" />
@@ -88,10 +97,10 @@ export default function ProfileLayout({
                                         className="fixed inset-0 z-10"
                                         onClick={() => setIsMenuOpen(false)}
                                     />
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-20 py-1">
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-20 py-1">
                                         <button
                                             onClick={handleLogout}
-                                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-amber-900)] hover:bg-accent hover:text-accent-foreground transition-colors"
                                         >
                                             <LogOut className="w-4 h-4" />
                                             Cerrar sesión

@@ -1,26 +1,92 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import NextImage from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCart } from '../../store/CartContext';
 import { useUser } from '../../store/UserContext';
-import { Search, User, ShoppingBag, Menu, ChevronDown } from 'lucide-react';
-
+import { Search, User, ShoppingBag, Menu, X, ChevronDown, LayoutDashboard, Package, Settings, LogOut, LogIn, UserPlus } from 'lucide-react';
 import SearchOverlay from './SearchOverlay';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+
+interface MenuItem {
+    id: string;
+    type: 'link' | 'accordion';
+    label: string;
+    path?: string;
+    isRed?: boolean;
+    children?: { label: string; path: string }[];
+}
 
 const Navbar: React.FC = () => {
     const pathname = usePathname();
     const { cart, toggleCart } = useCart();
     const { user, isAuthenticated, logout } = useUser();
     const router = useRouter();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+    const isProfileRoute = ['/profile', '/orders', '/settings', '/admin', '/superadmin', '/checkout'].some(route => pathname?.startsWith(route));
+
+    // 0. State for categories
+    const [categories, setCategories] = useState<{ label: string, path: string }[]>([]);
+
+    useEffect(() => {
+        import('../../services/categoryService').then(({ fetchCategories }) => {
+            fetchCategories().then(data => {
+                if (data && data.length > 0) {
+                    const mapped = data.map(cat => ({
+                        label: cat.name,
+                        path: `/category/${cat.slug}`
+                    }));
+                    setCategories(mapped);
+                } else {
+                    // Fallback to defaults if fetch fails or returns empty
+                    setCategories([
+                        { label: 'Poleras', path: '/category/poleras' },
+                        { label: 'Polerones', path: '/category/polerones' },
+                        { label: 'Lentes', path: '/category/lentes' }
+                    ]);
+                }
+            });
+        });
+    }, []);
+
+    // 1. Define the dynamic menu items (excluding 'Inicio' which is fixed)
+    const dynamicMenuItems: MenuItem[] = [
+        {
+            id: 'catalog',
+            type: 'link',
+            label: 'Catálogo',
+            path: '/catalog'
+        },
+        {
+            id: 'category',
+            type: 'accordion',
+            label: 'Categoría',
+            children: categories
+        },
+        {
+            id: 'sale',
+            type: 'link',
+            label: 'Sale',
+            path: '/catalog?sale=true',
+            isRed: true
+        },
+    ];
+
+    // 2. Automatically sort items by label length to create a "Tree" shape (Pyramid)
+    const sortedMenuItems = useMemo(() => {
+        return [...dynamicMenuItems].sort((a, b) => a.label.length - b.label.length);
+    }, [categories]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -33,178 +99,268 @@ const Navbar: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleUserClick = () => {
-        if (isAuthenticated) {
-            setIsUserDropdownOpen(!isUserDropdownOpen);
+    // Prevent scroll when menu is open on mobile
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+            // Also close search if menu opens
+            setIsSearchOpen(false);
         } else {
-            router.push('/login');
+            document.body.style.overflow = 'unset';
         }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [isMenuOpen]);
+
+    const handleUserClick = () => {
+        setIsUserDropdownOpen(!isUserDropdownOpen);
     };
 
     const handleLogout = () => {
         logout();
-        toast.info('Sesión cerrada correctamente');
         setIsUserDropdownOpen(false);
         router.push('/');
+        toast.info('Sesión cerrada correctly');
     };
 
-    const isProfileRoute = ['/profile', '/orders', '/settings'].some(route => pathname?.startsWith(route));
+    const toggleSearch = () => {
+        setIsSearchOpen(!isSearchOpen);
+    };
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+        setIsUserDropdownOpen(false);
+    };
+
+    const closeMenu = () => {
+        setIsMenuOpen(false);
+        setIsCategoryOpen(false);
+    };
 
     if (isProfileRoute) return null;
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-50">
-            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-
-            <div className="relative z-50 bg-black text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-gray-800">
-                <div className="flex whitespace-nowrap animate-marquee">
-                    <div className="flex items-center">
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
-                        <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
-                        <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>
-                    </div>
-                    <div className="flex items-center">
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
-                        <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
-                        <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                        <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>
-                    </div>
+        <div className={cn(
+            "z-40 w-full transition-colors duration-300",
+            isMenuOpen ? "fixed top-0 left-0" : "sticky top-0"
+        )}>
+            {/* Marquee */}
+            <div className="bg-white text-black dark:bg-black dark:text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-border relative z-50 transition-colors duration-300">
+                <div className="whitespace-nowrap animate-marquee inline-block">
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
+                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>
                 </div>
             </div>
 
-            <nav className="relative z-50 bg-white/95 dark:bg-black backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 text-black dark:text-white">
+            <nav className="bg-background text-foreground border-b border-border transition-colors duration-300 relative">
+                <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-20">
-                        {/* Mobile Menu Button */}
-                        <div className="flex items-center md:hidden">
+                    <div className="flex justify-between items-center h-20 relative">
+
+                        {/* Left: Hamburger Menu (Always visible) */}
+                        <div className="flex items-center z-40">
                             <button
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2"
+                                onClick={toggleMenu}
+                                className="text-foreground hover:text-muted-foreground p-2 -ml-2 transition-colors focus:outline-none"
                             >
-                                <Menu className="w-6 h-6" />
+                                {isMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
                             </button>
                         </div>
 
-                        {/* Logo */}
-                        <div className="flex-shrink-0 flex items-center justify-center flex-1 md:flex-none md:justify-start">
-                            <Link href="/" className="flex-shrink-0">
-                                <span className="sr-only">JP DK</span>
-                                <div className="relative h-12 w-32">
-                                    <NextImage
-                                        src="/logo.png"
-                                        alt="JP DK Logo"
-                                        fill
-                                        className="object-contain dark:invert"
-                                        priority
-                                    />
-                                </div>
+                        {/* Center: Logo (Absolutely positioned) */}
+                        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 text-center">
+                            <Link href="/" onClick={closeMenu} className="font-display text-4xl font-black tracking-tighter italic px-2 border-2 border-foreground inline-block hover:scale-105 transition-transform duration-300">
+                                JP DK
                             </Link>
                         </div>
 
-                        {/* Desktop Navigation */}
-                        <div className="hidden md:flex space-x-8 items-center justify-center flex-1">
-                            <Link href="/" className="font-display text-base uppercase font-bold tracking-wider hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Inicio</Link>
-                            <Link href="/catalog" className="font-display text-base uppercase font-bold tracking-wider hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Catálogo</Link>
-                            <Link href="/catalog" className="font-display text-base uppercase font-bold tracking-wider hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Lookbook</Link>
-                            <Link href="/catalog" className="font-display text-base uppercase font-bold tracking-wider text-red-600 hover:text-red-700 transition-colors">Sale</Link>
-                        </div>
+                        {/* Right: Icons */}
+                        <div className="flex items-center space-x-1 md:space-x-3 z-40">
 
-                        {/* Icons */}
-                        <div className="flex items-center space-x-2 md:space-x-4">
                             <button
-                                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                                className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2 transition-colors"
+                                onClick={toggleSearch}
+                                className="p-2 transition-colors text-foreground hover:text-muted-foreground"
                             >
-                                <Search className="w-5 h-5" />
+                                <Search className="w-6 h-6" />
                             </button>
 
                             {/* User Dropdown */}
-                            <div className="relative hidden sm:block group" ref={dropdownRef}>
+                            <div className="relative" ref={dropdownRef}>
                                 <button
                                     onClick={handleUserClick}
-                                    className="flex items-center gap-1 text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2 transition-colors"
+                                    className="flex items-center gap-1 text-foreground hover:text-muted-foreground p-2 transition-colors"
                                 >
-                                    <User className="w-5 h-5" />
-                                    <ChevronDown className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <User className="w-6 h-6" />
                                 </button>
 
-                                {/* Dropdown cuando NO está autenticado - aparece en hover */}
-                                {!isAuthenticated && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                        <Link
-                                            href="/login"
-                                            onClick={() => setIsUserDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                        >
-                                            Iniciar sesión
-                                        </Link>
-                                        <Link
-                                            href="/register"
-                                            onClick={() => setIsUserDropdownOpen(false)}
-                                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                        >
-                                            Crear cuenta
-                                        </Link>
-                                    </div>
-                                )}
+                                {isUserDropdownOpen && (
+                                    <div className="absolute right-0 mt-2 w-64 bg-popover text-popover-foreground rounded-lg shadow-xl border border-border py-2 z-[60] animate-fade-in">
+                                        {isAuthenticated && user ? (
+                                            <>
+                                                <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                                                        <User className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <p className="text-sm font-bold text-foreground truncate">{user.name}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="py-1">
+                                                    {(user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
+                                                        <Link
+                                                            href={user.role === 'SUPERADMIN' ? "/superadmin" : "/admin"}
+                                                            onClick={() => setIsUserDropdownOpen(false)}
+                                                            className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                                        >
+                                                            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                                                            Dashboard
+                                                        </Link>
+                                                    )}
+                                                    <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                        <User className="w-4 h-4 text-muted-foreground" />
+                                                        Perfil
+                                                    </Link>
 
-                                {/* Dropdown cuando SÍ está autenticado - aparece en hover */}
-                                {user && (
-                                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                                                <User className="w-4 h-4" />
+                                                    {user.role !== 'SUPERADMIN' && (
+                                                        <Link href="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                            <Package className="w-4 h-4 text-muted-foreground" />
+                                                            Pedidos
+                                                        </Link>
+                                                    )}
+
+                                                    <Link
+                                                        href={user.role === 'SUPERADMIN' ? "/superadmin/settings" : "/profile"}
+                                                        onClick={() => setIsUserDropdownOpen(false)}
+                                                        className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                                    >
+                                                        <Settings className="w-4 h-4 text-muted-foreground" />
+                                                        Configuración
+                                                    </Link>
+                                                </div>
+                                                <div className="border-t border-border pt-1">
+                                                    <button
+                                                        onClick={handleLogout}
+                                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                                    >
+                                                        <LogOut className="w-4 h-4" />
+                                                        Cerrar sesión
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="py-1">
+                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 font-bold flex items-center gap-3 transition-colors">
+                                                    <LogIn className="w-4 h-4 text-muted-foreground" />
+                                                    Iniciar sesión
+                                                </Link>
+                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                    <UserPlus className="w-4 h-4" />
+                                                    Crear cuenta
+                                                </Link>
                                             </div>
-                                            <div className="overflow-hidden">
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
-                                            </div>
-                                        </div>
-                                        <div className="py-1">
-                                            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Perfil</Link>
-                                            <Link href="/orders" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Pedidos</Link>
-                                            <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Configuración</Link>
-                                        </div>
-                                        <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
-                                            <button
-                                                onClick={handleLogout}
-                                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                            >
-                                                Cerrar sesión
-                                            </button>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
 
                             <button
                                 onClick={toggleCart}
-                                className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 p-2 transition-colors relative"
+                                className="text-foreground hover:text-muted-foreground p-2 transition-colors relative"
                             >
-                                <ShoppingBag className="w-5 h-5" />
+                                <motion.div
+                                    key={cartCount}
+                                    initial={{ scale: 1 }}
+                                    animate={{ scale: [1, 1.15, 1] }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <ShoppingBag className="w-6 h-6" />
+                                </motion.div>
                                 {cartCount > 0 && (
-                                    <span className="absolute top-1 right-0 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-fade-in">
+                                    <motion.span
+                                        key={`badge-${cartCount}`}
+                                        initial={{ scale: 0.5, opacity: 0 }}
+                                        animate={{
+                                            scale: [1, 1.4, 1],
+                                            opacity: 1
+                                        }}
+                                        transition={{ duration: 0.4 }}
+                                        className="absolute top-0 right-0 bg-foreground text-background text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-foreground z-10"
+                                    >
                                         {cartCount}
-                                    </span>
+                                    </motion.span>
                                 )}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Mobile Menu */}
-                {isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-black animate-slide-in">
-                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                            <Link href="/" className="block px-3 py-2 text-base font-bold font-display uppercase hover:bg-gray-50 dark:hover:bg-gray-800">Inicio</Link>
-                            <Link href="/catalog" className="block px-3 py-2 text-base font-bold font-display uppercase hover:bg-gray-50 dark:hover:bg-gray-800">Catálogo</Link>
-                            <Link href="/catalog" className="block px-3 py-2 text-base font-bold font-display uppercase hover:bg-gray-50 dark:hover:bg-gray-800">Lookbook</Link>
-                            <Link href="/catalog" className="block px-3 py-2 text-base font-bold font-display uppercase text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800">Sale</Link>
+                {/* Full Screen Navigation Menu */}
+                {isMenuOpen && (
+                    <div className="absolute top-full left-0 w-full h-[calc(100vh-100%)] bg-background border-t border-border animate-slide-in z-20 flex flex-col shadow-2xl">
+                        <div className="flex-1 overflow-y-auto py-8 px-6 flex flex-col items-center justify-center space-y-6">
+
+                            {/* 1. Fixed 'Inicio' */}
+                            <Link href="/" onClick={closeMenu} className="text-3xl md:text-5xl font-display font-black uppercase tracking-tight text-foreground hover:text-muted-foreground hover:scale-105 transition-all">
+                                Inicio
+                            </Link>
+
+                            {/* 2. Sorted Items */}
+                            {sortedMenuItems.map((item) => (
+                                <React.Fragment key={item.id}>
+                                    {item.type === 'link' ? (
+                                        <Link
+                                            href={item.path || '#'}
+                                            onClick={closeMenu}
+                                            className={`text-3xl md:text-5xl font-display font-black uppercase tracking-tight hover:scale-105 transition-all ${item.isRed ? 'text-red-600 hover:text-red-500' : 'text-foreground hover:text-muted-foreground'}`}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    ) : (
+                                        /* Accordion Item */
+                                        <div className="flex flex-col items-center w-full">
+                                            <button
+                                                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                                                className="flex items-center justify-center gap-2 text-3xl md:text-5xl font-display font-black uppercase tracking-tight text-foreground hover:text-muted-foreground hover:scale-105 transition-all focus:outline-none"
+                                            >
+                                                {item.label}
+                                                <ChevronDown className={`w-8 h-8 md:w-12 md:h-12 transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {/* Submenu */}
+                                            <div className={`overflow-hidden transition-all duration-300 ease-in-out flex flex-col items-center space-y-4 ${isCategoryOpen ? 'max-h-48 opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                                                {item.children?.map((child) => (
+                                                    <Link
+                                                        key={child.label}
+                                                        href={child.path}
+                                                        onClick={closeMenu}
+                                                        className="text-xl md:text-2xl font-display font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+                                                    >
+                                                        {child.label}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            ))}
+
+                            <div className="w-24 h-px bg-border my-4"></div>
+
+                            {user?.role === 'ADMIN' && (
+                                <Link href="/admin" onClick={closeMenu} className="text-sm font-display font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                                    Admin Panel
+                                </Link>
+                            )}
                             {!isAuthenticated && (
-                                <Link href="/login" className="block px-3 py-2 text-base font-bold font-display uppercase text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 border-t border-gray-100 dark:border-gray-800 mt-2 pt-2">Iniciar Sesión</Link>
+                                <Link href="/login" onClick={closeMenu} className="text-sm font-display font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                                    Iniciar Sesión
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -215,3 +371,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

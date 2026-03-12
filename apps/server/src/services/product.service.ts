@@ -2,7 +2,12 @@ import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 
 // Type definition until Prisma generates types
-type Size = "S" | "M" | "L" | "XL" | "XXL";
+type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
+
+interface ProductVariantInput {
+    size: Size;
+    stock: number;
+}
 
 // Helper function to generate slug from name
 const generateSlug = (name: string): string => {
@@ -20,12 +25,13 @@ interface CreateProductData {
     description?: string;
     price: number;
     originalPrice?: number;
-    stock: number;
+    discountPercent?: number;
     categoryId: string;
-    sizes: Size[];
+    variants: ProductVariantInput[];
     isNew?: boolean;
     isSale?: boolean;
     images?: string[];
+    isPublished?: boolean;
 }
 
 interface ProductFilters {
@@ -37,6 +43,7 @@ interface ProductFilters {
     isNew?: boolean;
     isSale?: boolean;
     search?: string;
+    isPublished?: boolean;
 }
 
 export const productService = {
@@ -52,18 +59,25 @@ export const productService = {
             throw new AppError("Category not found", 404);
         }
 
-        // Create product with images
+        // Validate price integrity: originalPrice must be greater than price
+        if (data.originalPrice !== undefined && data.originalPrice !== null) {
+            if (data.originalPrice <= data.price) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        }
+
+        // Create product with images and variants
         const product = await prisma.product.create({
             data: {
                 name: data.name,
                 description: data.description ?? null,
                 price: data.price,
                 originalPrice: data.originalPrice ?? null,
-                stock: data.stock,
+                discountPercent: data.discountPercent ?? null,
                 categoryId: data.categoryId,
-                sizes: data.sizes,
                 isNew: data.isNew ?? true,
                 isSale: data.isSale ?? false,
+                isPublished: data.isPublished ?? false,
                 slug,
                 ...(data.images
                     ? {
@@ -72,10 +86,17 @@ export const productService = {
                         },
                     }
                     : {}),
+                variants: {
+                    create: data.variants.map((v) => ({
+                        size: v.size,
+                        stock: v.stock,
+                    })),
+                },
             },
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -101,8 +122,11 @@ export const productService = {
         }
 
         if (filters?.size) {
-            where.sizes = {
-                has: filters.size,
+            where.variants = {
+                some: {
+                    size: filters.size,
+                    stock: { gt: 0 }
+                },
             };
         }
 
@@ -121,11 +145,16 @@ export const productService = {
             ];
         }
 
+        if (filters?.isPublished !== undefined) {
+            where.isPublished = filters.isPublished;
+        }
+
         const products = await prisma.product.findMany({
             where,
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
             orderBy: {
                 createdAt: "desc",
@@ -142,6 +171,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -158,6 +188,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -188,6 +219,25 @@ export const productService = {
             }
         }
 
+        // Validate price integrity: originalPrice must be greater than price
+        // Need to check both new values and existing values
+        if (productData.originalPrice !== undefined && productData.originalPrice !== null) {
+            // originalPrice is being set to a value, validate it
+            const priceToCheck = productData.price !== undefined ? productData.price : (await prisma.product.findUnique({ where: { id } }))?.price;
+            if (priceToCheck !== undefined && productData.originalPrice <= priceToCheck) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        } else if (productData.originalPrice === null) {
+            // originalPrice is being explicitly set to null (removing offer), skip validation
+            // This is valid - we're removing the offer
+        } else if (productData.price !== undefined) {
+            // If only price is being updated, check against existing originalPrice
+            const existingProduct = await prisma.product.findUnique({ where: { id } });
+            if (existingProduct?.originalPrice && existingProduct.originalPrice <= productData.price) {
+                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
+            }
+        }
+
         const product = await prisma.product.update({
             where: { id },
             data: {
@@ -195,7 +245,7 @@ export const productService = {
                 ...(productData.description !== undefined ? { description: productData.description } : {}),
                 ...(productData.price !== undefined ? { price: productData.price } : {}),
                 ...(productData.originalPrice !== undefined ? { originalPrice: productData.originalPrice } : {}),
-                ...(productData.stock !== undefined ? { stock: productData.stock } : {}),
+                ...(productData.discountPercent !== undefined ? { discountPercent: productData.discountPercent } : {}),
                 ...(productData.categoryId
                     ? {
                         category: {
@@ -203,14 +253,34 @@ export const productService = {
                         },
                     }
                     : {}),
-                ...(productData.sizes !== undefined ? { sizes: productData.sizes } : {}),
                 ...(productData.isNew !== undefined ? { isNew: productData.isNew } : {}),
                 ...(productData.isSale !== undefined ? { isSale: productData.isSale } : {}),
+                ...(productData.isPublished !== undefined ? { isPublished: productData.isPublished } : {}),
                 ...(productData.slug !== undefined ? { slug: productData.slug } : {}),
+                ...(productData.images
+                    ? {
+                        images: {
+                            deleteMany: {},
+                            create: productData.images.map((url) => ({ url })),
+                        },
+                    }
+                    : {}),
+                ...(productData.variants !== undefined
+                    ? {
+                        variants: {
+                            deleteMany: {},
+                            create: productData.variants.map((v) => ({
+                                size: v.size,
+                                stock: v.stock,
+                            })),
+                        },
+                    }
+                    : {}),
             },
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
         });
 
@@ -250,6 +320,7 @@ export const productService = {
             include: {
                 images: true,
                 category: true,
+                variants: true,
             },
             orderBy: {
                 createdAt: "desc",

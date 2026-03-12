@@ -1,9 +1,11 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import { couponService } from "./coupon.service.js";
+import { shopConfigService } from "./shop-config.service.js";
 
 // Type definitions until Prisma generates types
-type Size = "S" | "M" | "L" | "XL" | "XXL";
-type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
+type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
 
 interface OrderItemInput {
     productId: string;
@@ -12,13 +14,13 @@ interface OrderItemInput {
 }
 
 export const orderService = {
-    async createOrder(userId: string, items: OrderItemInput[]) {
+    async createOrder(userId: string, items: OrderItemInput[], shippingAddressId?: string, billingAddressId?: string, couponCode?: string) {
         if (!items || items.length === 0) {
             throw new AppError("Order must contain at least one item", 400);
         }
 
         // Use a transaction to ensure data consistency
-        const order = await prisma.$transaction(async (tx: typeof prisma) => {
+        const order = await prisma.$transaction(async (tx: any) => {
             let total = 0;
             const orderItemsData = [];
 
@@ -26,6 +28,7 @@ export const orderService = {
             for (const item of items) {
                 const product = await tx.product.findUnique({
                     where: { id: item.productId },
+                    include: { variants: true }
                 });
 
                 if (!product) {
@@ -35,8 +38,10 @@ export const orderService = {
                     );
                 }
 
-                // Check if size is available
-                if (!product.sizes.includes(item.size)) {
+                // Check if size is available in variants
+                const variant = product.variants.find((v: any) => v.size === item.size);
+
+                if (!variant) {
                     throw new AppError(
                         `Size ${item.size} not available for ${product.name}`,
                         400
@@ -44,16 +49,21 @@ export const orderService = {
                 }
 
                 // Check stock
-                if (product.stock < item.quantity) {
+                if (variant.stock < item.quantity) {
                     throw new AppError(
-                        `Insufficient stock for ${product.name}. Available: ${product.stock}`,
+                        `Insufficient stock for ${product.name} (Size: ${item.size}). Available: ${variant.stock}`,
                         400
                     );
                 }
 
-                // Update stock
-                await tx.product.update({
-                    where: { id: item.productId },
+                // Update stock in ProductVariant
+                await tx.productVariant.update({
+                    where: {
+                        productId_size: {
+                            productId: item.productId,
+                            size: item.size
+                        }
+                    },
                     data: {
                         stock: {
                             decrement: item.quantity,
@@ -73,13 +83,123 @@ export const orderService = {
                 });
             }
 
-            // Create order with items
+            // --- Coupon Logic ---
+            let discountAmount = 0;
+            let couponId: string | undefined = undefined;
+
+            if (couponCode) {
+                // Pasamos la transacción actual (tx) para asegurar concurrencia
+                const coupon = await couponService.validateCoupon(couponCode, userId, total, tx);
+
+                if (coupon.type === "PERCENTAGE") {
+                    // Redondeo CLP estándar
+                    discountAmount = Math.round(total * (coupon.value / 100));
+                } else if (coupon.type === "FIXED_AMOUNT") {
+                    discountAmount = Math.min(coupon.value, total);
+                }
+
+                couponId = coupon.id;
+
+                // Incremento atómico del uso del cupón dentro de la misma transacción
+                await tx.coupon.update({
+                    where: { id: coupon.id },
+                    data: { usedCount: { increment: 1 } }
+                });
+
+                // Marcar como usado en la billetera (si existe)
+                await tx.userCoupon.updateMany({
+                    where: {
+                        userId,
+                        couponId: coupon.id,
+                        isUsed: false
+                    },
+                    data: {
+                        isUsed: true,
+                        usedAt: new Date()
+                    }
+                });
+            }
+            // ---------------------
+
+            // Aplicar lógica de impuestos: Sin impuestos por solicitud del usuario
+            const netAmount = total - discountAmount;
+            const taxRate = 0; // Sin impuestos
+            const taxes = 0;
+            const shippingCost = 3990; // Monto fijo según CheckoutPage
+            const finalTotal = netAmount + shippingCost;
+
+            // Fetch user details for snapshot
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+            });
+
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+
+            // Fetch user addresses for the order
+            const userAddresses = await tx.address.findMany({
+                where: { userId, isActive: true },
+            });
+
+            if (userAddresses.length === 0) {
+                throw new AppError("User must have at least one address to create an order", 400);
+            }
+
+            // Determine addresses (use provided IDs or fallback to default)
+            const shippingAddr = shippingAddressId
+                ? userAddresses.find((a: any) => a.id === shippingAddressId)
+                : (userAddresses.find((a: any) => a.isDefault) || userAddresses[0]);
+
+            const billingAddr = billingAddressId
+                ? userAddresses.find((a: any) => a.id === billingAddressId)
+                : shippingAddr;
+
+            if (!shippingAddr) throw new AppError("Shipping address not found", 400);
+            if (!billingAddr) throw new AppError("Billing address not found", 400);
+
+            // Create order with items and SNAPSHOTS
             const newOrder = await tx.order.create({
                 data: {
                     userId,
-                    total,
+                    date: new Date(),
+                    total: finalTotal,
+                    subtotal: total,
+                    discountAmount: discountAmount,
+                    couponId: couponId,
+                    shippingCost: shippingCost,
+                    taxes: taxes,
+                    taxRate: taxRate,
                     status: "PENDING",
                     isPaid: false,
+                    shippingAddressId: shippingAddr.id,
+                    billingAddressId: billingAddr.id,
+
+                    // Snapshot: Customer
+                    customerName: user.name,
+                    customerEmail: user.email,
+                    customerPhone: user.phone,
+
+                    // Snapshot: Shipping
+                    shippingName: shippingAddr.name,
+                    shippingRut: shippingAddr.rut,
+                    shippingStreet: shippingAddr.street,
+                    shippingComuna: shippingAddr.comuna,
+                    shippingRegion: shippingAddr.region,
+                    shippingZipCode: shippingAddr.zipCode,
+                    shippingPhone: shippingAddr.phone,
+
+                    // Snapshot: Billing
+                    billingName: billingAddr.name,
+                    billingRut: billingAddr.rut,
+                    billingStreet: billingAddr.street,
+                    billingComuna: billingAddr.comuna,
+                    billingRegion: billingAddr.region,
+                    billingZipCode: billingAddr.zipCode,
+
+                    billingPhone: billingAddr.phone,
+                    billingCompany: billingAddr.company,
+
                     items: {
                         create: orderItemsData,
                     },
@@ -90,6 +210,8 @@ export const orderService = {
                             product: {
                                 include: {
                                     images: true,
+                                    category: true,
+                                    variants: true,
                                 },
                             },
                         },
@@ -99,12 +221,32 @@ export const orderService = {
                             id: true,
                             email: true,
                             name: true,
+                            phone: true,
                         },
                     },
+                    coupon: true,
                 },
             });
 
-            return newOrder;
+            // 5. Verificar si califica para Cupón VIP (Basado en el total de esta compra)
+            const storeConfig = await shopConfigService.getConfig();
+            let earnedCoupon = null;
+
+            if (total >= storeConfig.vipThreshold) {
+                const result = await couponService.assignCouponToUser(userId, storeConfig.vipCouponCode, tx);
+                // Solo informamos si es un cupón NUEVO (primera vez que entra al umbral)
+                if (result?.isNew) {
+                    earnedCoupon = {
+                        code: storeConfig.vipCouponCode,
+                        message: storeConfig.vipRewardMessage
+                    };
+                }
+            }
+
+            return {
+                ...newOrder,
+                earnedCoupon
+            };
         });
 
         return order;
@@ -119,8 +261,18 @@ export const orderService = {
                         product: {
                             include: {
                                 images: true,
+                                category: true,
+                                variants: true,
                             },
                         },
+                    },
+                },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        phone: true,
                     },
                 },
             },
@@ -141,6 +293,8 @@ export const orderService = {
                         product: {
                             include: {
                                 images: true,
+                                category: true,
+                                variants: true,
                             },
                         },
                     },
@@ -150,6 +304,7 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
             },
@@ -159,7 +314,6 @@ export const orderService = {
             throw new AppError("Order not found", 404);
         }
 
-        // If userId is provided, verify ownership
         if (userId && order.userId !== userId) {
             throw new AppError("Access denied", 403);
         }
@@ -167,14 +321,73 @@ export const orderService = {
         return order;
     },
 
-    async getAllOrders() {
+    async getAllOrders(filters?: {
+        status?: OrderStatus;
+        startDate?: Date;
+        endDate?: Date;
+        search?: string;
+    }) {
+        const where: any = {};
+
+        if (filters?.status) {
+            where.status = filters.status;
+        }
+
+        if (filters?.startDate || filters?.endDate) {
+            where.createdAt = {};
+            if (filters.startDate) {
+                where.createdAt.gte = filters.startDate;
+            }
+            if (filters.endDate) {
+                where.createdAt.lte = filters.endDate;
+            }
+        }
+
+        if (filters?.search) {
+            where.OR = [
+                {
+                    id: {
+                        startsWith: filters.search,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    user: {
+                        OR: [
+                            {
+                                name: {
+                                    startsWith: filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                            {
+                                name: {
+                                    contains: " " + filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                            {
+                                email: {
+                                    startsWith: filters.search,
+                                    mode: "insensitive",
+                                },
+                            },
+                        ],
+                    },
+                },
+            ];
+        }
+
         const orders = await prisma.order.findMany({
+            where,
             include: {
                 items: {
                     include: {
                         product: {
                             include: {
                                 images: true,
+                                category: true,
+                                variants: true,
                             },
                         },
                     },
@@ -184,8 +397,11 @@ export const orderService = {
                         id: true,
                         email: true,
                         name: true,
+                        phone: true,
                     },
                 },
+                shippingAddress: true,
+                billingAddress: true,
             },
             orderBy: {
                 createdAt: "desc",
@@ -202,9 +418,25 @@ export const orderService = {
             include: {
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: {
+                                images: true,
+                                category: true,
+                                variants: true,
+                            },
+                        },
                     },
                 },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        phone: true,
+                    },
+                },
+                shippingAddress: true,
+                billingAddress: true,
             },
         });
 
@@ -217,14 +449,30 @@ export const orderService = {
             data: {
                 isPaid: true,
                 paidAt: new Date(),
-                status: "PAID",
+                status: "CONFIRMED",
             },
             include: {
                 items: {
                     include: {
-                        product: true,
+                        product: {
+                            include: {
+                                images: true,
+                                category: true,
+                                variants: true,
+                            },
+                        },
                     },
                 },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        phone: true,
+                    },
+                },
+                shippingAddress: true,
+                billingAddress: true,
             },
         });
 
@@ -232,7 +480,6 @@ export const orderService = {
     },
 
     async cancelOrder(orderId: string, userId?: string) {
-        // Get order first to verify and restore stock
         const order = await this.getOrderById(orderId, userId);
 
         if (order.status === "CANCELLED") {
@@ -243,12 +490,15 @@ export const orderService = {
             throw new AppError("Cannot cancel delivered order", 400);
         }
 
-        // Use transaction to restore stock and update order
-        const updatedOrder = await prisma.$transaction(async (tx: typeof prisma) => {
-            // Restore stock for each item
+        const updatedOrder = await prisma.$transaction(async (tx: any) => {
             for (const item of order.items) {
-                await tx.product.update({
-                    where: { id: item.productId },
+                await tx.productVariant.update({
+                    where: {
+                        productId_size: {
+                            productId: item.productId,
+                            size: item.size
+                        }
+                    },
                     data: {
                         stock: {
                             increment: item.quantity,
@@ -257,14 +507,19 @@ export const orderService = {
                 });
             }
 
-            // Update order status
             const cancelled = await tx.order.update({
                 where: { id: orderId },
                 data: { status: "CANCELLED" },
                 include: {
                     items: {
                         include: {
-                            product: true,
+                            product: {
+                                include: {
+                                    images: true,
+                                    category: true,
+                                    variants: true,
+                                },
+                            },
                         },
                     },
                 },
