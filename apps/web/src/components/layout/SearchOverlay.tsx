@@ -172,7 +172,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                         {suggestions.map(cat => (
                                             <li key={cat.id}>
                                                 <Link
-                                                    href={`/catalog?category=${cat.id}`}
+                                                    href={`/catalog?category=${cat.slug || cat.id}`}
                                                     onClick={onClose}
                                                     className="text-foreground font-bold text-sm hover:underline hover:text-muted-foreground block"
                                                 >
@@ -192,7 +192,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                         {products.map(product => (
                                             <Link
                                                 key={product.id}
-                                                href={`/product/${product.id}`}
+                                                href={`/product/${product.slug || product.id}`}
                                                 onClick={onClose}
                                                 className="flex items-center gap-4 group hover:bg-accent p-2 rounded transition-colors"
                                             >

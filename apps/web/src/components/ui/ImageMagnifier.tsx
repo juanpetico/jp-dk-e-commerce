@@ -72,54 +72,54 @@ const MagnifierCore: React.FC<ImageMagnifierProps & { disableMaximize?: boolean;
                     }}
                     transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
                 />
+            </div>
 
-                {/* Controls Overlay - Simplified */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
-                    <div className="bg-black/70 text-white rounded px-2 py-1 text-xs font-mono">
-                        {Math.round(zoomLevel * 100)}%
-                    </div>
-
-                    <div className="flex bg-white/90 dark:bg-black/90 rounded border border-gray-200 dark:border-gray-800 shadow-sm">
-                        <button
-                            onClick={decreaseZoom}
-                            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors disabled:opacity-30 border-r border-gray-200 dark:border-gray-700"
-                            title="Reducir Zoom"
-                            disabled={zoomLevel <= 1}
-                        >
-                            <ZoomOut className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={resetZoom}
-                            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors border-r border-gray-200 dark:border-gray-700"
-                            title="Restablecer"
-                        >
-                            <RotateCcw className="w-3 h-3" />
-                        </button>
-                        <button
-                            onClick={increaseZoom}
-                            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors disabled:opacity-30"
-                            title="Aumentar Zoom"
-                            disabled={zoomLevel >= 3}
-                        >
-                            <ZoomIn className="w-4 h-4" />
-                        </button>
-                    </div>
+            {/* Controls Overlay - Moved to container corners */}
+            <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+                <div className="bg-black/70 text-white rounded px-2 py-1 text-xs font-mono">
+                    {Math.round(zoomLevel * 100)}%
                 </div>
 
-                {/* Fullscreen Button - Simplified */}
-                {!disableMaximize && onMaximize && (
+                <div className="flex bg-white/90 dark:bg-black/90 rounded border border-gray-200 dark:border-gray-800 shadow-sm">
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onMaximize();
-                        }}
-                        className="absolute top-4 right-4 bg-white/90 dark:bg-black/90 text-black dark:text-white p-1.5 rounded shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 z-20 transition-all border border-gray-200 dark:border-gray-800"
-                        title="Ampliar imagen"
+                        onClick={decreaseZoom}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors disabled:opacity-30 border-r border-gray-200 dark:border-gray-700"
+                        title="Reducir Zoom"
+                        disabled={zoomLevel <= 1}
                     >
-                        <Maximize2 className="w-4 h-4" />
+                        <ZoomOut className="w-4 h-4" />
                     </button>
-                )}
+                    <button
+                        onClick={resetZoom}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors border-r border-gray-200 dark:border-gray-700"
+                        title="Restablecer"
+                    >
+                        <RotateCcw className="w-3 h-3" />
+                    </button>
+                    <button
+                        onClick={increaseZoom}
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white transition-colors disabled:opacity-30"
+                        title="Aumentar Zoom"
+                        disabled={zoomLevel >= 3}
+                    >
+                        <ZoomIn className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
+
+            {/* Fullscreen Button - Moved to container corners */}
+            {!disableMaximize && onMaximize && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onMaximize();
+                    }}
+                    className="absolute top-4 right-4 bg-white/90 dark:bg-black/90 text-black dark:text-white p-1.5 rounded shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 z-20 transition-all border border-gray-200 dark:border-gray-800"
+                    title="Ampliar imagen"
+                >
+                    <Maximize2 className="w-4 h-4" />
+                </button>
+            )}
         </div>
     );
 };

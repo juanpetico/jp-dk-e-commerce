@@ -1,23 +1,44 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProductCard from '../../src/components/product/ProductCard';
 import { Product } from '../../src/types';
 import { fetchProducts } from '../../src/services/productService';
 import { Button } from '../../src/components/ui/Button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 
-const CatalogPage: React.FC = () => {
+const CatalogContent = () => {
+    const searchParams = useSearchParams();
+    const initialCategory = searchParams.get('category');
+    const initialSearch = searchParams.get('search');
+
     const [products, setProducts] = useState<Product[]>([]);
     const [filter, setFilter] = useState('All');
+    const [searchTerm, setSearchTerm] = useState(initialSearch || '');
+
+    useEffect(() => {
+        if (initialCategory) {
+            const catLower = initialCategory.toLowerCase();
+            if (catLower === 'poleras') setFilter('Poleras');
+            else if (catLower === 'polerones') setFilter('Polerones');
+            else if (catLower === 'lentes') setFilter('Lentes');
+            else setFilter('All');
+        }
+        if (initialSearch) {
+            setSearchTerm(initialSearch);
+        }
+    }, [initialCategory, initialSearch]);
 
     useEffect(() => {
         fetchProducts().then(setProducts);
     }, []);
 
-    const filteredProducts = filter === 'All'
-        ? products
-        : products.filter(p => p.category.name === filter || p.category.slug === filter.toLowerCase() || (filter === 'Poleras' && p.category.name === 'Poleras') || (filter === 'Polerones' && p.category.name === 'Polerones') || (filter === 'Lentes' && p.category.name === 'Lentes'));
+    const filteredProducts = products.filter(p => {
+        const matchesCategory = filter === 'All' || p.category.name === filter || p.category.slug === filter.toLowerCase();
+        const matchesSearch = searchTerm === '' || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
 
     const categories = ['All', 'Poleras', 'Polerones', 'Lentes'];
 
@@ -148,29 +169,42 @@ const CatalogPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Quick Filter Bar (Minimal) */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-gray-100 pb-6 gap-4">
-                    <h1 className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-2">
-                        {filter === 'All' ? 'Catálogo Completo' : filter}
-                        <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full align-middle font-sans">
-                            {filteredProducts.length}
-                        </span>
-                    </h1>
+                <div className="flex flex-col mb-12 border-b border-gray-100 pb-6 gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h1 className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-2">
+                            {filter === 'All' ? 'Catálogo Completo' : filter}
+                            <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full align-middle font-sans">
+                                {filteredProducts.length}
+                            </span>
+                        </h1>
 
-                    {/* Quick Filter Buttons */}
-                    <div className="flex gap-2">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setFilter(cat)}
-                                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${filter === cat
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                    }`}
-                            >
-                                {cat === 'All' ? 'Ver Todo' : cat}
-                            </button>
-                        ))}
+                        {/* Quick Filter Buttons */}
+                        <div className="flex gap-2">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setFilter(cat)}
+                                    className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${filter === cat
+                                        ? 'bg-black text-white'
+                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {cat === 'All' ? 'Ver Todo' : cat}
+                                </button>
+                            ))}
+                        </div>
                     </div>
+                    {searchTerm && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">Resultados para:</span>
+                            <span className="font-bold text-sm bg-gray-100 px-3 py-1 rounded-full flex items-center gap-2">
+                                "{searchTerm}"
+                                <button onClick={() => setSearchTerm('')} className="text-gray-400 hover:text-black">
+                                    &times;
+                                </button>
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Product Grid */}
@@ -183,11 +217,23 @@ const CatalogPage: React.FC = () => {
                 {filteredProducts.length === 0 && (
                     <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                         <p className="text-gray-400 font-display text-xl uppercase tracking-wide">Sin stock disponible</p>
-                        <Button variant="outline" className="mt-4" onClick={() => setFilter('All')}>Ver todo el catálogo</Button>
+                        <Button variant="outline" className="mt-4" onClick={() => { setFilter('All'); setSearchTerm(''); }}>Ver todo el catálogo</Button>
                     </div>
                 )}
             </div>
         </div>
+    );
+};
+
+const CatalogPage: React.FC = () => {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        }>
+            <CatalogContent />
+        </Suspense>
     );
 };
 
