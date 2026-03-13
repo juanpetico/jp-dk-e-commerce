@@ -30,6 +30,10 @@ out/
 build
 dist
 
+# Logs de compilación
+*.log
+build_output.log
+build_error.log
 
 # Debug
 npm-debug.log*
