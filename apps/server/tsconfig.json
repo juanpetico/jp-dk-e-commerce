@@ -34,6 +34,8 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
-  }
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "prisma/**/*"],
+  "exclude": ["node_modules", "dist", "retro_assign.ts", "audit_coupons.ts", "fix_coupons.ts", "update_config_v2.ts", "src/test-register.ts"]
 }
