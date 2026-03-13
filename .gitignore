@@ -43,3 +43,8 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Logs
+*.log
+build_error.log
+build_output.log
