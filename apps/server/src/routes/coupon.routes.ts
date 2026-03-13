@@ -3,7 +3,7 @@ import { Router } from "express";
 import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
-const router: ExpressRouter = Router();
+const router: Router = Router();
 
 // Todas las rutas de cupones requieren autenticación por ahora
 router.use(authenticate);

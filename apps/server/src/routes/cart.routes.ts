@@ -2,7 +2,7 @@ import { Router } from "express";
 import { cartController } from "../controllers/cart.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 
-const router = Router();
+const router: Router = Router();
 
 router.use(authenticate);
 

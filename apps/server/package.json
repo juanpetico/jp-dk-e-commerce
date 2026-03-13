@@ -17,7 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "^6.2.0",
+    "@prisma/client": "^7.5.0",
     "@prisma/config": "^7.5.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
@@ -34,7 +34,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.15.3",
-    "prisma": "^6.2.0",
+    "prisma": "^7.5.0",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

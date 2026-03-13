@@ -7,7 +7,7 @@ import {
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
 
-const router: ExpressRouter = Router();
+const router: Router = Router();
 
 // Public routes
 router.get("/products", productController.getAllProducts);
