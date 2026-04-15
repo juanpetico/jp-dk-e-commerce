@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
-import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye } from 'lucide-react';
+import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag } from 'lucide-react';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
 import { Coupon, Order } from '@/types';
@@ -16,6 +16,7 @@ export default function MarketingPage() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
     const [config, setConfig] = useState<StoreConfig | null>(null);
@@ -30,6 +31,7 @@ export default function MarketingPage() {
 
     const loadData = useCallback(async () => {
         try {
+            setError(null);
             setLoading(true);
             const [couponsData, ordersData, configData] = await Promise.all([
                 fetchAllCoupons(),
@@ -39,9 +41,9 @@ export default function MarketingPage() {
             setCoupons(couponsData);
             setOrders(ordersData);
             setConfig(configData);
-        } catch (error) {
-            console.error('Error loading marketing data:', error);
-            toast.error('Error al cargar datos de marketing');
+        } catch (err) {
+            setError('Error al cargar datos de marketing');
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -75,6 +77,19 @@ export default function MarketingPage() {
             const { vipThreshold, vipRewardMessage, ...cleanCouponData } = couponData;
 
             if (editingCoupon) {
+                const originalSnapshot = {
+                    code: editingCoupon.code,
+                    type: editingCoupon.type,
+                    value: editingCoupon.value,
+                    description: editingCoupon.description,
+                    minAmount: editingCoupon.minAmount,
+                    maxUses: editingCoupon.maxUses,
+                    maxUsesPerUser: editingCoupon.maxUsesPerUser,
+                    startDate: editingCoupon.startDate,
+                    endDate: editingCoupon.endDate,
+                    isActive: editingCoupon.isActive,
+                };
+
                 await updateCoupon(editingCoupon.id, cleanCouponData);
 
                 // Sync with Shop Config if it's a Fidelity Coupon
@@ -82,22 +97,35 @@ export default function MarketingPage() {
                     const isWelcome = config.welcomeCouponCode && editingCoupon.code.toUpperCase() === config.welcomeCouponCode.toUpperCase();
                     const isVIP = config.vipCouponCode && editingCoupon.code.toUpperCase() === config.vipCouponCode.toUpperCase();
 
-                    if (isWelcome) {
-                        await shopConfigService.updateConfig({
-                            welcomeCouponCode: cleanCouponData.code?.toUpperCase(),
-                            welcomeCouponType: cleanCouponData.type,
-                            welcomeCouponValue: cleanCouponData.value
-                        });
-                        toast.info('Configuración de bienvenida actualizada');
-                    } else if (isVIP) {
-                        await shopConfigService.updateConfig({
-                            vipCouponCode: cleanCouponData.code?.toUpperCase(),
-                            vipCouponType: cleanCouponData.type,
-                            vipCouponValue: cleanCouponData.value,
-                            vipThreshold: vipThreshold,
-                            vipRewardMessage: vipRewardMessage
-                        });
-                        toast.info('Configuración VIP actualizada');
+                    if (isWelcome || isVIP) {
+                        try {
+                            if (isWelcome) {
+                                await shopConfigService.updateConfig({
+                                    welcomeCouponCode: cleanCouponData.code?.toUpperCase(),
+                                    welcomeCouponType: cleanCouponData.type,
+                                    welcomeCouponValue: cleanCouponData.value
+                                });
+                                toast.info('Configuración de bienvenida actualizada');
+                            } else if (isVIP) {
+                                await shopConfigService.updateConfig({
+                                    vipCouponCode: cleanCouponData.code?.toUpperCase(),
+                                    vipCouponType: cleanCouponData.type,
+                                    vipCouponValue: cleanCouponData.value,
+                                    vipThreshold: vipThreshold,
+                                    vipRewardMessage: vipRewardMessage
+                                });
+                                toast.info('Configuración VIP actualizada');
+                            }
+                        } catch (syncError) {
+                            try {
+                                await updateCoupon(editingCoupon.id, originalSnapshot);
+                                toast.error('Error al sincronizar configuración. Los cambios en el cupón fueron revertidos.');
+                            } catch (rollbackError) {
+                                toast.error('Error crítico: no se pudo revertir el cupón. Recarga la página y verifica manualmente.', { duration: 10000 });
+                            }
+                            loadData();
+                            return;
+                        }
                     }
                 }
 
@@ -143,6 +171,19 @@ export default function MarketingPage() {
         );
     }
 
+    if (error && !loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <AlertTriangle className="h-12 w-12 text-destructive" />
+                <p className="text-muted-foreground text-center">{error}</p>
+                <Button onClick={loadData} variant="outline" className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Reintentar
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className=" animate-fade-in text-foreground pb-20">
             <div className="flex justify-between items-center">
@@ -165,6 +206,22 @@ export default function MarketingPage() {
             <TriggersConfigCard />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {!loading && !error && coupons.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
+                    <div className="p-4 rounded-full bg-muted">
+                      <Tag className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-lg">Sin cupones todavía</p>
+                      <p className="text-muted-foreground text-sm">Crea tu primer cupón para empezar a medir resultados.</p>
+                    </div>
+                    <Button onClick={() => { setEditingCoupon(null); setIsModalOpen(true); }} className="gap-2">
+                      <PlusCircle className="h-4 w-4" />
+                      Crear primer cupón
+                    </Button>
+                  </div>
+                ) : (
+                <>
                 {coupons.map(coupon => {
                     const stats = getCouponStats(coupon.id);
                     const isExpired = coupon.endDate && new Date(coupon.endDate) < new Date();
@@ -173,8 +230,18 @@ export default function MarketingPage() {
                     return (
                         <div
                             key={coupon.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Editar cupón ${coupon.code}`}
                             onClick={(e) => {
                                 if (window.getSelection()?.toString().length === 0) {
+                                    setEditingCoupon(coupon);
+                                    setIsModalOpen(true);
+                                }
+                            }}
+                            onKeyDown={(e) => {
+                                if ((e.key === 'Enter' || e.key === ' ') && window.getSelection()?.toString().length === 0) {
+                                    e.preventDefault();
                                     setEditingCoupon(coupon);
                                     setIsModalOpen(true);
                                 }
@@ -248,7 +315,8 @@ export default function MarketingPage() {
                                             handleDeleteCoupon(coupon.id, coupon.code);
                                         }}
                                         className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
-                                        title="Eliminar campaña"
+                                        title="Eliminar cupón"
+                                        aria-label={`Eliminar cupón ${coupon.code}`}
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -260,6 +328,7 @@ export default function MarketingPage() {
                                         }}
                                         className="p-1.5 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
                                         title="Ver detalles"
+                                        aria-label={`Ver detalles de cupón ${coupon.code}`}
                                     >
                                         <Eye className="w-4 h-4" />
                                     </button>
@@ -269,6 +338,7 @@ export default function MarketingPage() {
                     );
                 })}
 
+                {coupons.length > 0 && (
                 <button
                     onClick={() => {
                         setEditingCoupon(null);
@@ -281,6 +351,9 @@ export default function MarketingPage() {
                     </div>
                     <span className="font-black text-xs uppercase tracking-widest">Nuevo Cupón</span>
                 </button>
+                )}
+                </>
+                )}
             </div>
 
             <CouponModal
