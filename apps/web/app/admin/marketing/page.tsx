@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
-import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag } from 'lucide-react';
+import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
 import { Coupon, Order } from '@/types';
@@ -10,7 +10,10 @@ import { toast } from 'sonner';
 import CouponModal from '@/components/admin/CouponModal';
 import TriggersConfigCard from '@/components/admin/TriggersConfigCard';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
-import SonnerConfirm from '@/components/ui/SonnerConfirm'; // Import SonnerConfirm
+import SonnerConfirm from '@/components/ui/SonnerConfirm';
+import { getCouponStatus, getCouponStats } from '@/lib/coupon-utils';
+
+const PAGE_SIZE = 9;
 
 export default function MarketingPage() {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -21,6 +24,16 @@ export default function MarketingPage() {
     const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
     const [config, setConfig] = useState<StoreConfig | null>(null);
 
+    // Filter / sort / pagination state
+    const [searchRaw, setSearchRaw] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState<'ALL' | 'ACTIVO' | 'EXPIRADO' | 'INACTIVO'>('ALL');
+    const [filterType, setFilterType] = useState<'ALL' | 'PERCENTAGE' | 'FIXED_AMOUNT'>('ALL');
+    const [sortKey, setSortKey] = useState<'code' | 'usedCount' | 'roi' | 'revenue' | 'createdAt'>('createdAt');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    const [page, setPage] = useState(1);
+    const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
     // Confirmation Dialog State
     const [confirmDialog, setConfirmDialog] = useState({
         isOpen: false,
@@ -28,6 +41,17 @@ export default function MarketingPage() {
         description: '',
         onConfirm: () => { }
     });
+
+    // Debounce searchRaw → searchQuery
+    useEffect(() => {
+        const t = setTimeout(() => setSearchQuery(searchRaw), 300);
+        return () => clearTimeout(t);
+    }, [searchRaw]);
+
+    // Reset page when filters/sort change
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery, filterStatus, filterType, sortKey, sortDir]);
 
     const loadData = useCallback(async () => {
         try {
@@ -57,23 +81,44 @@ export default function MarketingPage() {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);
     };
 
-    const getCouponStats = (couponId: string) => {
-        const couponOrders = orders.filter(o => o.couponId === couponId);
-        const revenue = couponOrders.reduce((sum, o) => sum + o.total, 0);
-        const totalDiscount = couponOrders.reduce((sum, o) => sum + o.discountAmount, 0);
-        const roi = totalDiscount > 0 ? (revenue / totalDiscount).toFixed(1) : '0';
+    // Enriched coupons with status and stats
+    const enrichedCoupons = useMemo(() =>
+        coupons.map(c => ({
+            ...c,
+            _status: getCouponStatus(c),
+            _stats: getCouponStats(c.id, orders),
+        })),
+    [coupons, orders]);
 
-        return {
-            revenue,
-            totalDiscount,
-            roi,
-            count: couponOrders.length
-        };
-    };
+    const filteredSorted = useMemo(() => {
+        let r = enrichedCoupons;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            r = r.filter(c => c.code.toLowerCase().includes(q) || (c.description ?? '').toLowerCase().includes(q));
+        }
+        if (filterStatus !== 'ALL') r = r.filter(c => c._status === filterStatus);
+        if (filterType !== 'ALL') r = r.filter(c => c.type === filterType);
+        return [...r].sort((a, b) => {
+            const getVal = (x: typeof a) => {
+                if (sortKey === 'code') return x.code;
+                if (sortKey === 'usedCount') return x.usedCount;
+                if (sortKey === 'roi') return x._stats.roi ?? -Infinity;
+                if (sortKey === 'revenue') return x._stats.revenue;
+                return x.id; // createdAt proxy (CUID is time-ordered)
+            };
+            const [va, vb] = [getVal(a), getVal(b)];
+            return (va < vb ? -1 : va > vb ? 1 : 0) * (sortDir === 'asc' ? 1 : -1);
+        });
+    }, [enrichedCoupons, searchQuery, filterStatus, filterType, sortKey, sortDir]);
+
+    const paginated = useMemo(() =>
+        filteredSorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredSorted, page]);
+
+    const totalPages = Math.ceil(filteredSorted.length / PAGE_SIZE);
 
     const handleSaveCoupon = async (couponData: Partial<Coupon> & { vipThreshold?: number; vipRewardMessage?: string }) => {
         try {
-            // Extract VIP specific fields to avoid sending them to the Coupon API
             const { vipThreshold, vipRewardMessage, ...cleanCouponData } = couponData;
 
             if (editingCoupon) {
@@ -92,7 +137,6 @@ export default function MarketingPage() {
 
                 await updateCoupon(editingCoupon.id, cleanCouponData);
 
-                // Sync with Shop Config if it's a Fidelity Coupon
                 if (config) {
                     const isWelcome = config.welcomeCouponCode && editingCoupon.code.toUpperCase() === config.welcomeCouponCode.toUpperCase();
                     const isVIP = config.vipCouponCode && editingCoupon.code.toUpperCase() === config.vipCouponCode.toUpperCase();
@@ -150,10 +194,16 @@ export default function MarketingPage() {
             toast.error('No se pudo eliminar el cupón');
         } finally {
             setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            setDeletingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
         }
     };
 
     const handleDeleteCoupon = (id: string, code: string) => {
+        setDeletingIds(prev => new Set(prev).add(id));
         setConfirmDialog({
             isOpen: true,
             title: '¿Eliminar cupón?',
@@ -161,6 +211,16 @@ export default function MarketingPage() {
             onConfirm: () => confirmDelete(id)
         });
     };
+
+    const clearFilters = () => {
+        setSearchRaw('');
+        setFilterStatus('ALL');
+        setFilterType('ALL');
+        setSortKey('createdAt');
+        setSortDir('desc');
+    };
+
+    const hasActiveFilters = searchRaw !== '' || filterStatus !== 'ALL' || filterType !== 'ALL';
 
     if (loading && coupons.length === 0) {
         return (
@@ -205,6 +265,48 @@ export default function MarketingPage() {
 
             <TriggersConfigCard />
 
+            {/* Search and filter bar */}
+            {coupons.length > 0 && (
+                <div className="flex flex-wrap gap-3 items-center mb-6">
+                    <div className="relative flex-1 min-w-[180px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Buscar cupón..."
+                            value={searchRaw}
+                            onChange={e => setSearchRaw(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                    </div>
+                    <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        <option value="ALL">Todos los estados</option>
+                        <option value="ACTIVO">Activo</option>
+                        <option value="INACTIVO">Inactivo</option>
+                        <option value="EXPIRADO">Expirado</option>
+                    </select>
+                    <select value={filterType} onChange={e => setFilterType(e.target.value as typeof filterType)}
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        <option value="ALL">Todos los tipos</option>
+                        <option value="PERCENTAGE">Porcentaje</option>
+                        <option value="FIXED_AMOUNT">Monto fijo</option>
+                    </select>
+                    <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        <option value="createdAt">Más reciente</option>
+                        <option value="code">Código</option>
+                        <option value="usedCount">Más usado</option>
+                        <option value="roi">Mayor ROI</option>
+                        <option value="revenue">Mayor ingreso</option>
+                    </select>
+                    <button onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                        className="p-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                        title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}>
+                        {sortDir === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                    </button>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {!loading && !error && coupons.length === 0 ? (
                   <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
@@ -220,12 +322,25 @@ export default function MarketingPage() {
                       Crear primer cupón
                     </Button>
                   </div>
+                ) : filteredSorted.length === 0 && hasActiveFilters ? (
+                    <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
+                        <div className="p-4 rounded-full bg-muted">
+                            <Search className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        <div className="text-center">
+                            <p className="font-semibold text-lg">No hay cupones que coincidan</p>
+                            <p className="text-muted-foreground text-sm">Intenta con otros filtros o limpia la búsqueda.</p>
+                        </div>
+                        <Button onClick={clearFilters} variant="outline" className="gap-2">
+                            Limpiar filtros
+                        </Button>
+                    </div>
                 ) : (
                 <>
-                {coupons.map(coupon => {
-                    const stats = getCouponStats(coupon.id);
-                    const isExpired = coupon.endDate && new Date(coupon.endDate) < new Date();
-                    const status = !coupon.isActive ? 'INACTIVO' : isExpired ? 'EXPIRADO' : 'ACTIVO';
+                {paginated.map(coupon => {
+                    const stats = coupon._stats;
+                    const status = coupon._status;
+                    const isDeleting = deletingIds.has(coupon.id);
 
                     return (
                         <div
@@ -277,7 +392,9 @@ export default function MarketingPage() {
                                             <TrendingUp className="w-3 h-3" />
                                             <span className="text-[9px] font-black uppercase tracking-widest">ROI</span>
                                         </div>
-                                        <p className="text-xl font-black text-primary font-mono">{stats.roi}x</p>
+                                        <p className="text-xl font-black text-primary font-mono">
+                                            {stats.roi === null ? '—' : `${stats.roi.toFixed(1)}x`}
+                                        </p>
                                     </div>
                                     <div className="bg-muted/50 p-3 rounded-lg border border-border/50">
                                         <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -314,11 +431,15 @@ export default function MarketingPage() {
                                             e.stopPropagation();
                                             handleDeleteCoupon(coupon.id, coupon.code);
                                         }}
-                                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
+                                        disabled={isDeleting}
+                                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="Eliminar cupón"
                                         aria-label={`Eliminar cupón ${coupon.code}`}
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        {isDeleting
+                                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                                            : <Trash2 className="w-4 h-4" />
+                                        }
                                     </button>
                                     <button
                                         onClick={(e) => {
@@ -338,7 +459,8 @@ export default function MarketingPage() {
                     );
                 })}
 
-                {coupons.length > 0 && (
+                {/* "Add coupon" card only on last page or when no pages */}
+                {coupons.length > 0 && (totalPages <= 1 || page === totalPages) && (
                 <button
                     onClick={() => {
                         setEditingCoupon(null);
@@ -355,6 +477,21 @@ export default function MarketingPage() {
                 </>
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4 mt-8">
+                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                        className="p-2 rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-muted-foreground font-medium">Página {page} de {totalPages}</span>
+                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                        className="p-2 rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
 
             <CouponModal
                 isOpen={isModalOpen}
