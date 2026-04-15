@@ -40,6 +40,28 @@ export const addressValidation = [
     body("isDefault").optional().isBoolean(),
 ];
 
+const SESSION_COOKIE = "token";
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const setSessionCookie = (res: Response, token: string) => {
+    res.cookie(SESSION_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_MAX_AGE_MS,
+        path: "/",
+    });
+};
+
+const clearSessionCookie = (res: Response) => {
+    res.clearCookie(SESSION_COOKIE, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+    });
+};
+
 // Controller functions
 export const userController = {
     async register(req: Request, res: Response, next: NextFunction) {
@@ -58,10 +80,15 @@ export const userController = {
             const { email, password, name } = req.body;
             const result = await authService.register({ email, password, name });
 
+            setSessionCookie(res, result.token);
+
             res.status(201).json({
                 success: true,
                 message: "Usuario registrado exitosamente",
-                data: result,
+                data: {
+                    user: result.user,
+                    welcomeCoupon: result.welcomeCoupon,
+                },
             });
         } catch (error) {
             next(error);
@@ -84,11 +111,22 @@ export const userController = {
             const { email, password } = req.body;
             const result = await authService.login(email, password);
 
+            setSessionCookie(res, result.token);
+
             res.json({
                 success: true,
                 message: "Inicio de sesión exitoso",
-                data: result,
+                data: { user: result.user },
             });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async logout(_req: Request, res: Response, next: NextFunction) {
+        try {
+            clearSessionCookie(res);
+            res.json({ success: true, message: "Sesión cerrada" });
         } catch (error) {
             next(error);
         }

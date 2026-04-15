@@ -201,20 +201,10 @@ export const fetchProductBySlug = async (slug: string): Promise<Product | undefi
 };
 
 export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    // Simplistic token retrieval, ideally use a helper or the context if passed, 
-    // but services usually simple fetch wrappers. 
-    // Assuming backend handles auth via Header "Authorization: Bearer <token>"
-
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const res = await fetch(`${API_URL}/products`, {
         method: 'POST',
-        headers,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productData),
     });
 
@@ -228,16 +218,10 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
 };
 
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const res = await fetch(`${API_URL}/products/${id}`, {
         method: 'PUT',
-        headers,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productData),
     });
 
@@ -251,16 +235,9 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const res = await fetch(`${API_URL}/products/${id}`, {
         method: 'DELETE',
-        headers,
+        credentials: 'include',
     });
 
     if (!res.ok) {

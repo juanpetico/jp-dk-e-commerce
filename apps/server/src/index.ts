@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { errorHandler } from "./middleware/error-handler.js";
 
@@ -60,7 +61,8 @@ const createServer = (): Express => {
     app
         .disable("x-powered-by")
         .use(express.json({ limit: '1mb' }))
-        .use(express.urlencoded({ extended: true, limit: '500kb', parameterLimit: 50 }));
+        .use(express.urlencoded({ extended: true, limit: '500kb', parameterLimit: 50 }))
+        .use(cookieParser());
 
     // Global rate limit
     app.use("/api", globalLimiter);

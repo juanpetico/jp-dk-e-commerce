@@ -2,17 +2,7 @@ import { Order, OrderStatus } from '../types';
 
 const API_URL = 'http://localhost:5001/api';
 
-// Helper para obtener el token de autenticación
-const getAuthHeaders = (): HeadersInit => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
+const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
 /**
  * Obtener todas las órdenes (solo para admin)
@@ -44,7 +34,8 @@ export const fetchAllOrders = async (filters?: {
         const url = `${API_URL}/orders/all/admin${queryString ? `?${queryString}` : ''}`;
 
         const res = await fetch(url, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -65,7 +56,8 @@ export const fetchAllOrders = async (filters?: {
 export const fetchUserOrders = async (): Promise<Order[]> => {
     try {
         const res = await fetch(`${API_URL}/orders`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -86,7 +78,8 @@ export const fetchUserOrders = async (): Promise<Order[]> => {
 export const fetchOrderById = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -108,7 +101,8 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
             method: 'PUT',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ status }),
         });
 
@@ -132,7 +126,8 @@ export const markOrderAsPaid = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/pay`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -155,7 +150,8 @@ export const cancelOrder = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -203,7 +199,8 @@ export const validateCoupon = async (code: string, total: number): Promise<any> 
     try {
         const res = await fetch(`${API_URL}/coupons/validate`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ code, total }),
         });
 
@@ -232,7 +229,8 @@ export const createOrder = async (
     try {
         const res = await fetch(`${API_URL}/orders`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ items, shippingAddressId, billingAddressId, couponCode }),
         });
 

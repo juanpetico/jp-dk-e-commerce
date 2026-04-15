@@ -15,16 +15,10 @@ export const fetchCategories = async (): Promise<Category[]> => {
 };
 
 export const createCategory = async (name: string): Promise<Category> => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const res = await fetch(`${API_URL}/categories`, {
         method: 'POST',
-        headers,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
     });
 

@@ -16,18 +16,10 @@ export const authenticate = async (
     next: NextFunction
 ) => {
     try {
-        // Get token from header
-        const authHeader = req.headers.authorization;
-
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            throw new AppError("No token provided", 401);
-        }
-
-        const parts = authHeader.split(" ");
-        const token = parts[1];
+        const token = (req as Request & { cookies?: { token?: string } }).cookies?.token;
 
         if (!token) {
-            throw new AppError("Invalid token format", 401);
+            throw new AppError("No token provided", 401);
         }
 
         // Verify token

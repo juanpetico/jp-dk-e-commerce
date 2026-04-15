@@ -8,7 +8,7 @@ interface UserContextType {
     user: User | null;
     login: (email: string, password: string) => Promise<{ success: boolean; role?: string }>;
     register: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; welcomeCoupon?: any }>;
-    logout: () => void;
+    logout: () => Promise<void>;
     isAuthenticated: boolean;
     updateProfile: (data: Partial<User>) => Promise<boolean>;
     addAddress: (address: Omit<Address, 'id'>) => Promise<boolean>;
@@ -17,6 +17,8 @@ interface UserContextType {
     refreshUser: () => Promise<void>;
 }
 
+const API_URL = 'http://localhost:5001/api';
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -24,30 +26,24 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(true);
 
     const checkAuth = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            const response = await fetch('http://localhost:5001/api/users/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const response = await fetch(`${API_URL}/users/profile`, {
+                credentials: 'include',
             });
 
-            const data = await response.json();
+            if (!response.ok) {
+                setUser(null);
+                return;
+            }
 
+            const data = await response.json();
             if (data.success) {
                 setUser(data.data);
             } else {
-                localStorage.removeItem('token');
                 setUser(null);
             }
         } catch (error) {
             console.error('Error checking auth:', error);
-            localStorage.removeItem('token');
             setUser(null);
         } finally {
             setIsLoading(false);
@@ -60,11 +56,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const login = async (email: string, password: string): Promise<{ success: boolean; role?: string }> => {
         try {
-            const response = await fetch('http://localhost:5001/api/auth/login', {
+            const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
 
@@ -76,8 +71,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             if (data.success) {
-                localStorage.setItem('token', data.data.token);
-                document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
                 setUser(data.data.user);
                 toast.success('Sesión iniciada correctamente');
                 return { success: true, role: data.data.user.role };
@@ -93,11 +86,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const register = async (email: string, password: string, name: string, phone?: string): Promise<{ success: boolean; welcomeCoupon?: any }> => {
         try {
             const trimmedEmail = email.trim();
-            const response = await fetch('http://localhost:5001/api/auth/register', {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: trimmedEmail, password, name, phone }),
             });
 
@@ -109,8 +101,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             if (data.success) {
-                localStorage.setItem('token', data.data.token);
-                document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
                 setUser(data.data.user);
                 toast.success('Registro exitoso');
                 return { success: true, welcomeCoupon: data.data.welcomeCoupon };
@@ -123,24 +113,25 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    const logout = async () => {
+        try {
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
         setUser(null);
         toast.success('Sesión cerrada correctamente');
     };
 
     const updateProfile = async (data: Partial<User>): Promise<boolean> => {
-        const token = localStorage.getItem('token');
-        if (!token) return false;
-
         try {
-            const response = await fetch('http://localhost:5001/api/users/profile', {
+            const response = await fetch(`${API_URL}/users/profile`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
@@ -162,23 +153,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const addAddress = async (address: Omit<Address, 'id'>): Promise<boolean> => {
-        const token = localStorage.getItem('token');
-        if (!token) return false;
-
         try {
-            const response = await fetch('http://localhost:5001/api/users/address', {
+            const response = await fetch(`${API_URL}/users/address`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(address),
             });
 
             const resData = await response.json();
 
             if (resData.success) {
-                // Refresh profile to get updated addresses
                 checkAuth();
                 toast.success('Dirección agregada');
                 return true;
@@ -194,23 +179,17 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const updateAddress = async (id: string, address: Partial<Address>): Promise<boolean> => {
-        const token = localStorage.getItem('token');
-        if (!token) return false;
-
         try {
-            const response = await fetch(`http://localhost:5001/api/users/address/${id}`, {
+            const response = await fetch(`${API_URL}/users/address/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(address),
             });
 
             const resData = await response.json();
 
             if (resData.success) {
-                // Refresh profile to get updated addresses
                 checkAuth();
                 toast.success('Dirección actualizada');
                 return true;
@@ -226,21 +205,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const deleteAddress = async (id: string): Promise<boolean> => {
-        const token = localStorage.getItem('token');
-        if (!token) return false;
-
         try {
-            const response = await fetch(`http://localhost:5001/api/users/address/${id}`, {
+            const response = await fetch(`${API_URL}/users/address/${id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                credentials: 'include',
             });
 
             const resData = await response.json();
 
             if (resData.success) {
-                // Refresh profile to get updated addresses
                 checkAuth();
                 toast.success('Dirección eliminada');
                 return true;

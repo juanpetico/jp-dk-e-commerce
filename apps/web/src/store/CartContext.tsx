@@ -75,9 +75,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const loadCart = async () => {
             if (isAuthenticated && user) {
                 try {
-                    const token = localStorage.getItem('token');
-                    if (!token) return;
-                    const serverCart = await cartService.getCart(token);
+                    const serverCart = await cartService.getCart();
                     setCart(serverCart);
                 } catch (error) {
                     console.error("Failed to load cart from server", error);
@@ -106,36 +104,31 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // If user is logged in, sync with backend
         if (isAuthenticated) {
             try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    // Check local state availability before calling API strictly speaking, 
-                    // but server should also validate. For better UX, we check here.
-                    const existingItem = cart.find(item => item.id === product.id && item.selectedSize === size);
-                    const currentQty = existingItem ? existingItem.quantity : 0;
+                const existingItem = cart.find(item => item.id === product.id && item.selectedSize === size);
+                const currentQty = existingItem ? existingItem.quantity : 0;
 
-                    if (currentQty + quantity > availableStock) {
-                        toast.error(`Solo quedan ${availableStock} disponibles, revisa tu tienda!`);
-                        return false;
-                    }
-
-                    const newItem = await cartService.addItem(token, product.id, size, quantity);
-
-                    setCart((prev) => {
-                        const existingIdx = prev.findIndex(item => item.id === product.id && item.selectedSize === size);
-                        if (existingIdx >= 0) {
-                            const newCart = [...prev];
-                            newCart[existingIdx] = newItem;
-                            return newCart;
-                        }
-                        return [...prev, newItem];
-                    });
-
-                    if (wasEmpty) setIsOpen(true);
-                    return true;
+                if (currentQty + quantity > availableStock) {
+                    toast.error(`Solo quedan ${availableStock} disponibles, revisa tu tienda!`);
+                    return false;
                 }
+
+                const newItem = await cartService.addItem(product.id, size, quantity);
+
+                setCart((prev) => {
+                    const existingIdx = prev.findIndex(item => item.id === product.id && item.selectedSize === size);
+                    if (existingIdx >= 0) {
+                        const newCart = [...prev];
+                        newCart[existingIdx] = newItem;
+                        return newCart;
+                    }
+                    return [...prev, newItem];
+                });
+
+                if (wasEmpty) setIsOpen(true);
+                return true;
             } catch (error) {
                 console.error("Failed to add item to server cart", error);
-                return false; // Return false if server operation fails
+                return false;
             }
         }
 
@@ -175,13 +168,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const removeFromCart = async (productId: string, size: string) => {
         if (isAuthenticated) {
             try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    // We need cartItemId for backend.
-                    const itemToRemove = cart.find(item => item.id === productId && item.selectedSize === size);
-                    if (itemToRemove && itemToRemove.cartItemId) {
-                        await cartService.removeItem(token, itemToRemove.cartItemId);
-                    }
+                const itemToRemove = cart.find(item => item.id === productId && item.selectedSize === size);
+                if (itemToRemove && itemToRemove.cartItemId) {
+                    await cartService.removeItem(itemToRemove.cartItemId);
                 }
             } catch (error) {
                 console.error("Failed to remove item from server cart", error);
@@ -211,21 +200,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (isAuthenticated) {
             try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const itemToUpdate = cart.find(item => item.id === productId && item.selectedSize === size);
-                    if (itemToUpdate && itemToUpdate.cartItemId) {
-                        const updatedItem = await cartService.updateQuantity(token, itemToUpdate.cartItemId, quantity);
+                const itemToUpdate = cart.find(item => item.id === productId && item.selectedSize === size);
+                if (itemToUpdate && itemToUpdate.cartItemId) {
+                    const updatedItem = await cartService.updateQuantity(itemToUpdate.cartItemId, quantity);
 
-                        setCart((prev) =>
-                            prev.map((item) =>
-                                item.id === productId && item.selectedSize === size
-                                    ? updatedItem
-                                    : item
-                            )
-                        );
-                        return;
-                    }
+                    setCart((prev) =>
+                        prev.map((item) =>
+                            item.id === productId && item.selectedSize === size
+                                ? updatedItem
+                                : item
+                        )
+                    );
+                    return;
                 }
             } catch (error) {
                 console.error("Failed to update quantity on server", error);
