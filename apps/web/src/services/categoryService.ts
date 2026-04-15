@@ -15,7 +15,7 @@ export const fetchCategories = async (): Promise<Category[]> => {
 };
 
 export const createCategory = async (name: string): Promise<Category> => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     const headers: HeadersInit = {
         'Content-Type': 'application/json',

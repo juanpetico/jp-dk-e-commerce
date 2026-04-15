@@ -201,7 +201,7 @@ export const fetchProductBySlug = async (slug: string): Promise<Product | undefi
 };
 
 export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     // Simplistic token retrieval, ideally use a helper or the context if passed, 
     // but services usually simple fetch wrappers. 
@@ -228,7 +228,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
 };
 
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product> => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
@@ -251,7 +251,7 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     const headers: HeadersInit = {
         'Content-Type': 'application/json',

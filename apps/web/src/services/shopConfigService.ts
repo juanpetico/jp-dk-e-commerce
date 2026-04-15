@@ -1,7 +1,7 @@
 const API_URL = 'http://localhost:5001/api';
 
 const getAuthHeaders = (): HeadersInit => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
