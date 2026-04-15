@@ -1,21 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/store/CartContext';
 import { useUser } from '@/store/UserContext';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createOrder, validateCoupon, ORDER_STATUS_LABELS } from '@/services/orderService';
+import { createOrder, validateCoupon } from '@/services/orderService';
 import { fetchMyCoupons } from '@/services/couponService';
-import { Coupon, OrderStatus } from '@/types';
-import { ArrowLeft, Edit2, ShieldCheck, CreditCard, Truck, Check, Ticket, ChevronDown, ChevronUp } from 'lucide-react';
+import { shopConfigService } from '@/services/shopConfigService';
+import { OrderStatus } from '@/types';
+import { Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { LoyaltyModal } from '@/components/ui/LoyaltyModal';
+import { CheckoutSummary, PaymentMethodSelector, OrderConfirmation } from '@/components/checkout';
+
+const SHIPPING_FALLBACK = { baseShippingCost: 3990, freeShippingThreshold: 50000 };
 
 export default function CheckoutPage() {
     const { cart, cartTotal, buyNowItem, appliedCoupon, setAppliedCoupon, clearCart } = useCart();
     const { user, isAuthenticated, refreshUser } = useUser();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const isBuyNow = searchParams.get('buyNow') === 'true';
+
     const [paymentMethod, setPaymentMethod] = useState('mercadopago');
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -26,76 +33,53 @@ export default function CheckoutPage() {
     const [snapshotDiscount, setSnapshotDiscount] = useState(0);
     const [snapshotStatus, setSnapshotStatus] = useState<OrderStatus | null>(null);
     const [couponCode, setCouponCode] = useState(appliedCoupon?.code || '');
-    // We already have appliedCoupon from context, but we keep a local setter for convenience in this page if needed, 
-    // although it's better to use the context one.
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
     const [showVIPModal, setShowVIPModal] = useState(false);
     const [userCoupons, setUserCoupons] = useState<any[]>([]);
     const [showWallet, setShowWallet] = useState(false);
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const isBuyNow = searchParams.get('buyNow') === 'true';
+    const [shopConfig, setShopConfig] = useState(SHIPPING_FALLBACK);
 
-    // Redirect if not authenticated or empty cart (optional, but good UX)
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isAuthenticated && !user) {
             const redirectUrl = isBuyNow ? '/checkout?buyNow=true' : '/checkout';
             router.push(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
-        } else if (isAuthenticated) {
-            // Cargar cupones de la billetera si el usuario está autenticado
-            const loadWallet = async () => {
-                try {
-                    const data = await fetchMyCoupons();
-                    setUserCoupons(data);
-                } catch (error) {
-                    console.error("Error loading wallet coupons:", error);
-                }
-            };
-            loadWallet();
+            return;
+        }
+        if (isAuthenticated) {
+            fetchMyCoupons().then(setUserCoupons).catch(() => {});
+            shopConfigService.getConfig()
+                .then(cfg => setShopConfig({
+                    baseShippingCost: cfg.baseShippingCost,
+                    freeShippingThreshold: cfg.freeShippingThreshold,
+                }))
+                .catch(() => {}); // mantiene fallback
         }
     }, [isAuthenticated, user, router, isBuyNow]);
 
-    // Addresses
     const defaultAddress = user?.addresses?.find(a => a.isDefault) || user?.addresses?.[0];
     const shippingAddressId = defaultAddress?.id;
     const billingAddressId = defaultAddress?.id;
-
-    const contactEmail = user?.email || "";
-
-    // Formatted Address String
     const formattedAddress = defaultAddress
         ? `${defaultAddress.name}, ${defaultAddress.rut || ''}, ${defaultAddress.street}, ${defaultAddress.comuna}, ${defaultAddress.country}, ${defaultAddress.phone}`
-        : "No tienes direcciones guardadas. Por favor agrega una.";
+        : 'No tienes direcciones guardadas. Por favor agrega una.';
 
-    const shippingCost = 3990;
-
-    // Effective items logic: use buyNowItem if isBuyNow flag is set
     const effectiveItems = (isBuyNow && buyNowItem) ? [buyNowItem] : cart;
-    const effectiveTotal = (isBuyNow && buyNowItem)
-        ? buyNowItem.price * buyNowItem.quantity
-        : cartTotal;
+    const effectiveTotal = (isBuyNow && buyNowItem) ? buyNowItem.price * buyNowItem.quantity : cartTotal;
 
-    // Coupon discount calculation
     let couponDiscount = 0;
     if (appliedCoupon) {
-        if (appliedCoupon.type === 'PERCENTAGE') {
-            // CLP Standard rounding
-            couponDiscount = Math.round(effectiveTotal * (appliedCoupon.value / 100));
-        } else {
-            couponDiscount = Math.min(appliedCoupon.value, effectiveTotal);
-        }
+        couponDiscount = appliedCoupon.type === 'PERCENTAGE'
+            ? Math.round(effectiveTotal * (appliedCoupon.value / 100))
+            : Math.min(appliedCoupon.value, effectiveTotal);
     }
 
     const netAmount = effectiveTotal - couponDiscount;
-    const taxes = 0;
-    const finalTotal = netAmount + taxes + shippingCost;
-
-    const displayCart = effectiveItems;
-    const displayTotal = effectiveTotal;
+    const isFreeShipping = effectiveTotal >= shopConfig.freeShippingThreshold;
+    const shippingCost = isFreeShipping ? 0 : shopConfig.baseShippingCost;
+    const finalTotal = netAmount + shippingCost;
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return;
-
         setIsValidatingCoupon(true);
         try {
             const coupon = await validateCoupon(couponCode, effectiveTotal);
@@ -103,7 +87,7 @@ export default function CheckoutPage() {
             toast.success(`Cupón "${coupon.code}" aplicado correctamente`);
         } catch (error: any) {
             setAppliedCoupon(null);
-            toast.error(error.message || "Cupón inválido");
+            toast.error(error.message || 'Cupón inválido');
         } finally {
             setIsValidatingCoupon(false);
         }
@@ -115,280 +99,88 @@ export default function CheckoutPage() {
     };
 
     const handlePayment = async () => {
-        if (effectiveItems.length === 0) {
-            toast.error("El carrito está vacío");
-            return;
-        }
-
-        if (!shippingAddressId) {
-            toast.error("Debes agregar una dirección de envío en tu perfil");
-            return;
-        }
-
+        if (effectiveItems.length === 0) { toast.error('El carrito está vacío'); return; }
+        if (!shippingAddressId) { toast.error('Debes agregar una dirección de envío en tu perfil'); return; }
         setIsProcessing(true);
         try {
-            // Prepare items for backend
             const orderItems = effectiveItems.map(item => ({
                 productId: item.id,
                 quantity: item.quantity,
-                size: item.selectedSize
+                size: item.selectedSize,
             }));
-
-            // Create Order
-            const order = await createOrder(
-                orderItems,
-                shippingAddressId,
-                billingAddressId,
-                appliedCoupon?.code
-            );
-
-            // Refresh user to get the new order in the list
+            const order = await createOrder(orderItems, shippingAddressId, billingAddressId, appliedCoupon?.code);
             await refreshUser();
-
             setOrderId(order.id);
             setOrderedItems(effectiveItems);
             setSnapshotTotal(finalTotal);
             setSnapshotDiscount(couponDiscount);
             setSnapshotStatus(order.status);
-
-            if (order.earnedCoupon) {
-                setEarnedCoupon(order.earnedCoupon);
-                setShowVIPModal(true);
-            }
+            if (order.earnedCoupon) { setEarnedCoupon(order.earnedCoupon); setShowVIPModal(true); }
             setIsSuccess(true);
-            toast.success("Pedido creado exitosamente");
-
-            // Clear cart and global coupon
+            toast.success('Pedido creado exitosamente');
             clearCart();
-
         } catch (error: any) {
-            console.error(error);
-            toast.error(error.message || "Error al procesar el pedido");
+            toast.error(error.message || 'Error al procesar el pedido');
         } finally {
             setIsProcessing(false);
         }
     };
 
-    if (!user) return null; // Wait for auth load
+    if (!user) return null;
 
     if (isSuccess) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4">
-                <LoyaltyModal
-                    isOpen={showVIPModal}
-                    onClose={() => setShowVIPModal(false)}
-                    type="VIP"
-                    couponCode={earnedCoupon?.code || ''}
-                    message={earnedCoupon?.message}
-                />
-                <div className="max-w-xl w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
-                    <div className="flex justify-center">
-                        <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-4">
-                            <Check className="w-16 h-16 text-green-600 dark:text-green-400" />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <h1 className="font-display text-4xl font-bold tracking-tight uppercase italic">¡Gracias por tu compra!</h1>
-                        <p className="text-muted-foreground font-medium">Tu pedido #{orderId} ha sido procesado con éxito.</p>
-                    </div>
-
-                    {/* Enhanced Order Info Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-muted/30 rounded-xl p-6 border border-border text-left space-y-4">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Detalles del Pedido</h3>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground font-medium">Estado</span>
-                                <span className="font-bold text-amber-600 dark:text-amber-400 capitalize">
-                                    {snapshotStatus ? ORDER_STATUS_LABELS[snapshotStatus] : ''}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground font-medium">Total Pagado</span>
-                                <span className="font-bold font-mono">${snapshotTotal.toLocaleString('es-CL')}</span>
-                            </div>
-                            {snapshotDiscount > 0 && (
-                                <div className="flex justify-between text-sm text-primary font-bold">
-                                    <span>Descuento aplicado</span>
-                                    <span>-${snapshotDiscount.toLocaleString('es-CL')}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="bg-muted/30 rounded-xl p-6 border border-border text-left">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">Resumen de Productos</h3>
-                            <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
-                                {orderedItems.map(item => (
-                                    <div key={`${item.id}-${item.selectedSize}`} className="flex justify-between items-center gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-10 bg-muted rounded overflow-hidden flex-shrink-0 border border-border/50">
-                                                <img src={item.images?.[0]?.url} className="w-full h-full object-cover" alt="" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold text-foreground truncate max-w-[120px] uppercase">{item.name}</p>
-                                                <p className="text-[9px] text-muted-foreground font-medium uppercase">{item.selectedSize} x {item.quantity}</p>
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] font-mono font-bold">${(item.price * item.quantity).toLocaleString('es-CL')}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {earnedCoupon && (
-                        <div className="p-5 bg-primary/10 border border-primary/20 rounded-xl animate-bounce-subtle flex flex-col items-center">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Ticket className="w-6 h-6 text-primary" />
-                                <span className="font-black text-primary tracking-tighter text-lg uppercase italic">¡NUEVO CUPÓN DESBLOQUEADO!</span>
-                            </div>
-                            <p className="text-sm font-medium text-foreground text-center mb-3">{earnedCoupon.message}</p>
-                            <div className="bg-background border-2 border-dashed border-primary/40 px-6 py-3 rounded-lg flex items-center gap-4">
-                                <span className="text-2xl font-black text-primary font-mono tracking-tighter">{earnedCoupon.code}</span>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(earnedCoupon.code);
-                                        toast.success("Código copiado al portapapeles");
-                                    }}
-                                    className="p-1 hover:text-primary transition-colors"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <Button
-                            onClick={() => router.push('/orders')}
-                            className="flex-1 h-14 text-sm font-black uppercase tracking-widest shadow-xl hover:translate-y-0.5 transition-all"
-                        >
-                            Ver mis pedidos
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => router.push('/')}
-                            className="flex-1 h-14 text-sm font-black uppercase tracking-widest border-2 hover:bg-muted/50 transition-colors"
-                        >
-                            Volver a la Tienda
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <OrderConfirmation
+                orderId={orderId!}
+                orderedItems={orderedItems}
+                snapshotTotal={snapshotTotal}
+                snapshotDiscount={snapshotDiscount}
+                snapshotStatus={snapshotStatus}
+                earnedCoupon={earnedCoupon}
+                showVIPModal={showVIPModal}
+                setShowVIPModal={setShowVIPModal}
+            />
         );
     }
 
     return (
         <div className="min-h-screen bg-background grid grid-cols-1 lg:grid-cols-12 font-sans animate-fade-in">
-            {/* Left Column - Forms */}
+            {/* Columna izquierda */}
             <div className="lg:col-span-7 px-4 py-4 md:px-8 lg:px-12 lg:py-8 order-2 lg:order-1 border-r border-border">
                 <div className="max-w-xl ml-auto mr-auto lg:mr-0">
-                    {/* Header/Logo */}
                     <div className="mb-6 flex items-center justify-between">
                         <Link href="/" className="font-display text-3xl md:text-4xl font-black italic tracking-tighter text-foreground hover:scale-105 transition-transform inline-block">JP DK</Link>
-                        <Link href="/" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors lg:hidden">
-                            Volver
-                        </Link>
+                        <Link href="/" className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors lg:hidden">Volver</Link>
                     </div>
 
-                    {/* Breadcrumbs / Contact Info */}
                     <div className="space-y-6">
-
-                        {/* Combined Information Group */}
+                        {/* Info de contacto, dirección y método */}
                         <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm text-sm">
-                            {/* Contact Section */}
                             <div className="p-4 border-b border-border flex justify-between items-start">
                                 <div className="flex-1 grid grid-cols-[100px_1fr] gap-2 items-center">
                                     <p className="text-muted-foreground text-xs font-medium">Contacto</p>
-                                    <p className="font-medium text-foreground truncate">{contactEmail}</p>
+                                    <p className="font-medium text-foreground truncate">{user?.email}</p>
                                 </div>
-                                <Link href="/profile" className="text-primary hover:text-primary/80 transition-colors">
-                                    <Edit2 className="w-4 h-4" />
-                                </Link>
+                                <Link href="/profile" className="text-primary hover:text-primary/80 transition-colors"><Edit2 className="w-4 h-4" /></Link>
                             </div>
-
-                            {/* Ship To Section */}
                             <div className="p-4 border-b border-border flex justify-between items-start">
                                 <div className="flex-1 grid grid-cols-[100px_1fr] gap-2 items-center">
                                     <p className="text-muted-foreground text-xs font-medium">Enviar a</p>
-                                    <p className="font-medium text-foreground leading-snug text-xs md:text-sm">
-                                        {formattedAddress}
-                                    </p>
+                                    <p className="font-medium text-foreground leading-snug text-xs md:text-sm">{formattedAddress}</p>
                                 </div>
-                                <Link href="/profile" className="text-primary hover:text-primary/80 transition-colors">
-                                    <Edit2 className="w-4 h-4" />
-                                </Link>
+                                <Link href="/profile" className="text-primary hover:text-primary/80 transition-colors"><Edit2 className="w-4 h-4" /></Link>
                             </div>
-
-                            {/* Method Section */}
-                            <div className="p-4 flex justify-between items-center">
+                            <div className="p-4 flex items-center">
                                 <div className="flex-1 grid grid-cols-[100px_1fr] gap-2 items-center">
                                     <p className="text-muted-foreground text-xs font-medium">Método</p>
-                                    <p className="font-medium text-foreground text-xs md:text-sm">Envío Estándar · <span className="font-bold">${shippingCost.toLocaleString('es-CL')}</span></p>
+                                    <p className="font-medium text-foreground text-xs md:text-sm">
+                                        Envío Estándar · <span className="font-bold">{isFreeShipping ? 'Gratis' : `$${shippingCost.toLocaleString('es-CL')}`}</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Payment Section (Active) */}
-                        <div className="mt-8">
-                            <h2 className="font-display text-lg font-bold uppercase mb-2 text-foreground">Pago</h2>
-                            <p className="text-xs text-muted-foreground mb-4">Todas las transacciones son seguras y están encriptadas.</p>
-
-                            <div className="border border-border rounded-lg overflow-hidden bg-card">
-                                {/* Mercado Pago */}
-                                <div
-                                    className={`p-4 flex items-center justify-between cursor-pointer border-b border-border transition-colors ${paymentMethod === 'mercadopago' ? 'bg-muted/30' : 'bg-card'}`}
-                                    onClick={() => setPaymentMethod('mercadopago')}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === 'mercadopago' ? 'border-primary' : 'border-muted-foreground'}`}>
-                                            {paymentMethod === 'mercadopago' && <div className="w-2 h-2 rounded-full bg-primary" />}
-                                        </div>
-                                        <span className="font-bold text-sm text-foreground">Mercado Pago</span>
-                                    </div>
-                                    <div className="flex gap-1 items-center opacity-100">
-                                        <span className="text-[9px] font-black text-blue-500 italic bg-white border px-1 rounded">MP</span>
-                                        <span className="text-[9px] font-bold text-blue-800 bg-white border px-1 rounded">VISA</span>
-                                        <span className="text-[9px] font-bold text-red-600 bg-white border px-1 rounded">MC</span>
-                                    </div>
-                                </div>
-
-                                {paymentMethod === 'mercadopago' && (
-                                    <div className="p-8 bg-background text-center border-b border-border animate-fade-in flex flex-col items-center justify-center">
-                                        <ShieldCheck className="w-12 h-12 text-foreground mb-4 mx-auto" />
-                                        <p className="text-sm text-foreground font-medium max-w-xs mx-auto leading-relaxed">
-                                            Luego de hacer clic en "Pagar ahora", serás redirigido a Mercado Pago para completar tu compra de forma segura.
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Flow */}
-                                <div
-                                    className={`p-4 flex items-center justify-between cursor-pointer border-b border-border transition-colors ${paymentMethod === 'flow' ? 'bg-muted/30' : 'bg-card'}`}
-                                    onClick={() => setPaymentMethod('flow')}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === 'flow' ? 'border-primary' : 'border-muted-foreground'}`}>
-                                            {paymentMethod === 'flow' && <div className="w-2 h-2 rounded-full bg-primary" />}
-                                        </div>
-                                        <span className="font-medium text-sm text-foreground">Checkout Flow</span>
-                                    </div>
-                                </div>
-
-                                {/* Transfer */}
-                                <div
-                                    className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${paymentMethod === 'transfer' ? 'bg-muted/30' : 'bg-card'}`}
-                                    onClick={() => setPaymentMethod('transfer')}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentMethod === 'transfer' ? 'border-primary' : 'border-muted-foreground'}`}>
-                                            {paymentMethod === 'transfer' && <div className="w-2 h-2 rounded-full bg-primary" />}
-                                        </div>
-                                        <span className="font-medium text-sm text-foreground">Transferencia / Deposito</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <PaymentMethodSelector paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />
 
                         <div className="mt-8">
                             <Button
@@ -410,164 +202,25 @@ export default function CheckoutPage() {
                 </div>
             </div>
 
-            {/* Right Column - Summary */}
-            <div className="lg:col-span-5 bg-muted/20 px-4 py-8 md:px-8 lg:px-10 lg:py-8 order-1 lg:order-2 border-l border-border h-full lg:min-h-screen">
-                <div className="max-w-md mr-auto ml-auto lg:ml-0 sticky top-8">
-                    {/* Mobile Header (Only visible on mobile if needed, but we have global header now) */}
-
-                    {/* Items Accordion / List */}
-                    <div className="mb-6">
-                        <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                            {displayCart.map(item => (
-                                <div key={`${item.id}-${item.selectedSize}`} className="flex gap-4 items-center">
-                                    <div className="relative w-16 h-16 bg-card border border-border rounded-md overflow-hidden flex-shrink-0">
-                                        <img src={item.images[0]?.url} className="w-full h-full object-cover" alt={item.name} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-foreground truncate">{item.name}</p>
-                                        <p className="text-xs text-muted-foreground font-medium">{item.selectedSize}</p>
-                                        <p className="text-xs text-muted-foreground font-medium mt-1">Cantidad: {item.quantity}</p>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <div className="text-sm font-bold text-foreground font-mono">
-                                            ${item.price.toLocaleString('es-CL')}
-                                        </div>
-                                        {item.originalPrice && item.originalPrice > item.price && (
-                                            <div className="text-[10px] text-muted-foreground line-through font-mono">
-                                                ${item.originalPrice.toLocaleString('es-CL')}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Discount */}
-                    <div className="mb-8 border-b border-border pb-8">
-                        {!appliedCoupon ? (
-                            <div className="flex gap-3">
-                                <input
-                                    type="text"
-                                    placeholder="Código de descuento"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                    className="flex-1 bg-background border border-border rounded-none border-t-0 border-r-0 border-l-0 border-b-2 px-0 py-2 text-sm focus:border-foreground focus:ring-0 focus:outline-none transition-colors placeholder:text-muted-foreground/70"
-                                />
-                                <Button
-                                    variant="outline"
-                                    className="font-bold border-2"
-                                    onClick={handleApplyCoupon}
-                                    disabled={isValidatingCoupon || !couponCode.trim()}
-                                >
-                                    {isValidatingCoupon ? '...' : 'Usar'}
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-between bg-primary/5 border border-primary/20 p-3 rounded-md">
-                                <div className="flex items-center gap-2">
-                                    <ShieldCheck className="w-4 h-4 text-primary" />
-                                    <div>
-                                        <p className="text-sm font-bold text-primary">{appliedCoupon.code}</p>
-                                        <p className="text-[11px] font-medium text-primary/80">
-                                            {appliedCoupon.type === 'PERCENTAGE'
-                                                ? `${appliedCoupon.value}% OFF`
-                                                : `$${appliedCoupon.value.toLocaleString('es-CL')} OFF`
-                                            }
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground">{appliedCoupon.description || 'Descuento aplicado'}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleRemoveCoupon}
-                                    className="text-muted-foreground hover:text-destructive transition-colors text-xs font-bold underline"
-                                >
-                                    Quitar
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Wallet Selector */}
-                        {!appliedCoupon && userCoupons.length > 0 && (
-                            <div className="mt-4">
-                                <button
-                                    onClick={() => setShowWallet(!showWallet)}
-                                    className="flex items-center gap-2 text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
-                                >
-                                    <Ticket className="w-4 h-4" />
-                                    {showWallet ? 'Ocultar mis cupones' : 'Ver mis cupones disponibles'}
-                                    {showWallet ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                </button>
-
-                                {showWallet && (
-                                    <div className="mt-3 space-y-2 animate-in slide-in-from-top-1 duration-200">
-                                        {userCoupons.map((item) => (
-                                            <button
-                                                key={item.id}
-                                                onClick={() => {
-                                                    setCouponCode(item.coupon.code);
-                                                    setShowWallet(false);
-                                                }}
-                                                className="w-full text-left p-3 border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all group"
-                                            >
-                                                <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <p className="text-xs font-black tracking-tight">{item.coupon.code}</p>
-                                                        <p className="text-[10px] text-muted-foreground">
-                                                            {item.coupon.type === 'PERCENTAGE' ? `${item.coupon.value}%` : `$${item.coupon.value.toLocaleString('es-CL')}`} de descuento
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        SELECCIONAR
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Totals */}
-                    <div className="space-y-3 text-sm text-foreground/80 mb-6">
-                        <div className="flex justify-between">
-                            <span>Subtotal</span>
-                            <span className="font-medium text-foreground">${displayTotal.toLocaleString('es-CL')}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="flex items-center gap-1">Envío</span>
-                            <span className="font-medium text-foreground">${shippingCost.toLocaleString('es-CL')}</span>
-                        </div>
-
-                        {appliedCoupon && (
-                            <div className="flex justify-between text-primary font-bold">
-                                <span className="flex items-center gap-1">Descuento ({appliedCoupon.code})</span>
-                                <span>-${couponDiscount.toLocaleString('es-CL')}</span>
-                            </div>
-                        )}
-
-
-                        {/* Savings Display */}
-                        {displayCart.reduce((acc, item) => acc + ((item.originalPrice || item.price) - item.price) * item.quantity, 0) > 0 && (
-                            <div className="flex justify-between text-green-600 dark:text-green-400 font-bold">
-                                <span>Ahorrado</span>
-                                <span>-${displayCart.reduce((acc, item) => acc + ((item.originalPrice || item.price) - item.price) * item.quantity, 0).toLocaleString('es-CL')}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="border-t-2 border-dashed border-border pt-4">
-                        <div className="flex justify-between items-end">
-                            <span className="text-xl font-bold text-foreground">Total</span>
-                            <div className="text-right flex items-baseline gap-2">
-                                <span className="text-xs text-muted-foreground font-bold">CLP</span>
-                                <span className="text-3xl font-black text-foreground tracking-tight">${finalTotal.toLocaleString('es-CL')}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* Columna derecha - Resumen */}
+            <CheckoutSummary
+                items={effectiveItems}
+                subtotal={effectiveTotal}
+                shippingCost={shippingCost}
+                isFreeShipping={isFreeShipping}
+                freeShippingThreshold={shopConfig.freeShippingThreshold}
+                appliedCoupon={appliedCoupon}
+                couponDiscount={couponDiscount}
+                finalTotal={finalTotal}
+                couponCode={couponCode}
+                setCouponCode={setCouponCode}
+                isValidatingCoupon={isValidatingCoupon}
+                onApplyCoupon={handleApplyCoupon}
+                onRemoveCoupon={handleRemoveCoupon}
+                userCoupons={userCoupons}
+                showWallet={showWallet}
+                setShowWallet={setShowWallet}
+            />
         </div>
-    )
+    );
 }
