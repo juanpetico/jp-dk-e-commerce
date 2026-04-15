@@ -64,10 +64,12 @@ export const errorHandler = (
         // In production, keep the default "Internal server error" message
     }
 
-    // Log error in development
-    if (process.env.NODE_ENV === "development") {
-        console.error("Error:", err);
-    }
+    // Log server-side (no body, no PII) — useful in all environments
+    const userId = (req as Request & { user?: { id?: string } }).user?.id;
+    console.error(
+        `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} — status ${statusCode}${userId ? ` user=${userId}` : ""}`,
+        err instanceof Error ? (err.stack || err.message) : err
+    );
 
     // Send error response
     res.status(statusCode).json({

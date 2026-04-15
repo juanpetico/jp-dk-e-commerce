@@ -1,5 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import { errorHandler } from "./middleware/error-handler.js";
 
@@ -14,19 +16,56 @@ import shopConfigRoutes from "./routes/shop-config.routes.js";
 
 dotenv.config();
 
+const parseOrigins = (): string[] => {
+    const raw = process.env.CORS_ORIGINS;
+    if (raw && raw.trim().length > 0) {
+        return raw.split(",").map(o => o.trim()).filter(Boolean);
+    }
+    return ["http://localhost:3000", "http://localhost:3001"];
+};
+
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { success: false, message: "Too many requests, please try again later" },
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    message: { success: false, message: "Too many authentication attempts, please try again later" },
+});
+
 const createServer = (): Express => {
     const app = express();
-    // Middleware
+
+    app.set("trust proxy", 1);
+
+    // Security headers
+    app.use(helmet());
+
+    // CORS
     app.use(
         cors({
-            origin: ["http://localhost:3000", "http://localhost:3001", "https://wide-cycles-nail.loca.lt"],
+            origin: parseOrigins(),
             credentials: true,
         })
     );
+
     app
         .disable("x-powered-by")
         .use(express.json({ limit: '1mb' }))
         .use(express.urlencoded({ extended: true, limit: '500kb', parameterLimit: 50 }));
+
+    // Global rate limit
+    app.use("/api", globalLimiter);
+    // Aggressive rate limit on auth endpoints
+    app.use("/api/auth", authLimiter);
 
     // Health check
     app.get("/health", (_, res) => {

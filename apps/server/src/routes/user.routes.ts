@@ -4,6 +4,8 @@ import {
     userController,
     registerValidation,
     loginValidation,
+    updateProfileValidation,
+    addressValidation,
 } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireRole } from "../middleware/role.middleware.js";
@@ -16,11 +18,11 @@ router.post("/auth/login", loginValidation, userController.login);
 
 // Protected routes (requires authentication)
 router.get("/users/profile", authenticate, userController.getProfile);
-router.put("/users/profile", authenticate, userController.updateProfile);
+router.put("/users/profile", authenticate, updateProfileValidation, userController.updateProfile);
 
 // Address routes
-router.post("/users/address", authenticate, userController.addAddress);
-router.put("/users/address/:id", authenticate, userController.updateAddress);
+router.post("/users/address", authenticate, addressValidation, userController.addAddress);
+router.put("/users/address/:id", authenticate, addressValidation, userController.updateAddress);
 router.delete("/users/address/:id", authenticate, userController.deleteAddress);
 
 // Admin only routes

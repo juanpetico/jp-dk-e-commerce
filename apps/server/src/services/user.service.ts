@@ -1,7 +1,6 @@
 import prisma from "../config/prisma.js";
 import bcrypt from "bcrypt";
 import { AppError } from "../middleware/error-handler.js";
-import { CLIENT_RENEG_LIMIT } from "tls";
 
 // Helper for consistent User selections and transformations
 const userInclude = {
