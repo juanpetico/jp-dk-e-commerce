@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:5001/api';
 
 // Helper para obtener el token de autenticación
 const getAuthHeaders = (): HeadersInit => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
     };
