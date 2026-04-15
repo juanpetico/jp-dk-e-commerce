@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
-import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Ticket, Zap, BarChart2 } from 'lucide-react';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
 import { Coupon, Order } from '@/types';
@@ -244,57 +244,105 @@ export default function MarketingPage() {
         );
     }
 
+    // Summary stats
+    const totalRevenue = enrichedCoupons.reduce((sum, c) => sum + c._stats.revenue, 0);
+    const activeCoupons = enrichedCoupons.filter(c => c._status === 'ACTIVO').length;
+    const totalUses = enrichedCoupons.reduce((sum, c) => sum + c.usedCount, 0);
+
     return (
-        <div className=" animate-fade-in text-foreground pb-20">
-            <div className="flex justify-between items-center">
+        <div className="animate-fade-in text-foreground pb-20 space-y-6">
+
+            {/* Page Header */}
+            <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Marketing</h1>
-                    <p className="text-muted-foreground text-sm">Rendimiento de cupones y campañas</p>
+                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground leading-none">Marketing</h1>
+                    <p className="text-muted-foreground text-sm mt-1">Cupones, campañas y drivers de fidelización</p>
                 </div>
                 <Button
                     onClick={() => {
                         setEditingCoupon(null);
                         setIsModalOpen(true);
                     }}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs"
+                    className="flex items-center gap-2 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs shrink-0"
                 >
                     <PlusCircle className="w-4 h-4" />
                     Crear Cupón
                 </Button>
             </div>
 
+            {/* Stats summary strip */}
+            {!loading && coupons.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                            <Ticket className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cupones activos</p>
+                            <p className="text-2xl font-black font-mono leading-none">{activeCoupons}<span className="text-xs text-muted-foreground font-medium ml-1">/ {coupons.length}</span></p>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                            <Zap className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total usos</p>
+                            <p className="text-2xl font-black font-mono leading-none">{totalUses}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                            <BarChart2 className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ingresos generados</p>
+                            <p className="text-lg font-black font-mono leading-none truncate">{formatPrice(totalRevenue)}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Drivers de Fidelización (collapsible) */}
             <TriggersConfigCard />
+
+            {/* Divider + section label for coupons */}
+            <div className="flex items-center gap-3 pt-2">
+                <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cupones</span>
+                <div className="flex-1 h-px bg-border" />
+            </div>
 
             {/* Search and filter bar */}
             {coupons.length > 0 && (
-                <div className="flex flex-wrap gap-3 items-center mb-6">
+                <div className="flex flex-wrap gap-2 items-center">
                     <div className="relative flex-1 min-w-[180px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Buscar cupón..."
+                            placeholder="Buscar por código..."
                             value={searchRaw}
                             onChange={e => setSearchRaw(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
                         />
                     </div>
                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
                         <option value="ALL">Todos los estados</option>
                         <option value="ACTIVO">Activo</option>
                         <option value="INACTIVO">Inactivo</option>
                         <option value="EXPIRADO">Expirado</option>
                     </select>
                     <select value={filterType} onChange={e => setFilterType(e.target.value as typeof filterType)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
                         <option value="ALL">Todos los tipos</option>
                         <option value="PERCENTAGE">Porcentaje</option>
                         <option value="FIXED_AMOUNT">Monto fijo</option>
                     </select>
                     <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer">
+                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground min-w-[140px]">
                         <option value="createdAt">Más reciente</option>
-                        <option value="code">Código</option>
+                        <option value="code">Código A→Z</option>
                         <option value="usedCount">Más usado</option>
                         <option value="roi">Mayor ROI</option>
                         <option value="revenue">Mayor ingreso</option>
@@ -304,10 +352,16 @@ export default function MarketingPage() {
                         title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}>
                         {sortDir === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                     </button>
+                    {hasActiveFilters && (
+                        <button onClick={clearFilters}
+                            className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-colors uppercase tracking-wide">
+                            Limpiar
+                        </button>
+                    )}
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {!loading && !error && coupons.length === 0 ? (
                   <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
                     <div className="p-4 rounded-full bg-muted">

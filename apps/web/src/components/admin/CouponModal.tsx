@@ -249,8 +249,8 @@ export default function CouponModal({ isOpen, onClose, onSave, initialData, auto
                             </div>
                         )}
 
-                        {/* Status Checkbox - Only for manual coupons */}
-                        {!automationType && (
+                        {/* Status Checkbox */}
+                        {(
                             <div className="flex items-center justify-between bg-muted/30 p-4 rounded-xl border border-border/50">
                                 <div className="space-y-0.5">
                                     <Label htmlFor="isActive" className="text-sm font-bold uppercase tracking-tight cursor-pointer">Estado del Cupón</Label>

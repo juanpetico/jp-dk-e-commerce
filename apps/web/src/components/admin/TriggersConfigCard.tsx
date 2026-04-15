@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Settings, Save, Loader2, Sparkles, Trophy, DollarSign } from 'lucide-react';
+import { Settings, Save, Loader2, Sparkles, Trophy, DollarSign, ChevronDown } from 'lucide-react';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,8 @@ export default function TriggersConfigCard() {
         description: '',
         onConfirm: () => { }
     });
+
+    const [isExpanded, setIsExpanded] = useState(false);
 
     // Validar form
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -110,18 +112,28 @@ export default function TriggersConfigCard() {
 
     return (
         <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm animate-in fade-in duration-500">
-            <div className="p-6 border-b border-border bg-muted/20">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                        <Settings className="w-5 h-5 text-primary" />
+            <button
+                type="button"
+                onClick={() => setIsExpanded(prev => !prev)}
+                className="w-full p-5 border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-expanded={isExpanded}
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <Settings className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="font-display font-black uppercase text-base tracking-tight text-foreground">Drivers de Fidelización</h2>
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Bienvenida · VIP — asignación automática</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="font-display font-black uppercase text-xl tracking-tight">Drivers de Fidelización</h2>
-                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest">Configura la lógica de asignación automática</p>
-                    </div>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
-            </div>
+            </button>
 
+            {isExpanded && (
+            <>
             <div className="p-6 space-y-8">
                 {/* Welcome Trigger */}
                 <div className="space-y-4">
@@ -259,6 +271,8 @@ export default function TriggersConfigCard() {
                     {isSaving ? 'Guardando...' : 'Guardar Configuración'}
                 </Button>
             </div>
+            </>
+            )}
 
             <SonnerConfirm
                 isOpen={confirmDialog.isOpen}

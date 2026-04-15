@@ -57,6 +57,19 @@ export default function CustomersPage() {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price || 0);
     };
 
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
+        return new Intl.DateTimeFormat('es-CL', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(date);
+    };
+
     // Filter customers
     const filteredCustomers = customers.filter(customer => {
         const matchesSearch = (customer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -162,7 +175,7 @@ export default function CustomersPage() {
                                             </td>
                                             <td className="px-6 py-4 font-mono text-sm text-foreground">{formatPrice(customer.totalSpent)}</td>
                                             <td className="px-6 py-4 text-sm font-bold text-foreground">{customer.ordersCount || 0}</td>
-                                            <td className="px-6 py-4 text-sm text-muted-foreground">{customer.lastOrder || '-'}</td>
+                                            <td className="px-6 py-4 text-sm font-medium text-foreground">{formatDate(customer.lastOrder)}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <span className={`w-2 h-2 rounded-full inline-block ${customer.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
                                             </td>
