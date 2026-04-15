@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from 'framer-motion';
+import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 
 const AVAILABLE_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'STD'];
 
@@ -51,9 +52,14 @@ const CartDrawer: React.FC = () => {
     const [userCoupons, setUserCoupons] = useState<any[]>([]);
     const [showWallet, setShowWallet] = useState(false);
 
-    const FREE_SHIPPING_THRESHOLD = 50000;
-    const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
-    const progressPercentage = Math.min(100, (cartTotal / FREE_SHIPPING_THRESHOLD) * 100);
+    const { freeShippingThreshold } = useShopConfigPublic();
+    const freeShippingEnabled = freeShippingThreshold > 0;
+    const remainingForFreeShipping = freeShippingEnabled
+        ? Math.max(0, freeShippingThreshold - cartTotal)
+        : 0;
+    const progressPercentage = freeShippingEnabled
+        ? Math.min(100, (cartTotal / freeShippingThreshold) * 100)
+        : 0;
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);
@@ -153,6 +159,7 @@ const CartDrawer: React.FC = () => {
                         </div>
 
                         {/* Free Shipping Progress */}
+                        {freeShippingEnabled && (
                         <div className="px-6 pt-4 pb-2">
                             {remainingForFreeShipping > 0 ? (
                                 <>
@@ -178,6 +185,7 @@ const CartDrawer: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         {/* Cart Items */}
                         <ScrollArea className="flex-1 bg-background">

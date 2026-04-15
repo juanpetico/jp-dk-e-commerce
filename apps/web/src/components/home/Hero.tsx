@@ -1,8 +1,15 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 
 export const Hero: React.FC = () => {
+    const { freeShippingThreshold } = useShopConfigPublic();
+    const heroShippingText = freeShippingThreshold > 0
+        ? `Compras sobre $${freeShippingThreshold.toLocaleString('es-CL')} llevan regalo + envío gratis`
+        : 'Compras con regalo incluido';
     return (
         <div className="relative w-full h-[600px] bg-black overflow-hidden group">
             <img
@@ -33,7 +40,7 @@ export const Hero: React.FC = () => {
                         </Link>
                     </div>
                 </div>
-                <p className="mt-8 text-yellow-400 font-bold uppercase tracking-widest text-sm">Compras sobre $50.000 llevan regalo + envío gratis</p>
+                <p className="mt-8 text-yellow-400 font-bold uppercase tracking-widest text-sm">{heroShippingText}</p>
             </div>
         </div>
     );

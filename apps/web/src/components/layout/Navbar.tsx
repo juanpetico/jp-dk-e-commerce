@@ -10,6 +10,7 @@ import { Search, User, ShoppingBag, Menu, X, ChevronDown, LayoutDashboard, Packa
 import SearchOverlay from './SearchOverlay';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 
 interface MenuItem {
     id: string;
@@ -33,6 +34,11 @@ const Navbar: React.FC = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const { freeShippingThreshold } = useShopConfigPublic();
+    const shippingEnabled = freeShippingThreshold > 0;
+    const shippingMessage = shippingEnabled
+        ? `ENVÍO GRATIS POR COMPRAS SOBRE $${freeShippingThreshold.toLocaleString('es-CL')}`
+        : 'DESPACHO A TODO CHILE';
 
     const isProfileRoute = ['/profile', '/orders', '/settings', '/admin', '/superadmin', '/checkout'].some(route => pathname?.startsWith(route));
 
@@ -146,13 +152,13 @@ const Navbar: React.FC = () => {
             {/* Marquee */}
             <div className="bg-white text-black dark:bg-black dark:text-white text-[10px] md:text-xs py-2 overflow-hidden border-b border-border relative z-50 transition-colors duration-300">
                 <div className="whitespace-nowrap animate-marquee inline-block">
-                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4">{shippingMessage}</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4">{shippingMessage}</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4">{shippingMessage}</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>•
-                    <span className="mx-4">ENVÍO GRATIS POR COMPRAS SOBRE $50.000</span>•
+                    <span className="mx-4">{shippingMessage}</span>•
                     <span className="mx-4 text-fuchsia-500 font-bold">🔥 NUEVO DROP DISPONIBLE 🔥</span>
                 </div>
             </div>

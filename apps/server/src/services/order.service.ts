@@ -125,7 +125,11 @@ export const orderService = {
             const netAmount = total - discountAmount;
             const taxRate = 0; // Sin impuestos
             const taxes = 0;
-            const shippingCost = 3990; // Monto fijo según CheckoutPage
+            // Envío y umbral de envío gratis provienen de la configuración dinámica de la tienda
+            const shopConfig = await shopConfigService.getConfig();
+            const qualifiesForFreeShipping =
+                shopConfig.freeShippingThreshold > 0 && total >= shopConfig.freeShippingThreshold;
+            const shippingCost = qualifiesForFreeShipping ? 0 : shopConfig.baseShippingCost;
             const finalTotal = netAmount + shippingCost;
 
             // Fetch user details for snapshot
@@ -229,16 +233,15 @@ export const orderService = {
             });
 
             // 5. Verificar si califica para Cupón VIP (Basado en el total de esta compra)
-            const storeConfig = await shopConfigService.getConfig();
             let earnedCoupon = null;
 
-            if (total >= storeConfig.vipThreshold) {
-                const result = await couponService.assignCouponToUser(userId, storeConfig.vipCouponCode, tx);
+            if (total >= shopConfig.vipThreshold) {
+                const result = await couponService.assignCouponToUser(userId, shopConfig.vipCouponCode, tx);
                 // Solo informamos si es un cupón NUEVO (primera vez que entra al umbral)
                 if (result?.isNew) {
                     earnedCoupon = {
-                        code: storeConfig.vipCouponCode,
-                        message: storeConfig.vipRewardMessage
+                        code: shopConfig.vipCouponCode,
+                        message: shopConfig.vipRewardMessage
                     };
                 }
             }
