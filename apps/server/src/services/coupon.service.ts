@@ -84,9 +84,18 @@ export const couponService = {
             endDate.setHours(23, 59, 59, 999);
         }
 
+        // Whitelist allowed fields to prevent mass assignment
         return await prisma.coupon.create({
             data: {
-                ...data,
+                code: data.code,
+                description: data.description ?? null,
+                type: data.type,
+                value: data.value,
+                minAmount: data.minAmount ?? 0,
+                maxUses: data.maxUses ?? null,
+                maxUsesPerUser: data.maxUsesPerUser ?? 1,
+                isActive: data.isActive ?? true,
+                isPublic: data.isPublic ?? true,
                 startDate,
                 endDate,
             },
@@ -94,7 +103,18 @@ export const couponService = {
     },
 
     async updateCoupon(id: string, data: any) {
-        const updateData: any = { ...data };
+        // Whitelist allowed fields to prevent mass assignment
+        const updateData: Record<string, unknown> = {};
+
+        if (data.code !== undefined) updateData.code = data.code;
+        if (data.description !== undefined) updateData.description = data.description;
+        if (data.type !== undefined) updateData.type = data.type;
+        if (data.value !== undefined) updateData.value = data.value;
+        if (data.minAmount !== undefined) updateData.minAmount = data.minAmount;
+        if (data.maxUses !== undefined) updateData.maxUses = data.maxUses;
+        if (data.maxUsesPerUser !== undefined) updateData.maxUsesPerUser = data.maxUsesPerUser;
+        if (data.isActive !== undefined) updateData.isActive = data.isActive;
+        if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
 
         if (data.startDate) {
             const startDate = new Date(data.startDate);

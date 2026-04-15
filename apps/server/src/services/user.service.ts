@@ -168,22 +168,34 @@ export const userService = {
         // Check if this is the first address, if so force default
         const count = await prisma.address.count({ where: { userId, isActive: true } });
 
+        let isDefault = data.isDefault ?? false;
         if (count === 0) {
-            data.isDefault = true;
+            isDefault = true;
         }
 
         // If this new address is set to default, unset others first
-        if (data.isDefault) {
+        if (isDefault) {
             await prisma.address.updateMany({
                 where: { userId, isActive: true },
                 data: { isDefault: false },
             });
         }
 
+        // Whitelist allowed fields to prevent mass assignment
         const address = await prisma.address.create({
             data: {
-                ...data,
                 userId,
+                name: data.name,
+                rut: data.rut,
+                street: data.street,
+                comuna: data.comuna,
+                city: data.city,
+                region: data.region,
+                zipCode: data.zipCode,
+                country: data.country,
+                phone: data.phone,
+                company: data.company,
+                isDefault,
             },
         });
         return address;
@@ -215,9 +227,23 @@ export const userService = {
             });
         }
 
+        // Whitelist allowed fields to prevent mass assignment
+        const safeData: Record<string, unknown> = {};
+        if (data.name !== undefined) safeData.name = data.name;
+        if (data.rut !== undefined) safeData.rut = data.rut;
+        if (data.street !== undefined) safeData.street = data.street;
+        if (data.comuna !== undefined) safeData.comuna = data.comuna;
+        if (data.city !== undefined) safeData.city = data.city;
+        if (data.region !== undefined) safeData.region = data.region;
+        if (data.zipCode !== undefined) safeData.zipCode = data.zipCode;
+        if (data.country !== undefined) safeData.country = data.country;
+        if (data.phone !== undefined) safeData.phone = data.phone;
+        if (data.company !== undefined) safeData.company = data.company;
+        if (data.isDefault !== undefined) safeData.isDefault = data.isDefault;
+
         const address = await prisma.address.update({
             where: { id: addressId },
-            data,
+            data: safeData,
         });
 
         return address;

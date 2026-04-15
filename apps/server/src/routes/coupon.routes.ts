@@ -2,6 +2,7 @@ import type { Router as ExpressRouter } from "express";
 import { Router } from "express";
 import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
+import { requireRole } from "../middleware/role.middleware.js";
 
 const router: Router = Router();
 
@@ -10,9 +11,11 @@ router.use(authenticate);
 
 router.post("/validate", couponController.validateCoupon);
 router.get("/my-coupons", couponController.getMyCoupons);
-router.get("/", couponController.getAllCoupons);
-router.post("/", couponController.createCoupon);
-router.patch("/:id", couponController.updateCoupon);
-router.delete("/:id", couponController.deleteCoupon);
+
+// Admin only routes
+router.get("/", requireRole("ADMIN", "SUPERADMIN"), couponController.getAllCoupons);
+router.post("/", requireRole("ADMIN", "SUPERADMIN"), couponController.createCoupon);
+router.patch("/:id", requireRole("ADMIN", "SUPERADMIN"), couponController.updateCoupon);
+router.delete("/:id", requireRole("ADMIN", "SUPERADMIN"), couponController.deleteCoupon);
 
 export default router;
