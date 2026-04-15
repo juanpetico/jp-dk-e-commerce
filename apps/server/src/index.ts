@@ -25,8 +25,8 @@ const createServer = (): Express => {
     );
     app
         .disable("x-powered-by")
-        .use(express.json())
-        .use(express.urlencoded({ extended: true }));
+        .use(express.json({ limit: '1mb' }))
+        .use(express.urlencoded({ extended: true, limit: '500kb', parameterLimit: 50 }));
 
     // Health check
     app.get("/health", (_, res) => {
