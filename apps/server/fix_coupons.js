@@ -2,7 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('--- Iniciando reparación de cupones ---');
 
     // 1. Asegurar Cupón de Bienvenida
     const welcomeCoupon = await prisma.coupon.upsert({
@@ -18,7 +17,6 @@ async function main() {
             isActive: true,
         }
     });
-    console.log('Comprobado Cupón BIENVENIDA:', welcomeCoupon.id);
 
     // 2. Asegurar Cupón VIP
     const vipCoupon = await prisma.coupon.upsert({
@@ -34,7 +32,6 @@ async function main() {
             isActive: true,
         }
     });
-    console.log('Comprobado Cupón VIP_GANG:', vipCoupon.id);
 
     // 3. Asegurar Configuración Inicial
     const config = await prisma.storeConfig.upsert({
@@ -48,7 +45,6 @@ async function main() {
             vipRewardMessage: '¡Felicidades! Por tu compra sobre $100.000 has ganado un 15% de descuento para tu próximo pedido.'
         }
     });
-    console.log('Comprobada Configuración Inicial:', config.updatedAt);
 }
 
 main()

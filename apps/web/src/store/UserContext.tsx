@@ -93,7 +93,6 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const register = async (email: string, password: string, name: string, phone?: string): Promise<{ success: boolean; welcomeCoupon?: any }> => {
         try {
             const trimmedEmail = email.trim();
-            console.log("Sending register data:", { email: trimmedEmail, password, name, phone });
             const response = await fetch('http://localhost:5001/api/auth/register', {
                 method: 'POST',
                 headers: {
