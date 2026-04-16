@@ -60,7 +60,7 @@ export const couponController = {
                 throw new AppError("No tienes permisos para realizar esta acción", 403);
             }
 
-            const coupon = await couponService.createCoupon(req.body);
+            const coupon = await couponService.createCoupon(req.body, req.user.id);
 
             res.status(201).json({
                 success: true,
@@ -82,7 +82,7 @@ export const couponController = {
                 throw new AppError("ID del cupón es requerido", 400);
             }
 
-            const coupon = await couponService.updateCoupon(id as string, req.body);
+            const coupon = await couponService.updateCoupon(id as string, req.body, req.user.id);
 
             res.json({
                 success: true,
@@ -103,7 +103,7 @@ export const couponController = {
             if (!id) {
                 throw new AppError("ID del cupón es requerido", 400);
             }
-            await couponService.deleteCoupon(id as string);
+            await couponService.deleteCoupon(id as string, req.user.id);
 
             res.json({
                 success: true,

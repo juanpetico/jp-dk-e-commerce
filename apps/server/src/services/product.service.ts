@@ -212,7 +212,7 @@ export const productService = {
     async updateProduct(
         id: string,
         actorId: string,
-        productData: Partial<CreateProductData> & { slug?: string }
+        productData: Partial<CreateProductData>
     ) {
         // Fetch current state once — used for validation and audit diff
         const current = await prisma.product.findUnique({
@@ -220,11 +220,6 @@ export const productService = {
             include: { variants: true },
         });
         if (!current) throw new AppError("Product not found", 404);
-
-        // Generate new slug if name is being updated
-        if (productData.name && !productData.slug) {
-            productData.slug = generateSlug(productData.name);
-        }
 
         // Verify category exists if being updated
         if (productData.categoryId) {
@@ -267,7 +262,6 @@ export const productService = {
                 ...(productData.isNew !== undefined ? { isNew: productData.isNew } : {}),
                 ...(productData.isSale !== undefined ? { isSale: productData.isSale } : {}),
                 ...(productData.isPublished !== undefined ? { isPublished: productData.isPublished } : {}),
-                ...(productData.slug !== undefined ? { slug: productData.slug } : {}),
                 ...(productData.images
                     ? {
                         images: {
@@ -317,6 +311,33 @@ export const productService = {
                 entityId: id,
                 oldValue: String(current.price),
                 newValue: String(productData.price),
+                metadata: { productName: current.name },
+            });
+        }
+
+        // Audit: sale/offer changes
+        const saleOldFields: Record<string, unknown> = {};
+        const saleNewFields: Record<string, unknown> = {};
+        if (productData.isSale !== undefined && productData.isSale !== current.isSale) {
+            saleOldFields.isSale = current.isSale;
+            saleNewFields.isSale = productData.isSale;
+        }
+        if (productData.originalPrice !== undefined && productData.originalPrice !== current.originalPrice) {
+            saleOldFields.originalPrice = current.originalPrice;
+            saleNewFields.originalPrice = productData.originalPrice;
+        }
+        if (productData.discountPercent !== undefined && productData.discountPercent !== current.discountPercent) {
+            saleOldFields.discountPercent = current.discountPercent;
+            saleNewFields.discountPercent = productData.discountPercent;
+        }
+        if (Object.keys(saleNewFields).length > 0) {
+            await createLog({
+                actorId,
+                action: "PRODUCT_SALE_CHANGE",
+                entityType: "PRODUCT",
+                entityId: id,
+                oldValue: JSON.stringify(saleOldFields),
+                newValue: JSON.stringify(saleNewFields),
                 metadata: { productName: current.name },
             });
         }

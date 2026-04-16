@@ -13,7 +13,11 @@ export type AuditAction =
     | "ORDER_STATUS_CHANGE"
     | "CATEGORY_CREATED"
     | "CATEGORY_DELETED"
-    | "STORE_CONFIG_CHANGE";
+    | "STORE_CONFIG_CHANGE"
+    | "COUPON_CREATED"
+    | "COUPON_UPDATED"
+    | "COUPON_DELETED"
+    | "PRODUCT_SALE_CHANGE";
 
 export interface AuditEntry {
     id: string;
@@ -22,6 +26,7 @@ export interface AuditEntry {
     entityId: string;
     oldValue: string | null;
     newValue: string | null;
+    metadata: Record<string, unknown> | null;
     createdAt: Date;
     actor: {
         id: string;
@@ -169,6 +174,7 @@ export async function listLogs(params: ListLogsParams): Promise<ListLogsResult> 
                 entityId: true,
                 oldValue: true,
                 newValue: true,
+                metadata: true,
                 createdAt: true,
                 actor: {
                     select: {

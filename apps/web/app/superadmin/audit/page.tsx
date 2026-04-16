@@ -36,6 +36,7 @@ const ENTITY_TYPE_OPTIONS = [
     { value: 'PRODUCT', label: 'Productos' },
     { value: 'ORDER', label: 'Órdenes' },
     { value: 'CATEGORY', label: 'Categorías' },
+    { value: 'COUPON', label: 'Cupones' },
     { value: 'STORE_CONFIG', label: 'Configuración' },
 ];
 
@@ -52,6 +53,10 @@ const ACTION_CONFIG: Record<string, { label: string; className: string }> = {
     CATEGORY_CREATED:        { label: 'Categoría Creada',    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
     CATEGORY_DELETED:        { label: 'Categoría Eliminada', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
     STORE_CONFIG_CHANGE:     { label: 'Config. Tienda',      className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+    COUPON_CREATED:          { label: 'Cupón Creado',        className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+    COUPON_UPDATED:          { label: 'Cupón Modificado',    className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    COUPON_DELETED:          { label: 'Cupón Eliminado',     className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+    PRODUCT_SALE_CHANGE:     { label: 'Oferta',              className: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300' },
 };
 
 const ACTION_FILTER_OPTIONS = [
@@ -71,6 +76,23 @@ const ROLE_LABELS: Record<string, string> = {
     CLIENT:     'Cliente',
     ADMIN:      'Admin',
     SUPERADMIN: 'Superadmin',
+};
+
+const SALE_FIELD_LABELS: Record<string, string> = {
+    isSale:          'En oferta',
+    originalPrice:   'Precio original',
+    discountPercent: 'Descuento %',
+};
+
+const COUPON_FIELD_LABELS: Record<string, string> = {
+    code:        'Código',
+    value:       'Valor',
+    type:        'Tipo',
+    isActive:    'Activo',
+    description: 'Descripción',
+    minAmount:   'Monto mínimo',
+    maxUses:     'Usos máximos',
+    isPublic:    'Público',
 };
 
 const CONFIG_FIELD_LABELS: Record<string, string> = {
@@ -187,11 +209,16 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
 
         case 'PRODUCT_PUBLISHED':
         case 'PRODUCT_UNPUBLISHED': {
-            const name = metadata?.productName as string | undefined;
+            const name = (metadata?.productName as string | undefined) ?? entry.entityId.slice(0, 8);
+            const isPublished = action === 'PRODUCT_PUBLISHED';
             return (
-                <span className="text-xs text-muted-foreground">
-                    {name ?? entry.entityId.slice(0, 8)}
-                </span>
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">Categoría:</span>
+                    <span className="text-xs text-muted-foreground">{name}</span>
+                    <NewVal className={isPublished ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400'}>
+                        {isPublished ? 'Publicado' : 'Despublicado'}
+                    </NewVal>
+                </div>
             );
         }
 
@@ -243,6 +270,67 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
 
         case 'CATEGORY_DELETED':
             return <span className="text-xs text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;
+
+        case 'COUPON_CREATED': {
+            const desc = metadata?.description as string | undefined;
+            return (
+                <div className="flex flex-col gap-0.5">
+                    <NewVal className="text-green-600 dark:text-green-400 font-mono">{newValue ?? '—'}</NewVal>
+                    {desc && <span className="text-[10px] text-muted-foreground">{desc}</span>}
+                </div>
+            );
+        }
+
+        case 'COUPON_UPDATED': {
+            let oldObj: Record<string, unknown> = {};
+            let newObj: Record<string, unknown> = {};
+            try { oldObj = JSON.parse(oldValue ?? '{}'); } catch { /* empty */ }
+            try { newObj = JSON.parse(newValue ?? '{}'); } catch { /* empty */ }
+            const couponCode = metadata?.couponCode as string | undefined;
+            const keys = Object.keys(newObj);
+            return (
+                <div className="flex flex-col gap-0.5">
+                    {couponCode && <span className="text-[10px] font-mono font-bold text-muted-foreground mb-0.5">{couponCode}</span>}
+                    {keys.map((key) => (
+                        <div key={key} className="flex items-center gap-0.5 flex-wrap">
+                            <span className="text-[10px] text-muted-foreground mr-1">{COUPON_FIELD_LABELS[key] ?? key}:</span>
+                            <OldVal>{String(oldObj[key] ?? '—')}</OldVal>
+                            <DiffArrow />
+                            <NewVal className="text-violet-600 dark:text-violet-400">
+                                {String(newObj[key] ?? '—')}
+                            </NewVal>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        case 'COUPON_DELETED':
+            return <span className="text-xs font-mono text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;
+
+        case 'PRODUCT_SALE_CHANGE': {
+            let oldObj: Record<string, unknown> = {};
+            let newObj: Record<string, unknown> = {};
+            try { oldObj = JSON.parse(oldValue ?? '{}'); } catch { /* empty */ }
+            try { newObj = JSON.parse(newValue ?? '{}'); } catch { /* empty */ }
+            const productName = metadata?.productName as string | undefined;
+            const keys = Object.keys(newObj);
+            return (
+                <div className="flex flex-col gap-0.5">
+                    {productName && <span className="text-[10px] font-medium text-muted-foreground mb-0.5">{productName}</span>}
+                    {keys.map((key) => (
+                        <div key={key} className="flex items-center gap-0.5 flex-wrap">
+                            <span className="text-[10px] text-muted-foreground mr-1">{SALE_FIELD_LABELS[key] ?? key}:</span>
+                            <OldVal>{String(oldObj[key] ?? '—')}</OldVal>
+                            <DiffArrow />
+                            <NewVal className="text-pink-600 dark:text-pink-400">
+                                {String(newObj[key] ?? '—')}
+                            </NewVal>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
 
         default:
             if (oldValue || newValue) {

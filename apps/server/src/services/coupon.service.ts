@@ -1,6 +1,7 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { shopConfigService } from "./shop-config.service.js";
+import { createLog } from "./audit.service.js";
 
 export const couponService = {
     async validateCoupon(code: string, userId: string, currentTotal: number, tx?: any) {
@@ -74,7 +75,7 @@ export const couponService = {
         });
     },
 
-    async createCoupon(data: any) {
+    async createCoupon(data: any, actorId: string) {
         const startDate = data.startDate ? new Date(data.startDate) : new Date();
         startDate.setHours(0, 0, 0, 0);
 
@@ -84,16 +85,27 @@ export const couponService = {
             endDate.setHours(23, 59, 59, 999);
         }
 
-        return await prisma.coupon.create({
+        const coupon = await prisma.coupon.create({
             data: {
                 ...data,
                 startDate,
                 endDate,
             },
         });
+
+        await createLog({
+            actorId,
+            action: "COUPON_CREATED",
+            entityType: "COUPON",
+            entityId: coupon.id,
+            newValue: coupon.code,
+            metadata: { description: coupon.description, type: coupon.type, value: coupon.value },
+        });
+
+        return coupon;
     },
 
-    async updateCoupon(id: string, data: any) {
+    async updateCoupon(id: string, data: any, actorId: string) {
         const updateData: any = { ...data };
 
         if (data.startDate) {
@@ -122,13 +134,51 @@ export const couponService = {
         // Sync with shop config if this is an automated coupon
         await shopConfigService.syncConfigFromCoupon(coupon, oldCoupon?.code);
 
+        if (oldCoupon) {
+            const TRACKED = ['code', 'value', 'type', 'isActive', 'description', 'minAmount', 'maxUses', 'isPublic'] as const;
+            const oldFields: Record<string, unknown> = {};
+            const newFields: Record<string, unknown> = {};
+            for (const key of TRACKED) {
+                if (String(oldCoupon[key]) !== String(coupon[key])) {
+                    oldFields[key] = oldCoupon[key];
+                    newFields[key] = coupon[key];
+                }
+            }
+            if (Object.keys(newFields).length > 0) {
+                await createLog({
+                    actorId,
+                    action: "COUPON_UPDATED",
+                    entityType: "COUPON",
+                    entityId: coupon.id,
+                    oldValue: JSON.stringify(oldFields),
+                    newValue: JSON.stringify(newFields),
+                    metadata: { couponCode: coupon.code },
+                });
+            }
+        }
+
         return coupon;
     },
 
-    async deleteCoupon(id: string) {
-        return await prisma.coupon.delete({
+    async deleteCoupon(id: string, actorId: string) {
+        const coupon = await prisma.coupon.findUnique({ where: { id } });
+
+        const result = await prisma.coupon.delete({
             where: { id },
         });
+
+        if (coupon) {
+            await createLog({
+                actorId,
+                action: "COUPON_DELETED",
+                entityType: "COUPON",
+                entityId: id,
+                oldValue: coupon.code,
+                metadata: { description: coupon.description },
+            });
+        }
+
+        return result;
     },
 
     async assignCouponToUser(userId: string, couponCode: string, tx?: any) {

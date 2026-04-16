@@ -182,7 +182,11 @@ export type AuditAction =
     | 'ORDER_STATUS_CHANGE'
     | 'CATEGORY_CREATED'
     | 'CATEGORY_DELETED'
-    | 'STORE_CONFIG_CHANGE';
+    | 'STORE_CONFIG_CHANGE'
+    | 'COUPON_CREATED'
+    | 'COUPON_UPDATED'
+    | 'COUPON_DELETED'
+    | 'PRODUCT_SALE_CHANGE';
 
 export interface AuditEntry {
     id: string;
