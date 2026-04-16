@@ -433,7 +433,7 @@ const AdminDashboardPage: React.FC = () => {
             {/* 2. CHARTS */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Line Chart */}
-                <div className="lg:col-span-2 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col h-96">
+                <div className="lg:col-span-2 min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col h-96">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
                             <h3 className="font-bold text-sm uppercase tracking-wide text-foreground mb-2 sm:mb-0">Tendencia de Ingresos</h3>
@@ -463,8 +463,8 @@ const AdminDashboardPage: React.FC = () => {
                             defaultDate={defaultDateRange}
                         />
                     </div>
-                    <div className="w-full h-full min-h-[250px] [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="w-full h-full min-h-[250px] min-w-0 [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
+                        <ResponsiveContainer width="99%" height={250} minWidth={1} debounce={50}>
                             <AreaChart data={salesTrendData} style={{ outline: 'none' }} tabIndex={-1}>
                                 <defs>
                                     <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
@@ -492,13 +492,13 @@ const AdminDashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px]">
+                <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px]">
                     <h3 className="font-bold text-sm uppercase tracking-wide mb-4 text-foreground">
                         Ventas por Categoría ({categoryData.reduce((acc, curr) => acc + curr.value, 0)} uds)
                     </h3>
-                    <div className="w-full h-[380px] relative [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
+                    <div className="w-full h-[380px] min-w-0 relative [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
                         {categoryData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="99%" height={300} minWidth={1} debounce={50}>
                                 <PieChart style={{ outline: 'none' }} tabIndex={-1}>
                                     <Pie
                                         data={categoryData}

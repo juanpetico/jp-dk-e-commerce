@@ -358,8 +358,8 @@ const Navbar: React.FC = () => {
 
                             <div className="w-24 h-px bg-border my-4"></div>
 
-                            {user?.role === 'ADMIN' && (
-                                <Link href="/admin" onClick={closeMenu} className="text-sm font-display font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                            {(user?.role === 'ADMIN' || user?.role === 'SUPERADMIN') && (
+                                <Link href={(user?.role === 'ADMIN' ? '/admin' : '/superadmin')} onClick={closeMenu} className="text-sm font-display font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
                                     Admin Panel
                                 </Link>
                             )}

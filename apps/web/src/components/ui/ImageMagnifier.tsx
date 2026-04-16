@@ -50,7 +50,8 @@ const MagnifierCore: React.FC<ImageMagnifierProps & { disableMaximize?: boolean;
         setZoomLevel(1);
     };
 
-    const transformOrigin = isHovering && zoomLevel > 1 ? `${cursorPos.x}% ${cursorPos.y}%` : 'center center';
+    const originX = isHovering && zoomLevel > 1 ? cursorPos.x / 100 : 0.5;
+    const originY = isHovering && zoomLevel > 1 ? cursorPos.y / 100 : 0.5;
 
     return (
         <div
@@ -68,7 +69,8 @@ const MagnifierCore: React.FC<ImageMagnifierProps & { disableMaximize?: boolean;
                     className="max-w-full max-h-full object-contain pointer-events-none block"
                     animate={{
                         scale: zoomLevel,
-                        transformOrigin: transformOrigin
+                        originX,
+                        originY
                     }}
                     transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
                 />

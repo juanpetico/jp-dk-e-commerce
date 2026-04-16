@@ -258,14 +258,6 @@ const CartDrawer: React.FC = () => {
                                                     </Popover>
                                                 </div>
 
-                                                {/* SKU Badge */}
-                                                <div className="mb-3">
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
-                                                        <Ticket className="w-3 h-3" />
-                                                        BG2026
-                                                    </span>
-                                                </div>
-
                                                 {/* Quantity & Price */}
                                                 <div className="flex items-center justify-between mt-auto">
                                                     <div className="flex items-center border border-input rounded overflow-hidden h-8">
