@@ -8,6 +8,9 @@ export interface FetchAuditLogsParams {
     entityType?: string;
     entityId?: string;
     actorId?: string;
+    actorQuery?: string;
+    createdFrom?: Date;
+    createdTo?: Date;
 }
 
 export const fetchAuditLogs = async (params: FetchAuditLogsParams = {}): Promise<AuditLogsResult> => {
@@ -18,6 +21,9 @@ export const fetchAuditLogs = async (params: FetchAuditLogsParams = {}): Promise
     if (params.entityType) searchParams.set('entityType', params.entityType);
     if (params.entityId) searchParams.set('entityId', params.entityId);
     if (params.actorId) searchParams.set('actorId', params.actorId);
+    if (params.actorQuery) searchParams.set('actorQuery', params.actorQuery);
+    if (params.createdFrom) searchParams.set('createdFrom', params.createdFrom.toISOString());
+    if (params.createdTo) searchParams.set('createdTo', params.createdTo.toISOString());
 
     const query = searchParams.toString();
     const url = `${API_URL}/admin/audit-logs${query ? `?${query}` : ''}`;

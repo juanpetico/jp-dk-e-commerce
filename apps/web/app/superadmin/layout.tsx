@@ -40,7 +40,7 @@ export default function SuperAdminLayout({
     return (
         <div className="flex bg-background text-foreground min-h-screen select-none">
             <AdminSidebar />
-            <main className="flex-1 p-8 overflow-y-auto max-h-screen">
+            <main className="flex-1 p-8">
                 {children}
             </main>
         </div>

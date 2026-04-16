@@ -2,8 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Loader2, Search, ShieldAlert } from 'lucide-react';
+import { endOfDay, startOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/Button';
+import { DatePickerWithRange } from '@/components/ui/DateRangePicker';
 import {
     Select,
     SelectContent,
@@ -265,24 +268,36 @@ export default function AuditPage() {
 
     const [entityTypeFilter, setEntityTypeFilter] = useState('ALL');
     const [actionFilter, setActionFilter] = useState('ALL');
-    const [entityIdInput, setEntityIdInput] = useState('');
-    const [debouncedEntityId, setDebouncedEntityId] = useState('');
+    const [actorQueryInput, setActorQueryInput] = useState('');
+    const [debouncedActorQuery, setDebouncedActorQuery] = useState('');
+    const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
 
-    // Debounce entity ID search
+    // Debounce actor search input
     useEffect(() => {
-        const t = setTimeout(() => setDebouncedEntityId(entityIdInput.trim()), 400);
+        const t = setTimeout(() => setDebouncedActorQuery(actorQueryInput.trim()), 400);
         return () => clearTimeout(t);
-    }, [entityIdInput]);
+    }, [actorQueryInput]);
 
     // Reset to page 1 when server-side filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [entityTypeFilter, debouncedEntityId]);
+    }, [entityTypeFilter, debouncedActorQuery, selectedDateRange]);
 
     const skip = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
+
+    const fromTimestamp = useMemo(() => {
+        if (!selectedDateRange?.from) return undefined;
+        return startOfDay(selectedDateRange.from).getTime();
+    }, [selectedDateRange?.from?.getTime()]);
+
+    const toTimestamp = useMemo(() => {
+        if (selectedDateRange?.to) return endOfDay(selectedDateRange.to).getTime();
+        if (selectedDateRange?.from) return endOfDay(selectedDateRange.from).getTime();
+        return undefined;
+    }, [selectedDateRange?.from?.getTime(), selectedDateRange?.to?.getTime()]);
 
     const loadLogs = useCallback(async () => {
         try {
@@ -292,7 +307,13 @@ export default function AuditPage() {
                 take: itemsPerPage,
                 skip,
                 ...(entityTypeFilter !== 'ALL' ? { entityType: entityTypeFilter } : {}),
-                ...(debouncedEntityId ? { entityId: debouncedEntityId } : {}),
+                ...(debouncedActorQuery ? { actorQuery: debouncedActorQuery } : {}),
+                                ...(fromTimestamp && toTimestamp
+                    ? {
+                                                    createdFrom: new Date(fromTimestamp),
+                                                    createdTo: new Date(toTimestamp),
+                      }
+                    : {}),
             });
             setLogs(result.items);
             setTotal(result.total);
@@ -302,7 +323,7 @@ export default function AuditPage() {
         } finally {
             setLoading(false);
         }
-    }, [skip, itemsPerPage, entityTypeFilter, debouncedEntityId]);
+    }, [skip, itemsPerPage, entityTypeFilter, debouncedActorQuery, fromTimestamp, toTimestamp]);
 
     useEffect(() => {
         loadLogs();
@@ -314,12 +335,13 @@ export default function AuditPage() {
         [logs, actionFilter],
     );
 
-    const hasFilters = entityTypeFilter !== 'ALL' || debouncedEntityId || actionFilter !== 'ALL';
+    const hasFilters = entityTypeFilter !== 'ALL' || debouncedActorQuery || actionFilter !== 'ALL' || selectedDateRange?.from;
 
     const clearFilters = () => {
         setEntityTypeFilter('ALL');
         setActionFilter('ALL');
-        setEntityIdInput('');
+        setActorQueryInput('');
+        setSelectedDateRange(undefined);
     };
 
     return (
@@ -347,9 +369,9 @@ export default function AuditPage() {
                 <div className="relative w-full md:max-w-xs">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                        value={entityIdInput}
-                        onChange={(e) => setEntityIdInput(e.target.value)}
-                        placeholder="Buscar por ID..."
+                        value={actorQueryInput}
+                        onChange={(e) => setActorQueryInput(e.target.value)}
+                        placeholder="Buscar por nombre o correo..."
                         className="pl-10 font-mono text-sm"
                     />
                 </div>
@@ -380,6 +402,13 @@ export default function AuditPage() {
                             ))}
                         </SelectContent>
                     </Select>
+
+                    <div className="w-full md:w-auto">
+                        <DatePickerWithRange
+                            date={selectedDateRange}
+                            setDate={setSelectedDateRange}
+                        />
+                    </div>
 
                     {hasFilters && (
                         <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">

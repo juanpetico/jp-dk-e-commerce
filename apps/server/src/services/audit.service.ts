@@ -34,6 +34,9 @@ export interface ListLogsParams {
     entityType?: string;
     entityId?: string;
     actorId?: string;
+    actorQuery?: string;
+    createdFrom?: Date;
+    createdTo?: Date;
     /** OR filter: (entityId=userId AND entityType=USER) OR actorId=userId */
     userId?: string;
     take?: number;
@@ -110,17 +113,46 @@ export async function listLogs(params: ListLogsParams): Promise<ListLogsResult> 
     const take = Math.min(params.take ?? 20, 100);
     const skip = params.skip ?? 0;
 
+    const createdAtFilter: Prisma.DateTimeFilter | undefined =
+        params.createdFrom || params.createdTo
+            ? {
+                  ...(params.createdFrom ? { gte: params.createdFrom } : {}),
+                  ...(params.createdTo ? { lte: params.createdTo } : {}),
+              }
+            : undefined;
+
+    const actorSearchFilter: Prisma.AuditLogWhereInput | undefined = params.actorQuery
+        ? {
+              actor: {
+                  is: {
+                      OR: [
+                          { name: { contains: params.actorQuery, mode: "insensitive" } },
+                          { email: { contains: params.actorQuery, mode: "insensitive" } },
+                      ],
+                  },
+              },
+          }
+        : undefined;
+
     const where: Prisma.AuditLogWhereInput = params.userId
         ? {
-              OR: [
-                  { entityId: params.userId, entityType: "USER" },
-                  { actorId: params.userId },
+              AND: [
+                  {
+                      OR: [
+                          { entityId: params.userId, entityType: "USER" },
+                          { actorId: params.userId },
+                      ],
+                  },
+                  ...(actorSearchFilter ? [actorSearchFilter] : []),
+                  ...(createdAtFilter ? [{ createdAt: createdAtFilter }] : []),
               ],
           }
         : {
               ...(params.entityType ? { entityType: params.entityType } : {}),
               ...(params.entityId ? { entityId: params.entityId } : {}),
               ...(params.actorId ? { actorId: params.actorId } : {}),
+              ...(actorSearchFilter ?? {}),
+              ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
           };
 
     const [total, items] = await prisma.$transaction([
