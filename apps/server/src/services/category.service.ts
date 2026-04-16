@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import { createLog } from "./audit.service.js";
 import _slugify from "slugify";
 const slugify = (_slugify as any).default || _slugify;
 
@@ -35,14 +36,19 @@ const generateSlug = async (name: string, excludeId?: string): Promise<string> =
 };
 
 export const categoryService = {
-    async createCategory(name: string) {
+    async createCategory(name: string, actorId: string) {
         const slug = await generateSlug(name);
 
         const category = await prisma.category.create({
-            data: {
-                name,
-                slug,
-            },
+            data: { name, slug },
+        });
+
+        await createLog({
+            actorId,
+            action: "CATEGORY_CREATED",
+            entityType: "CATEGORY",
+            entityId: category.id,
+            newValue: category.name,
         });
 
         return category;
@@ -115,30 +121,26 @@ export const categoryService = {
         return category;
     },
 
-    async deleteCategory(id: string) {
-        // Check if category has products
+    async deleteCategory(id: string, actorId: string) {
         const category = await prisma.category.findUnique({
             where: { id },
-            include: {
-                _count: {
-                    select: { products: true },
-                },
-            },
+            include: { _count: { select: { products: true } } },
         });
 
-        if (!category) {
-            throw new AppError("Category not found", 404);
-        }
+        if (!category) throw new AppError("Category not found", 404);
 
         if (category._count.products > 0) {
-            throw new AppError(
-                "Cannot delete category with existing products",
-                400
-            );
+            throw new AppError("Cannot delete category with existing products", 400);
         }
 
-        await prisma.category.delete({
-            where: { id },
+        await prisma.category.delete({ where: { id } });
+
+        await createLog({
+            actorId,
+            action: "CATEGORY_DELETED",
+            entityType: "CATEGORY",
+            entityId: id,
+            oldValue: category.name,
         });
     },
 };

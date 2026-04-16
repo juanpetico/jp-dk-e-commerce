@@ -3,6 +3,7 @@ import { categoryService } from "../services/category.service.js";
 import { body, validationResult } from "express-validator";
 import { AppError } from "../middleware/error-handler.js";
 import { getParam } from "../utils/request.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 // Validation rules
 export const categoryValidation = [
@@ -10,8 +11,9 @@ export const categoryValidation = [
 ];
 
 export const categoryController = {
-    async createCategory(req: Request, res: Response, next: NextFunction) {
+    async createCategory(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 throw new AppError(
@@ -24,7 +26,7 @@ export const categoryController = {
             }
 
             const { name } = req.body;
-            const category = await categoryService.createCategory(name);
+            const category = await categoryService.createCategory(name, req.user.id);
 
             res.status(201).json({
                 success: true,
@@ -104,10 +106,11 @@ export const categoryController = {
         }
     },
 
-    async deleteCategory(req: Request, res: Response, next: NextFunction) {
+    async deleteCategory(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const id = getParam(req, "id");
-            await categoryService.deleteCategory(id);
+            await categoryService.deleteCategory(id, req.user.id);
 
             res.json({
                 success: true,

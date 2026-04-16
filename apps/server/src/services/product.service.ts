@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
+import { createLog } from "./audit.service.js";
 
 // Type definition until Prisma generates types
 type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
@@ -47,7 +48,7 @@ interface ProductFilters {
 }
 
 export const productService = {
-    async createProduct(data: CreateProductData) {
+    async createProduct(data: CreateProductData, actorId: string) {
         const slug = generateSlug(data.name);
 
         // Verify category exists
@@ -98,6 +99,15 @@ export const productService = {
                 category: true,
                 variants: true,
             },
+        });
+
+        await createLog({
+            actorId,
+            action: "PRODUCT_CREATED",
+            entityType: "PRODUCT",
+            entityId: product.id,
+            newValue: product.name,
+            metadata: { categoryId: product.categoryId, price: product.price },
         });
 
         return product;
@@ -201,8 +211,16 @@ export const productService = {
 
     async updateProduct(
         id: string,
+        actorId: string,
         productData: Partial<CreateProductData> & { slug?: string }
     ) {
+        // Fetch current state once — used for validation and audit diff
+        const current = await prisma.product.findUnique({
+            where: { id },
+            include: { variants: true },
+        });
+        if (!current) throw new AppError("Product not found", 404);
+
         // Generate new slug if name is being updated
         if (productData.name && !productData.slug) {
             productData.slug = generateSlug(productData.name);
@@ -220,20 +238,13 @@ export const productService = {
         }
 
         // Validate price integrity: originalPrice must be greater than price
-        // Need to check both new values and existing values
         if (productData.originalPrice !== undefined && productData.originalPrice !== null) {
-            // originalPrice is being set to a value, validate it
-            const priceToCheck = productData.price !== undefined ? productData.price : (await prisma.product.findUnique({ where: { id } }))?.price;
-            if (priceToCheck !== undefined && productData.originalPrice <= priceToCheck) {
+            const priceToCheck = productData.price !== undefined ? productData.price : current.price;
+            if (productData.originalPrice <= priceToCheck) {
                 throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
             }
-        } else if (productData.originalPrice === null) {
-            // originalPrice is being explicitly set to null (removing offer), skip validation
-            // This is valid - we're removing the offer
         } else if (productData.price !== undefined) {
-            // If only price is being updated, check against existing originalPrice
-            const existingProduct = await prisma.product.findUnique({ where: { id } });
-            if (existingProduct?.originalPrice && existingProduct.originalPrice <= productData.price) {
+            if (current.originalPrice && current.originalPrice <= productData.price) {
                 throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
             }
         }
@@ -284,13 +295,70 @@ export const productService = {
             },
         });
 
+        // Audit: publish/unpublish
+        if (productData.isPublished !== undefined && productData.isPublished !== current.isPublished) {
+            await createLog({
+                actorId,
+                action: productData.isPublished ? "PRODUCT_PUBLISHED" : "PRODUCT_UNPUBLISHED",
+                entityType: "PRODUCT",
+                entityId: id,
+                oldValue: String(current.isPublished),
+                newValue: String(productData.isPublished),
+                metadata: { productName: current.name },
+            });
+        }
+
+        // Audit: price change
+        if (productData.price !== undefined && productData.price !== current.price) {
+            await createLog({
+                actorId,
+                action: "PRODUCT_PRICE_CHANGE",
+                entityType: "PRODUCT",
+                entityId: id,
+                oldValue: String(current.price),
+                newValue: String(productData.price),
+                metadata: { productName: current.name },
+            });
+        }
+
+        // Audit: stock changes per variant
+        if (productData.variants !== undefined) {
+            const oldStock = new Map(current.variants.map((v) => [v.size, v.stock]));
+            for (const v of productData.variants) {
+                const prev = oldStock.get(v.size);
+                if (prev === undefined || prev !== v.stock) {
+                    await createLog({
+                        actorId,
+                        action: "PRODUCT_STOCK_CHANGE",
+                        entityType: "PRODUCT",
+                        entityId: id,
+                        oldValue: prev !== undefined ? String(prev) : null,
+                        newValue: String(v.stock),
+                        metadata: { size: v.size, productName: current.name },
+                    });
+                }
+            }
+        }
+
         return product;
     },
 
-    async deleteProduct(id: string) {
-        // Product images will be cascade deleted
-        await prisma.product.delete({
+    async deleteProduct(id: string, actorId: string) {
+        const product = await prisma.product.findUnique({
             where: { id },
+            select: { name: true, categoryId: true, price: true },
+        });
+        if (!product) throw new AppError("Product not found", 404);
+
+        await prisma.product.delete({ where: { id } });
+
+        await createLog({
+            actorId,
+            action: "PRODUCT_DELETED",
+            entityType: "PRODUCT",
+            entityId: id,
+            oldValue: product.name,
+            metadata: { categoryId: product.categoryId, price: product.price },
         });
     },
 

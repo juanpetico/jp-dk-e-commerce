@@ -3,6 +3,7 @@ import { productService } from "../services/product.service.js";
 import { body, validationResult } from "express-validator";
 import { AppError } from "../middleware/error-handler.js";
 import { getParam, getQuery } from "../utils/request.js";
+import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 // Type definition until Prisma generates types
 type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
@@ -26,8 +27,9 @@ export const productValidation = [
 ];
 
 export const productController = {
-    async createProduct(req: Request, res: Response, next: NextFunction) {
+    async createProduct(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 throw new AppError(
@@ -54,7 +56,7 @@ export const productController = {
                 isSale,
                 isPublished,
                 images,
-            });
+            }, req.user.id);
 
             res.status(201).json({
                 success: true,
@@ -138,13 +140,14 @@ export const productController = {
         }
     },
 
-    async updateProduct(req: Request, res: Response, next: NextFunction) {
+    async updateProduct(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const id = getParam(req, "id");
             const { name, description, price, originalPrice, discountPercent, variants, categoryId, isNew, isSale, isPublished, images } =
                 req.body;
 
-            const product = await productService.updateProduct(id, {
+            const product = await productService.updateProduct(id, req.user.id, {
                 name,
                 description,
                 price,
@@ -168,10 +171,11 @@ export const productController = {
         }
     },
 
-    async deleteProduct(req: Request, res: Response, next: NextFunction) {
+    async deleteProduct(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const id = getParam(req, "id");
-            await productService.deleteProduct(id);
+            await productService.deleteProduct(id, req.user.id);
 
             res.json({
                 success: true,

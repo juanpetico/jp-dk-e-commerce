@@ -22,7 +22,7 @@ export const shopConfigController = {
                 throw new AppError("No tienes permisos para realizar esta acción", 403);
             }
 
-            const config = await shopConfigService.updateConfig(req.body);
+            const config = await shopConfigService.updateConfig(req.user.id, req.body);
             res.json({
                 success: true,
                 data: config,

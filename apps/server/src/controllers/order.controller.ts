@@ -143,8 +143,9 @@ export const orderController = {
         }
     },
 
-    async updateOrderStatus(req: Request, res: Response, next: NextFunction) {
+    async updateOrderStatus(req: AuthRequest, res: Response, next: NextFunction) {
         try {
+            if (!req.user) throw new AppError("Authentication required", 401);
             const id = getParam(req, "id");
             const { status } = req.body;
 
@@ -153,7 +154,7 @@ export const orderController = {
                 throw new AppError("Invalid order status", 400);
             }
 
-            const order = await orderService.updateOrderStatus(id, status);
+            const order = await orderService.updateOrderStatus(id, status, req.user.id);
 
             res.json({
                 success: true,

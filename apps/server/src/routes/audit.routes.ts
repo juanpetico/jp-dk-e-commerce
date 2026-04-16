@@ -2,30 +2,39 @@ import { Router } from "express";
 import type { Response, NextFunction } from "express";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireSuperadmin } from "../middleware/role.middleware.js";
-import { listForUser } from "../services/audit.service.js";
+import { listLogs } from "../services/audit.service.js";
 import type { AuthRequest } from "../middleware/auth.middleware.js";
 import { AppError } from "../middleware/error-handler.js";
-import { getParam } from "../utils/request.js";
 
 const router: Router = Router();
 
-// GET /api/admin/audit/users/:id — returns audit log for a user (SUPERADMIN only)
+// GET /api/admin/audit-logs — paginated audit log (SUPERADMIN only)
+// Query params: take, skip, entityType, actorId
 router.get(
-    "/admin/audit/users/:id",
+    "/admin/audit-logs",
     authenticate,
     requireSuperadmin,
     async (req: AuthRequest, res: Response, next: NextFunction) => {
         try {
-            const targetUserId = getParam(req, "id");
-            const limitRaw = req.query.limit as string | undefined;
-            const cursor = req.query.cursor as string | undefined;
-            const limit = limitRaw ? parseInt(limitRaw, 10) : 20;
+            const q = req.query as Record<string, string | undefined>;
 
-            if (isNaN(limit) || limit < 1 || limit > 100) {
-                throw new AppError("limit must be between 1 and 100", 400);
+            const take = q.take ? parseInt(q.take, 10) : 20;
+            const skip = q.skip ? parseInt(q.skip, 10) : 0;
+
+            if (isNaN(take) || take < 1 || take > 100) {
+                throw new AppError("take must be between 1 and 100", 400);
+            }
+            if (isNaN(skip) || skip < 0) {
+                throw new AppError("skip must be a non-negative integer", 400);
             }
 
-            const result = await listForUser(targetUserId, limit, cursor);
+            const result = await listLogs({
+                take,
+                skip,
+                ...(q.entityType !== undefined ? { entityType: q.entityType } : {}),
+                ...(q.entityId !== undefined ? { entityId: q.entityId } : {}),
+                ...(q.actorId !== undefined ? { actorId: q.actorId } : {}),
+            });
 
             res.json({ success: true, data: result });
         } catch (error) {

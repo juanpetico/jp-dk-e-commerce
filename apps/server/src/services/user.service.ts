@@ -265,6 +265,7 @@ export const userService = {
 
         const updatedUser = await withAudit(
             actorId,
+            "USER",
             targetId,
             "ROLE_CHANGE",
             target.role,
@@ -307,6 +308,7 @@ export const userService = {
 
         const updatedUser = await withAudit(
             actorId,
+            "USER",
             targetId,
             "STATUS_CHANGE",
             String(target.isActive),
@@ -328,7 +330,8 @@ export const userService = {
                         lastLogin: true,
                         createdAt: true,
                     },
-                })
+                }),
+            !newIsActive && deactivationReason ? { deactivationReason } : undefined
         );
 
         invalidateAuthCache(targetId);

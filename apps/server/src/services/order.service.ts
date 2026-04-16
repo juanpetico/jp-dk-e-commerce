@@ -2,6 +2,7 @@ import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { couponService } from "./coupon.service.js";
 import { shopConfigService } from "./shop-config.service.js";
+import { createLog } from "./audit.service.js";
 
 // Type definitions until Prisma generates types
 type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
@@ -414,7 +415,13 @@ export const orderService = {
         return orders;
     },
 
-    async updateOrderStatus(orderId: string, status: OrderStatus) {
+    async updateOrderStatus(orderId: string, status: OrderStatus, actorId: string) {
+        const current = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: { status: true },
+        });
+        if (!current) throw new AppError("Order not found", 404);
+
         const order = await prisma.order.update({
             where: { id: orderId },
             data: { status },
@@ -441,6 +448,15 @@ export const orderService = {
                 shippingAddress: true,
                 billingAddress: true,
             },
+        });
+
+        await createLog({
+            actorId,
+            action: "ORDER_STATUS_CHANGE",
+            entityType: "ORDER",
+            entityId: orderId,
+            oldValue: current.status,
+            newValue: status,
         });
 
         return order;

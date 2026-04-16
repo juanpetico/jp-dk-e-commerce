@@ -169,17 +169,39 @@ export interface AdminUser {
     createdAt: string;
 }
 
+export type AuditAction =
+    | 'ROLE_CHANGE'
+    | 'STATUS_CHANGE'
+    | 'PRODUCT_CREATED'
+    | 'PRODUCT_DELETED'
+    | 'PRODUCT_PRICE_CHANGE'
+    | 'PRODUCT_STOCK_CHANGE'
+    | 'PRODUCT_PUBLISHED'
+    | 'PRODUCT_UNPUBLISHED'
+    | 'ORDER_STATUS_CHANGE'
+    | 'CATEGORY_CREATED'
+    | 'CATEGORY_DELETED'
+    | 'STORE_CONFIG_CHANGE';
+
 export interface AuditEntry {
     id: string;
-    action: 'ROLE_CHANGE' | 'STATUS_CHANGE';
+    action: AuditAction | string;
+    entityType: string;
+    entityId: string;
     oldValue: string | null;
     newValue: string | null;
+    metadata?: Record<string, unknown> | null;
     createdAt: string;
     actor: {
         id: string;
         name: string | null;
         email: string;
     };
+}
+
+export interface AuditLogsResult {
+    items: AuditEntry[];
+    total: number;
 }
 
 export interface CartState {
