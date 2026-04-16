@@ -360,7 +360,7 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
         }));
 
         if (!formData.name) newErrors.name = 'El nombre es obligatorio';
-        if (!formData.slug) newErrors.slug = 'El slug es obligatorio';
+        if (!initialData && !formData.slug) newErrors.slug = 'El slug es obligatorio';
         if (!rawPrice || rawPrice <= 0) newErrors.price = 'El precio debe ser mayor a 0';
         else if (rawPrice < 1000) newErrors.price = 'El precio debe ser al menos $1.000 (Valores menores requieren autorización)';
 
@@ -450,20 +450,26 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                                 {errors.name && <p className="text-destructive text-xs font-medium">{errors.name}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="slug" className="text-xs font-bold uppercase text-muted-foreground flex items-center">
-                                    Slug (URL) <span className="text-red-500 ml-1">*</span>
+                                <Label htmlFor="slug" className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                                    Slug (URL)
+                                    {!initialData && <span className="text-red-500">*</span>}
+                                    {initialData && <span className="text-[10px] font-normal normal-case text-muted-foreground/60">(no editable)</span>}
                                 </Label>
                                 <Input
                                     id="slug"
                                     type="text"
                                     name="slug"
-                                    value={formData.slug}
+                                    value={formData.slug ?? ''}
                                     onChange={handleChange}
+                                    readOnly={!!initialData}
                                     className={cn(
-                                        "bg-muted/50 focus:ring-primary focus:bg-background h-11 font-mono text-muted-foreground",
+                                        "bg-muted/50 h-11 font-mono text-muted-foreground",
+                                        !initialData && "focus:ring-primary focus:bg-background",
+                                        initialData && "cursor-not-allowed opacity-60 select-none",
                                         errors.slug && "ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive"
                                     )}
                                     placeholder="slug-del-producto"
+                                    tabIndex={initialData ? -1 : undefined}
                                 />
                                 {errors.slug && <p className="text-destructive text-xs font-medium">{errors.slug}</p>}
                             </div>
