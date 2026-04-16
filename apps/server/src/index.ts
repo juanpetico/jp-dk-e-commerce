@@ -67,8 +67,10 @@ const createServer = (): Express => {
 
     // Global rate limit
     app.use("/api", globalLimiter);
-    // Aggressive rate limit on auth endpoints
-    app.use("/api/auth", authLimiter);
+    // Aggressive rate limit only on sensitive auth actions (not session checks)
+    app.use("/api/auth/login", authLimiter);
+    app.use("/api/auth/register", authLimiter);
+    app.use("/api/auth/forgot-password", authLimiter);
 
     // Health check
     app.get("/health", (_, res) => {

@@ -233,7 +233,7 @@ export default function UsersPage() {
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Rol</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Estado</TableHead>
-                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Ultimo Login</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Último Login</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Creado</TableHead>
                                     <TableHead className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">Acciones</TableHead>
                                 </TableRow>

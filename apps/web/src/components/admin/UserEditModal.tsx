@@ -341,7 +341,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                                         <p className="mt-1 font-semibold text-foreground">{user.isActive ? 'Activo' : 'Inactivo'}</p>
                                     </div>
                                     <div className="rounded-md border border-border p-4">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground">Ultimo login</p>
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground">Último login</p>
                                         <p className="mt-1 font-semibold text-foreground">{formatDate(user.lastLogin)}</p>
                                     </div>
                                     <div className="rounded-md border border-border p-4">
