@@ -10,6 +10,22 @@ export const categoryValidation = [
     body("name").trim().notEmpty().withMessage("Category name is required"),
 ];
 
+export const categoryPartialValidation = [
+    body("isPublished")
+        .optional()
+        .isBoolean()
+        .withMessage("isPublished must be a boolean"),
+    body("sortOrder")
+        .optional()
+        .isInt()
+        .withMessage("sortOrder must be an integer"),
+    body("name")
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage("Category name cannot be empty"),
+];
+
 export const categoryController = {
     async createCategory(req: AuthRequest, res: Response, next: NextFunction) {
         try {
@@ -40,7 +56,17 @@ export const categoryController = {
 
     async getAllCategories(req: Request, res: Response, next: NextFunction) {
         try {
-            const categories = await categoryService.getAllCategories();
+            const isPublishedParam = req.query.isPublished;
+            const isPublished =
+                isPublishedParam === "true"
+                    ? true
+                    : isPublishedParam === "false"
+                    ? false
+                    : undefined;
+
+            const categories = await categoryService.getAllCategories(
+                isPublished === undefined ? undefined : { isPublished }
+            );
 
             res.json({
                 success: true,
@@ -68,7 +94,17 @@ export const categoryController = {
     async getCategoryBySlug(req: Request, res: Response, next: NextFunction) {
         try {
             const slug = getParam(req, "slug");
-            const category = await categoryService.getCategoryBySlug(slug);
+            const isPublishedParam = req.query.isPublished;
+            const isPublished =
+                isPublishedParam === "true"
+                    ? true
+                    : isPublishedParam === "false"
+                    ? false
+                    : undefined;
+            const category = await categoryService.getCategoryBySlug(
+                slug,
+                isPublished === undefined ? undefined : { isPublished }
+            );
 
             res.json({
                 success: true,
@@ -115,6 +151,52 @@ export const categoryController = {
             res.json({
                 success: true,
                 message: "Category deleted successfully",
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async patchCategory(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) throw new AppError("Authentication required", 401);
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                throw new AppError(
+                    errors
+                        .array()
+                        .map((e) => e.msg)
+                        .join(", "),
+                    400
+                );
+            }
+
+            const id = getParam(req, "id");
+            const { name, isPublished, sortOrder } = req.body;
+
+            const hasName = typeof name === "string";
+            const hasIsPublished = typeof isPublished === "boolean";
+            const hasSortOrder = typeof sortOrder === "number";
+
+            if (!hasName && !hasIsPublished && !hasSortOrder) {
+                throw new AppError("At least one valid field is required", 400);
+            }
+
+            const category = await categoryService.updateCategoryFields(
+                id,
+                {
+                ...(hasName ? { name } : {}),
+                ...(hasIsPublished ? { isPublished } : {}),
+                ...(hasSortOrder ? { sortOrder } : {}),
+                },
+                req.user.id
+            );
+
+            res.json({
+                success: true,
+                message: "Category updated successfully",
+                data: category,
             });
         } catch (error) {
             next(error);

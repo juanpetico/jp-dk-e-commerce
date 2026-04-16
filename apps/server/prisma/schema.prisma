@@ -53,10 +53,12 @@ model CartItem {
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  products Product[]
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  isPublished Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  products    Product[]
 }
 
 model Coupon {

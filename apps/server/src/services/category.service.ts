@@ -4,6 +4,16 @@ import { createLog } from "./audit.service.js";
 import _slugify from "slugify";
 const slugify = (_slugify as any).default || _slugify;
 
+interface CategoryFilters {
+    isPublished?: boolean;
+}
+
+interface CategoryFieldsUpdateInput {
+    name?: string;
+    isPublished?: boolean;
+    sortOrder?: number;
+}
+
 // Helper function to generate slug from name
 const generateSlug = async (name: string, excludeId?: string): Promise<string> => {
     let slug = slugify(name, {
@@ -54,7 +64,7 @@ export const categoryService = {
         return category;
     },
 
-    async getAllCategories() {
+    async getAllCategories(filters?: CategoryFilters) {
         const categories = await prisma.category.findMany({
             include: {
                 _count: {
@@ -64,6 +74,9 @@ export const categoryService = {
             orderBy: {
                 name: "asc",
             },
+            ...(typeof filters?.isPublished === "boolean"
+                ? { where: { isPublished: filters.isPublished } }
+                : {}),
         });
 
         return categories;
@@ -88,9 +101,12 @@ export const categoryService = {
         return category;
     },
 
-    async getCategoryBySlug(slug: string) {
-        const category = await prisma.category.findUnique({
-            where: { slug },
+    async getCategoryBySlug(slug: string, filters?: CategoryFilters) {
+        const category = await prisma.category.findFirst({
+            where: {
+                slug,
+                ...(typeof filters?.isPublished === "boolean" ? { isPublished: filters.isPublished } : {}),
+            },
             include: {
                 products: {
                     include: {
@@ -108,15 +124,59 @@ export const categoryService = {
     },
 
     async updateCategory(id: string, name: string) {
-        const slug = await generateSlug(name, id);
+        return this.updateCategoryFields(id, { name });
+    },
+
+    async updateCategoryFields(id: string, fields: CategoryFieldsUpdateInput, actorId?: string) {
+        const existing = (await prisma.category.findUnique({ where: { id } })) as
+            | ({ isPublished?: boolean; name: string; id: string; slug: string } & Record<string, unknown>)
+            | null;
+        if (!existing) {
+            throw new AppError("Category not found", 404);
+        }
+
+        const updateData: CategoryFieldsUpdateInput & { slug?: string } = {};
+
+        if (typeof fields.name === "string") {
+            const trimmedName = fields.name.trim();
+            if (!trimmedName) {
+                throw new AppError("Category name is required", 400);
+            }
+            updateData.name = trimmedName;
+            updateData.slug = await generateSlug(trimmedName, id);
+        }
+
+        if (typeof fields.isPublished === "boolean") {
+            updateData.isPublished = fields.isPublished;
+        }
+
+        if (typeof fields.sortOrder === "number") {
+            updateData.sortOrder = fields.sortOrder;
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            throw new AppError("At least one field is required", 400);
+        }
 
         const category = await prisma.category.update({
             where: { id },
-            data: {
-                name,
-                slug,
-            },
+            data: updateData,
         });
+
+        if (
+            actorId &&
+            typeof updateData.isPublished === "boolean" &&
+            existing.isPublished !== updateData.isPublished
+        ) {
+            await createLog({
+                actorId,
+                action: updateData.isPublished ? "CATEGORY_PUBLISHED" : "CATEGORY_UNPUBLISHED",
+                entityType: "CATEGORY",
+                entityId: category.id,
+                oldValue: String(existing.isPublished),
+                newValue: String(updateData.isPublished),
+            });
+        }
 
         return category;
     },

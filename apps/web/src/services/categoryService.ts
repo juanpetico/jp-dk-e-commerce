@@ -2,9 +2,16 @@ import { Category } from '../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
-export const fetchCategories = async (): Promise<Category[]> => {
+export const fetchCategories = async (options?: { isPublished?: boolean }): Promise<Category[]> => {
     try {
-        const res = await fetch(`${API_URL}/categories`);
+        const params = new URLSearchParams();
+        if (typeof options?.isPublished === 'boolean') {
+            params.set('isPublished', String(options.isPublished));
+        }
+        const query = params.toString();
+        const url = query ? `${API_URL}/categories?${query}` : `${API_URL}/categories`;
+
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch categories');
         const json = await res.json();
         return json.data;
@@ -60,7 +67,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 export const getCategoryBySlug = async (slug: string): Promise<Category | undefined> => {
     try {
-        const res = await fetch(`${API_URL}/categories/slug/${slug}`);
+        const res = await fetch(`${API_URL}/categories/slug/${slug}?isPublished=true`);
         if (!res.ok) throw new Error('Failed to fetch category');
         const json = await res.json();
         return json.data;
@@ -68,4 +75,21 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | undefi
         console.warn("API disconnect, loading mock category", error);
         return undefined;
     }
+};
+
+export const patchCategory = async (id: string, payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder'>>): Promise<Category> => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.message || 'Failed to patch category');
+    }
+
+    const json = await res.json();
+    return json.data;
 };

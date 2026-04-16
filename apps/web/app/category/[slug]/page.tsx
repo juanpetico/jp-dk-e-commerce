@@ -23,7 +23,7 @@ const CategoryPage = () => {
             setLoading(true);
             try {
                 // Fetch all categories for navigation
-                const allCategories = await fetchCategories();
+                const allCategories = await fetchCategories({ isPublished: true });
                 setCategories(allCategories);
 
                 // Fetch current category info

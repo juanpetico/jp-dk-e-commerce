@@ -2,6 +2,7 @@ import type { Router as ExpressRouter } from "express";
 import { Router } from "express";
 import {
     categoryController,
+    categoryPartialValidation,
     categoryValidation,
 } from "../controllers/category.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -28,6 +29,13 @@ router.put(
     requireRole("ADMIN", "SUPERADMIN"),
     categoryValidation,
     categoryController.updateCategory
+);
+router.patch(
+    "/categories/:id",
+    authenticate,
+    requireRole("ADMIN", "SUPERADMIN"),
+    categoryPartialValidation,
+    categoryController.patchCategory
 );
 router.delete(
     "/categories/:id",

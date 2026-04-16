@@ -6,6 +6,7 @@ import { Loader2, FolderOpen, Plus, PenLine, Trash2, AlertTriangle, ExternalLink
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
     Dialog,
     DialogContent,
@@ -14,7 +15,7 @@ import {
     DialogFooter,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { fetchCategories, createCategory, updateCategory, deleteCategory } from '@/services/categoryService';
+import { fetchCategories, createCategory, updateCategory, deleteCategory, patchCategory } from '@/services/categoryService';
 import { Category } from '@/types';
 import { toast } from 'sonner';
 import { confirm } from '@/utils/confirm';
@@ -42,6 +43,7 @@ export default function CategoriesPage() {
 
     // Modal: bloqueo por productos
     const [blockedCategory, setBlockedCategory] = useState<Category | null>(null);
+    const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
     const load = async () => {
         try {
@@ -139,6 +141,19 @@ export default function CategoriesPage() {
         }
     };
 
+    const handleTogglePublished = async (cat: Category, nextValue: boolean) => {
+        try {
+            setStatusUpdatingId(cat.id);
+            const updated = await patchCategory(cat.id, { isPublished: nextValue });
+            setCategories(prev => prev.map(c => (c.id === updated.id ? { ...c, ...updated } : c)));
+            toast.success(`Categoría ${nextValue ? 'publicada' : 'ocultada'}: "${cat.name}"`);
+        } catch (error: any) {
+            toast.error(error?.message || 'No se pudo actualizar el estado');
+        } finally {
+            setStatusUpdatingId(null);
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fade-in text-foreground">
 
@@ -192,6 +207,7 @@ export default function CategoriesPage() {
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Nombre</th>
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Slug</th>
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Productos</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Estado</th>
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Acciones</th>
                                 </tr>
                             </thead>
@@ -214,6 +230,19 @@ export default function CategoriesPage() {
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground">Sin productos</span>
                                                 )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <Switch
+                                                        checked={cat.isPublished ?? true}
+                                                        onCheckedChange={(nextChecked) => handleTogglePublished(cat, nextChecked)}
+                                                        disabled={statusUpdatingId === cat.id}
+                                                        aria-label={`Cambiar estado de ${cat.name}`}
+                                                    />
+                                                    <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                                                        {(cat.isPublished ?? true) ? 'Visible' : 'Oculta'}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2 justify-end">

@@ -2,6 +2,8 @@ export interface Category {
     id: string;
     name: string;
     slug: string;
+    isPublished?: boolean;
+    sortOrder?: number;
     description?: string;
     _count?: { products: number };
 }
@@ -181,6 +183,8 @@ export type AuditAction =
     | 'PRODUCT_UNPUBLISHED'
     | 'ORDER_STATUS_CHANGE'
     | 'CATEGORY_CREATED'
+    | 'CATEGORY_PUBLISHED'
+    | 'CATEGORY_UNPUBLISHED'
     | 'CATEGORY_DELETED'
     | 'STORE_CONFIG_CHANGE'
     | 'COUPON_CREATED'

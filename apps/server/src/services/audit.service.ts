@@ -12,6 +12,8 @@ export type AuditAction =
     | "PRODUCT_UNPUBLISHED"
     | "ORDER_STATUS_CHANGE"
     | "CATEGORY_CREATED"
+    | "CATEGORY_PUBLISHED"
+    | "CATEGORY_UNPUBLISHED"
     | "CATEGORY_DELETED"
     | "STORE_CONFIG_CHANGE"
     | "COUPON_CREATED"
@@ -26,7 +28,7 @@ export interface AuditEntry {
     entityId: string;
     oldValue: string | null;
     newValue: string | null;
-    metadata: Record<string, unknown> | null;
+    metadata: Prisma.JsonValue | null;
     createdAt: Date;
     actor: {
         id: string;
