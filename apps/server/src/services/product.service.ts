@@ -1,14 +1,8 @@
 import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { createLog } from "./audit.service.js";
-
-// Type definition until Prisma generates types
-type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
-
-interface ProductVariantInput {
-    size: Size;
-    stock: number;
-}
+import { getAllProductsUseCase } from "./product/use-cases/get-all-products.js";
+import type { CreateProductData, ProductFilters, ProductVariantInput, Size } from "./product/product.types.js";
 
 // Helper function to generate slug from name
 const generateSlug = (name: string): string => {
@@ -21,31 +15,6 @@ const generateSlug = (name: string): string => {
         .replace(/\s+/g, "-"); // Replace spaces with hyphens
 };
 
-interface CreateProductData {
-    name: string;
-    description?: string;
-    price: number;
-    originalPrice?: number;
-    discountPercent?: number;
-    categoryId: string;
-    variants: ProductVariantInput[];
-    isNew?: boolean;
-    isSale?: boolean;
-    images?: string[];
-    isPublished?: boolean;
-}
-
-interface ProductFilters {
-    // ... existing filters
-    categoryId?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    size?: Size;
-    isNew?: boolean;
-    isSale?: boolean;
-    search?: string;
-    isPublished?: boolean;
-}
 
 export const productService = {
     async createProduct(data: CreateProductData, actorId: string) {
@@ -115,63 +84,7 @@ export const productService = {
 
     // ... (getAllProducts, getProductById, getProductBySlug remain similar but ensure filters are correct in getAllProducts if needed)
     async getAllProducts(filters?: ProductFilters) {
-        const where: any = {};
-
-        if (filters?.categoryId) {
-            where.categoryId = filters.categoryId;
-        }
-
-        if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
-            where.price = {};
-            if (filters.minPrice !== undefined) {
-                where.price.gte = filters.minPrice;
-            }
-            if (filters.maxPrice !== undefined) {
-                where.price.lte = filters.maxPrice;
-            }
-        }
-
-        if (filters?.size) {
-            where.variants = {
-                some: {
-                    size: filters.size,
-                    stock: { gt: 0 }
-                },
-            };
-        }
-
-        if (filters?.isNew !== undefined) {
-            where.isNew = filters.isNew;
-        }
-
-        if (filters?.isSale !== undefined) {
-            where.isSale = filters.isSale;
-        }
-
-        if (filters?.search) {
-            where.OR = [
-                { name: { contains: filters.search, mode: "insensitive" } },
-                { description: { contains: filters.search, mode: "insensitive" } },
-            ];
-        }
-
-        if (filters?.isPublished !== undefined) {
-            where.isPublished = filters.isPublished;
-        }
-
-        const products = await prisma.product.findMany({
-            where,
-            include: {
-                images: true,
-                category: true,
-                variants: true,
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-
-        return products;
+        return getAllProductsUseCase(filters);
     },
 
     // ... getProductById ...

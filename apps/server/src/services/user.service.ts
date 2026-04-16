@@ -3,9 +3,8 @@ import bcrypt from "bcrypt";
 import { AppError } from "../middleware/error-handler.js";
 import { withAudit } from "./audit.service.js";
 import { invalidateAuthCache } from "../middleware/auth.middleware.js";
-
-const VALID_ROLES = ["CLIENT", "ADMIN", "SUPERADMIN"] as const;
-type UserRole = (typeof VALID_ROLES)[number];
+import { getUsersUseCase } from "./user/use-cases/get-users.js";
+import { VALID_USER_ROLES, type UserRole } from "./user/user.types.js";
 
 interface ActorInfo { id: string; role: string }
 interface TargetInfo { id: string; role: string; isActive: boolean }
@@ -27,7 +26,7 @@ export function assertCanMutate(
     if (actor.role !== "SUPERADMIN") {
         throw new AppError("Forbidden", 403);
     }
-    if (change.role !== undefined && !VALID_ROLES.includes(change.role as UserRole)) {
+    if (change.role !== undefined && !VALID_USER_ROLES.includes(change.role as UserRole)) {
         throw new AppError("Invalid role", 400);
     }
 }
@@ -203,49 +202,7 @@ export const userService = {
         cursor?: string;
         limit?: number;
     }) {
-        const limit = params.limit ?? 20;
-        const take = limit + 1;
-
-        const where: any = {};
-
-        if (params.search) {
-            where.OR = [
-                { email: { contains: params.search, mode: "insensitive" } },
-                { name: { contains: params.search, mode: "insensitive" } },
-            ];
-        }
-
-        if (params.role && params.role !== "ALL") {
-            where.role = params.role;
-        }
-
-        if (params.status && params.status !== "ALL") {
-            where.isActive = params.status === "ACTIVE";
-        }
-
-        const users = await prisma.user.findMany({
-            where,
-            take,
-            ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
-            orderBy: { createdAt: "desc" },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                isActive: true,
-                deactivationReason: true,
-                lastLogin: true,
-                createdAt: true,
-            },
-        });
-
-        const hasNextPage = users.length > limit;
-        const items = hasNextPage ? users.slice(0, limit) : users;
-        const lastItem = items[items.length - 1];
-        const nextCursor = hasNextPage && lastItem ? lastItem.id : null;
-
-        return { users: items, nextCursor };
+        return getUsersUseCase(params);
     },
 
     async updateUserRole(actorId: string, targetId: string, newRole: string) {
