@@ -23,8 +23,8 @@ export function proxy(request: NextRequest) {
 
             const payload = JSON.parse(jsonPayload)
 
-            if (payload.role !== 'ADMIN') {
-                // If not admin, redirect to login (or 403 page if we had one, but login is requested)
+            if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
+                // If not admin/superadmin, redirect to login
                 return NextResponse.redirect(new URL('/login', request.url))
             }
         } catch (e) {

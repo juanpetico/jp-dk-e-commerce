@@ -76,8 +76,9 @@ export const orderController = {
         try {
             const id = getParam(req, "id");
 
-            // If user is not admin, pass userId to verify ownership
-            const userId = req.user?.role === "ADMIN" ? undefined : req.user?.id;
+            // If user is not admin/superadmin, pass userId to verify ownership
+            const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPERADMIN";
+            const userId = isAdmin ? undefined : req.user?.id;
             const order = await orderService.getOrderById(id, userId);
 
             res.json({
@@ -184,8 +185,9 @@ export const orderController = {
         try {
             const id = getParam(req, "id");
 
-            // If user is not admin, pass userId to verify ownership
-            const userId = req.user?.role === "ADMIN" ? undefined : req.user?.id;
+            // If user is not admin/superadmin, pass userId to verify ownership
+            const isAdmin = req.user?.role === "ADMIN" || req.user?.role === "SUPERADMIN";
+            const userId = isAdmin ? undefined : req.user?.id;
             const order = await orderService.cancelOrder(id, userId);
 
             res.json({
