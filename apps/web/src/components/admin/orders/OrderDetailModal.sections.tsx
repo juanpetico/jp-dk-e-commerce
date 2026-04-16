@@ -32,8 +32,8 @@ export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditab
                     <h2 className="font-display text-2xl font-black uppercase tracking-tight text-foreground">
                         {order.id.slice(0, 8)}
                     </h2>
-                    <Select value={order.status} onValueChange={onStatusChange} disabled={!statusEditable || order.status === 'CANCELLED'}>
-                        <SelectTrigger className={cn('h-7 w-[140px] text-[10px] uppercase font-bold border-2', getStatusColor(order.status))}>
+                    <Select value={order.status} onValueChange={onStatusChange} disabled={!statusEditable}>
+                        <SelectTrigger className={cn('h-7 w-[140px] text-[10px] uppercase font-bold rounded-full border-none focus:ring-0 shadow-none', getStatusColor(order.status))}>
                             <SelectValue placeholder="Estado" />
                         </SelectTrigger>
                         <SelectContent>
@@ -41,7 +41,7 @@ export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditab
                             <SelectItem value="CONFIRMED">Confirmado</SelectItem>
                             <SelectItem value="SHIPPED">Enviado</SelectItem>
                             <SelectItem value="DELIVERED">Entregado</SelectItem>
-                            <SelectItem value="CANCELLED" className="text-destructive focus:text-destructive">Cancelar Orden</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelar</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

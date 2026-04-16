@@ -3,6 +3,7 @@
 import React from 'react';
 import { confirm } from '@/utils/confirm';
 import { Order, OrderStatus } from '@/types';
+import { ORDER_STATUS_LABELS } from '@/services/orderService';
 import {
     OrderAddresses,
     OrderCustomerSummary,
@@ -27,13 +28,13 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
 
     const handleStatusChange = async (newStatus: string) => {
         const status = newStatus as OrderStatus;
-        if (status === 'CANCELLED') {
-            const confirmed = await confirm(
-                '¿Cancelar Orden?',
-                '¿Estás seguro de que deseas cancelar esta orden? Esta acción no se puede deshacer.'
-            );
-            if (!confirmed) return;
-        }
+        if (status === order.status) return;
+
+        const confirmed = await confirm(
+            '¿Guardar cambio de estado?',
+            `La orden pasará a "${ORDER_STATUS_LABELS[status]}".`
+        );
+        if (!confirmed) return;
 
         if (onStatusChange) {
             onStatusChange(order.id, status);

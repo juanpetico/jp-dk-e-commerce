@@ -35,20 +35,13 @@ export default function OrderStatusSelect({
         const newStatus = value as OrderStatus;
         if (newStatus === currentStatus) return;
 
-        // Mostrar el cambio inmediatamente en el UI
-        setLocalStatus(newStatus);
+        const confirmed = await confirm(
+            '¿Guardar cambio de estado?',
+            `La orden pasará a "${ORDER_STATUS_LABELS[newStatus]}".`
+        );
+        if (!confirmed) return;
 
-        // Confirmación para cancelaciones
-        if (newStatus === 'CANCELLED') {
-            const confirmed = await confirm(
-                '¿Estás seguro de que deseas cancelar esta orden?',
-                'Esta acción no se puede deshacer.'
-            );
-            if (!confirmed) {
-                setLocalStatus(currentStatus);
-                return;
-            }
-        }
+        setLocalStatus(newStatus);
 
         try {
             setIsUpdating(true);
@@ -75,7 +68,7 @@ export default function OrderStatusSelect({
             >
                 <SelectTrigger
                     className={cn(
-                        "flex items-center gap-2 h-7 px-2.5 text-[9px] uppercase font-black rounded-sm border transition-all focus:ring-1 focus:ring-primary/20",
+                        "h-7 w-[130px] text-[10px] uppercase font-bold rounded-full border-none focus:ring-0 shadow-none",
                         getOrderStatusColor(localStatus),
                         (disabled || isUpdating) ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-95'
                     )}

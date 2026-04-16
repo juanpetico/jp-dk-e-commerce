@@ -5,6 +5,7 @@ import { DateRange } from 'react-day-picker';
 import { OrderStatus } from '@/types';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithRange } from '@/components/ui/DateRangePicker';
 import { format } from 'date-fns';
@@ -103,19 +104,19 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
         <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between mb-6">
             <div className="relative w-full md:max-w-xs">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
+                <Input
                     type="text"
                     placeholder="Buscar por nombre o correo..."
                     value={search}
                     onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-10 pr-3 h-10 text-sm border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                    className="pl-10"
                 />
             </div>
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <div className="relative">
                     <Select value={status === '' ? 'ALL' : status} onValueChange={handleStatusChange}>
-                        <SelectTrigger className={`w-full h-10 bg-background border border-input rounded-md text-sm focus:ring-2 focus:ring-ring ${status === '' ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        <SelectTrigger className="w-full md:w-[180px]">
                             <SelectValue placeholder="Estado del pedido" />
                         </SelectTrigger>
                         <SelectContent>

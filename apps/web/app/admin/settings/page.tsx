@@ -3,14 +3,27 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../../../src/components/ui/Button';
 import { Truck, Loader2 } from 'lucide-react';
-import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { shopConfigService } from '@/services/shopConfigService';
 import { toast } from 'sonner';
 
 type ShippingForm = {
     storeName: string;
     supportEmail: string;
-    baseShippingCost: number;
-    freeShippingThreshold: number;
+    baseShippingCost: string;
+    freeShippingThreshold: string;
+};
+
+const formatThousandsCL = (value: number | string) => {
+    const digits = String(value).replace(/\D/g, '');
+    if (!digits) return '';
+    return new Intl.NumberFormat('es-CL').format(Number(digits));
+};
+
+const parseThousandsCL = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    return digits ? Number(digits) : 0;
 };
 
 export default function SettingsPage() {
@@ -19,8 +32,8 @@ export default function SettingsPage() {
     const [form, setForm] = useState<ShippingForm>({
         storeName: '',
         supportEmail: '',
-        baseShippingCost: 0,
-        freeShippingThreshold: 0,
+        baseShippingCost: '',
+        freeShippingThreshold: '',
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -31,8 +44,8 @@ export default function SettingsPage() {
                 setForm({
                     storeName: cfg.storeName || '',
                     supportEmail: cfg.supportEmail || '',
-                    baseShippingCost: cfg.baseShippingCost ?? 0,
-                    freeShippingThreshold: cfg.freeShippingThreshold ?? 0,
+                    baseShippingCost: formatThousandsCL(cfg.baseShippingCost ?? 0),
+                    freeShippingThreshold: formatThousandsCL(cfg.freeShippingThreshold ?? 0),
                 });
             } catch (e) {
                 toast.error('Error al cargar la configuración');
@@ -44,10 +57,12 @@ export default function SettingsPage() {
 
     const validate = (f: ShippingForm): Record<string, string> => {
         const errs: Record<string, string> = {};
+        const baseShippingCost = parseThousandsCL(f.baseShippingCost);
+        const freeShippingThreshold = parseThousandsCL(f.freeShippingThreshold);
         if (!f.storeName.trim()) errs.storeName = 'Requerido';
         if (!/^\S+@\S+\.\S+$/.test(f.supportEmail)) errs.supportEmail = 'Email inválido';
-        if (!Number.isFinite(f.baseShippingCost) || f.baseShippingCost < 0) errs.baseShippingCost = 'Debe ser ≥ 0';
-        if (!Number.isFinite(f.freeShippingThreshold) || f.freeShippingThreshold < 0) errs.freeShippingThreshold = 'Debe ser ≥ 0';
+        if (!Number.isFinite(baseShippingCost) || baseShippingCost < 0) errs.baseShippingCost = 'Debe ser >= 0';
+        if (!Number.isFinite(freeShippingThreshold) || freeShippingThreshold < 0) errs.freeShippingThreshold = 'Debe ser >= 0';
         return errs;
     };
 
@@ -63,10 +78,10 @@ export default function SettingsPage() {
             await shopConfigService.updateConfig({
                 storeName: form.storeName.trim(),
                 supportEmail: form.supportEmail.trim(),
-                baseShippingCost: Math.round(form.baseShippingCost),
-                freeShippingThreshold: Math.round(form.freeShippingThreshold),
+                baseShippingCost: Math.round(parseThousandsCL(form.baseShippingCost)),
+                freeShippingThreshold: Math.round(parseThousandsCL(form.freeShippingThreshold)),
             });
-            toast.success('Configuración guardada');
+            toast.success('Configuración guardada correctamente');
         } catch (e: any) {
             toast.error(e?.message || 'Error al guardar');
         } finally {
@@ -82,8 +97,6 @@ export default function SettingsPage() {
         );
     }
 
-    const inputCls = 'w-full bg-background border border-gray-300 dark:border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-foreground text-foreground';
-
     return (
         <div className="space-y-6 animate-fade-in max-w-4xl text-foreground">
             <div className="mb-8">
@@ -96,22 +109,20 @@ export default function SettingsPage() {
                 <h3 className="font-bold text-sm uppercase tracking-wide mb-6 border-b border-gray-300 dark:border-border pb-2 text-foreground">Información de la Tienda</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-2">Nombre de la tienda</label>
-                        <input
+                        <Label className="mb-2 block text-xs font-bold uppercase text-muted-foreground">Nombre de la tienda</Label>
+                        <Input
                             type="text"
                             value={form.storeName}
                             onChange={e => setForm(f => ({ ...f, storeName: e.target.value }))}
-                            className={inputCls}
                         />
                         {errors.storeName && <p className="text-xs text-red-500 mt-1">{errors.storeName}</p>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-2">Correo de soporte</label>
-                        <input
+                        <Label className="mb-2 block text-xs font-bold uppercase text-muted-foreground">Correo de soporte</Label>
+                        <Input
                             type="email"
                             value={form.supportEmail}
                             onChange={e => setForm(f => ({ ...f, supportEmail: e.target.value }))}
-                            className={inputCls}
                         />
                         {errors.supportEmail && <p className="text-xs text-red-500 mt-1">{errors.supportEmail}</p>}
                     </div>
@@ -132,29 +143,29 @@ export default function SettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-xs font-bold text-muted-foreground uppercase mb-2">Costo de envío</label>
+                            <Label className="mb-2 block text-xs font-bold uppercase text-muted-foreground">Costo de envío</Label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-muted-foreground">$</span>
-                                <input
-                                    type="number"
-                                    min={0}
+                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
                                     value={form.baseShippingCost}
-                                    onChange={e => setForm(f => ({ ...f, baseShippingCost: Number(e.target.value) }))}
-                                    className={`${inputCls} pl-6`}
+                                    onChange={e => setForm(f => ({ ...f, baseShippingCost: formatThousandsCL(e.target.value) }))}
+                                    className="pl-7"
                                 />
                             </div>
                             {errors.baseShippingCost && <p className="text-xs text-red-500 mt-1">{errors.baseShippingCost}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-muted-foreground uppercase mb-2">Monto para Envío Gratis</label>
+                            <Label className="mb-2 block text-xs font-bold uppercase text-muted-foreground">Monto para Envío Gratis</Label>
                             <div className="relative">
-                                <span className="absolute left-3 top-2 text-muted-foreground">$</span>
-                                <input
-                                    type="number"
-                                    min={0}
+                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
                                     value={form.freeShippingThreshold}
-                                    onChange={e => setForm(f => ({ ...f, freeShippingThreshold: Number(e.target.value) }))}
-                                    className={`${inputCls} pl-6`}
+                                    onChange={e => setForm(f => ({ ...f, freeShippingThreshold: formatThousandsCL(e.target.value) }))}
+                                    className="pl-7"
                                 />
                             </div>
                             {errors.freeShippingThreshold && <p className="text-xs text-red-500 mt-1">{errors.freeShippingThreshold}</p>}

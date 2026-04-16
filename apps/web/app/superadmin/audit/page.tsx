@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Loader2, Search, ShieldAlert } from 'lucide-react';
+import { ArrowRight, Loader2, Search, ShieldAlert, Download } from 'lucide-react';
 import { endOfDay, startOfDay } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { AuditEntry } from '@/types';
 import { fetchAuditLogs } from '@/services/auditService';
 
@@ -49,22 +50,18 @@ const ACTION_CONFIG: Record<string, { label: string; className: string }> = {
     PRODUCT_STOCK_CHANGE:    { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
     PRODUCT_PUBLISHED:       { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
     PRODUCT_UNPUBLISHED:     { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
-    ORDER_STATUS_CHANGE:     { label: 'Estado de Orden',     className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' },
+    ORDER_STATUS_CHANGE:     { label: 'Estado de Orden',     className: 'bg-indigo-200 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' },
     CATEGORY_CREATED:        { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     CATEGORY_PUBLISHED:      { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     CATEGORY_UNPUBLISHED:    { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     CATEGORY_DELETED:        { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     STORE_CONFIG_CHANGE:     { label: 'Estado de Configuración', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
-    COUPON_CREATED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
-    COUPON_UPDATED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
-    COUPON_DELETED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    /** BG-VIOLET-200 PARA QUE SE NOTE EN LIGHT     */
+    COUPON_CREATED:          { label: 'Estado de Cupón',     className: 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    COUPON_UPDATED:          { label: 'Estado de Cupón',     className: 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    COUPON_DELETED:          { label: 'Estado de Cupón',     className: 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
     PRODUCT_SALE_CHANGE:     { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
 };
-
-const ACTION_FILTER_OPTIONS = [
-    { value: 'ALL', label: 'Todas las acciones' },
-    ...Object.entries(ACTION_CONFIG).map(([value, { label }]) => ({ value, label })),
-];
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
     PENDING:   'Pendiente',
@@ -128,6 +125,13 @@ const formatDate = (value: string) => {
 const formatCLP = (value: string) =>
     new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(Number(value));
 
+const getProductName = (entry: AuditEntry, fallback?: string | null) => {
+    const metadataName = entry.metadata?.productName as string | undefined;
+    if (metadataName) return metadataName;
+    if (fallback) return fallback;
+    return entry.entityId.slice(0, 8);
+};
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const ActionBadge = ({ action }: { action: string }) => {
@@ -180,7 +184,7 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
                     <div className="flex items-center gap-0.5 flex-wrap">
                         <OldVal>{wasActive ? 'Activo' : 'Inactivo'}</OldVal>
                         <DiffArrow />
-                        <NewVal className={isActive ? 'text-green-600 dark:text-green-400' : 'text-zinc-500 dark:text-zinc-400'}>
+                        <NewVal className={isActive ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
                             {isActive ? 'Activo' : 'Inactivo'}
                         </NewVal>
                     </div>
@@ -191,9 +195,13 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
             );
         }
 
-        case 'PRODUCT_PRICE_CHANGE':
+        case 'PRODUCT_PRICE_CHANGE': {
+            const productName = getProductName(entry);
             return (
-                <div className="flex items-center gap-0.5 flex-wrap">
+                <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground">Producto:</span>
+                    <span className="text-xs text-muted-foreground mr-1">{productName}</span>
+                    <span className="text-[10px] text-muted-foreground">Precio:</span>
                     <OldVal>{formatCLP(oldValue ?? '0')}</OldVal>
                     <DiffArrow />
                     <NewVal className="text-purple-600 dark:text-purple-400">
@@ -201,12 +209,16 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
                     </NewVal>
                 </div>
             );
+        }
 
         case 'PRODUCT_STOCK_CHANGE': {
             const size = metadata?.size as string | undefined;
+            const productName = getProductName(entry);
             return (
-                <div className="flex items-center gap-0.5 flex-wrap">
-                    {size && <span className="text-[10px] text-muted-foreground mr-1">{size}</span>}
+                <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground">Producto:</span>
+                    <span className="text-xs text-muted-foreground mr-1">{productName}</span>
+                    {size && <span className="text-[10px] text-muted-foreground">Talla: {size}</span>}
                     <OldVal>{oldValue ?? '—'}</OldVal>
                     <DiffArrow />
                     <NewVal className="text-cyan-600 dark:text-cyan-400">{newValue ?? '—'}</NewVal>
@@ -216,14 +228,14 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
 
         case 'PRODUCT_PUBLISHED':
         case 'PRODUCT_UNPUBLISHED': {
-            const name = (metadata?.productName as string | undefined) ?? entry.entityId.slice(0, 8);
+            const name = getProductName(entry);
             const isPublished = action === 'PRODUCT_PUBLISHED';
             return (
                 <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground">Categoría:</span>
+                    <span className="text-[10px] text-muted-foreground">Producto:</span>
                     <span className="text-xs text-muted-foreground">{name}</span>
-                    <NewVal className={isPublished ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400'}>
-                        {isPublished ? 'Publicado' : 'Despublicado'}
+                    <NewVal className={isPublished ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}>
+                        {isPublished ? 'Publicado' : 'No publicado'}
                     </NewVal>
                 </div>
             );
@@ -263,13 +275,25 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
         }
 
         case 'PRODUCT_CREATED': {
-            const name = newValue ?? metadata?.productName as string | undefined;
-            return <span className="text-xs text-muted-foreground">{name ?? '—'}</span>;
+            const name = getProductName(entry, newValue);
+            return (
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">Producto:</span>
+                    <span className="text-xs text-muted-foreground">{name}</span>
+                    <NewVal className="text-emerald-600 dark:text-emerald-400">Creado</NewVal>
+                </div>
+            );
         }
 
         case 'PRODUCT_DELETED': {
-            const name = oldValue ?? metadata?.productName as string | undefined;
-            return <span className="text-xs text-muted-foreground line-through opacity-70">{name ?? '—'}</span>;
+            const name = getProductName(entry, oldValue);
+            return (
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">Producto:</span>
+                    <span className="text-xs text-muted-foreground">{name}</span>
+                    <NewVal className="text-destructive">Eliminado</NewVal>
+                </div>
+            );
         }
 
         case 'CATEGORY_CREATED':
@@ -286,7 +310,7 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
                     <div className="flex items-center gap-0.5 flex-wrap">
                         <OldVal>{wasVisible ? 'Visible' : 'Oculta'}</OldVal>
                         <DiffArrow />
-                        <NewVal className={isVisible ? 'text-teal-600 dark:text-teal-400' : 'text-zinc-500 dark:text-zinc-400'}>
+                        <NewVal className={isVisible ? 'text-teal-600 dark:text-teal-400' : 'text-amber-600 dark:text-amber-400'}>
                             {isVisible ? 'Visible' : 'Oculta'}
                         </NewVal>
                     </div>
@@ -298,11 +322,27 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
             return <span className="text-xs text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;
 
         case 'COUPON_CREATED': {
+            const couponCode = (metadata?.couponCode as string | undefined) ?? newValue;
+            const couponValue = metadata?.value as string | undefined;
+            const couponType = metadata?.type as string | undefined;
             const desc = metadata?.description as string | undefined;
             return (
                 <div className="flex flex-col gap-0.5">
-                    <NewVal className="text-green-600 dark:text-green-400 font-mono">{newValue ?? '—'}</NewVal>
-                    {desc && <span className="text-[10px] text-muted-foreground">{desc}</span>}
+                    <div className="flex items-center gap-1.5">
+                        <NewVal className="text-emerald-600 dark:text-emerald-400">Creado</NewVal>
+                        <span className="text-[10px] text-muted-foreground mr-1 ">{couponCode ?? '—'}</span>
+                    </div>
+                    {(couponType || couponValue) && (
+                        <div className="flex items-center gap-1.5">
+                            {couponType && <span className="text-[10px] text-muted-foreground">{couponType === 'PERCENTAGE' ? 'Descuento %' : 'Monto fijo'}</span>}
+                            {couponValue && (
+                                <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400">
+                                    {couponType === 'PERCENTAGE' ? `${couponValue}%` : formatCLP(couponValue)}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {desc && <span className="text-[10px] text-muted-foreground italic">{desc}</span>}
                 </div>
             );
         }
@@ -331,19 +371,33 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
             );
         }
 
-        case 'COUPON_DELETED':
-            return <span className="text-xs font-mono text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;
+        case 'COUPON_DELETED': {
+            const deletedCode = (metadata?.couponCode as string | undefined) ?? oldValue;
+            const deletedDesc = metadata?.description as string | undefined;
+            return (
+                <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                        <NewVal className="text-destructive">Eliminado</NewVal>
+                        <span className="text-xs font-mono text-muted-foreground line-through opacity-70">{deletedCode ?? '—'}</span>
+                    </div>
+                    {deletedDesc && <span className="text-[10px] text-muted-foreground italic opacity-70">{deletedDesc}</span>}
+                </div>
+            );
+        }
 
         case 'PRODUCT_SALE_CHANGE': {
             let oldObj: Record<string, unknown> = {};
             let newObj: Record<string, unknown> = {};
             try { oldObj = JSON.parse(oldValue ?? '{}'); } catch { /* empty */ }
             try { newObj = JSON.parse(newValue ?? '{}'); } catch { /* empty */ }
-            const productName = metadata?.productName as string | undefined;
+            const productName = getProductName(entry);
             const keys = Object.keys(newObj);
             return (
                 <div className="flex flex-col gap-0.5">
-                    {productName && <span className="text-[10px] font-medium text-muted-foreground mb-0.5">{productName}</span>}
+                    <div className="flex items-center gap-1 flex-wrap">
+                        <span className="text-[10px] text-muted-foreground">Producto:</span>
+                        <span className="text-xs text-muted-foreground">{productName}</span>
+                    </div>
                     {keys.map((key) => (
                         <div key={key} className="flex items-center gap-0.5 flex-wrap">
                             <span className="text-[10px] text-muted-foreground mr-1">{SALE_FIELD_LABELS[key] ?? key}:</span>
@@ -381,7 +435,6 @@ export default function AuditPage() {
     const [error, setError] = useState<string | null>(null);
 
     const [entityTypeFilter, setEntityTypeFilter] = useState('ALL');
-    const [actionFilter, setActionFilter] = useState('ALL');
     const [actorQueryInput, setActorQueryInput] = useState('');
     const [debouncedActorQuery, setDebouncedActorQuery] = useState('');
     const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>(undefined);
@@ -395,7 +448,6 @@ export default function AuditPage() {
         return () => clearTimeout(t);
     }, [actorQueryInput]);
 
-    // Reset to page 1 when server-side filters change
     useEffect(() => {
         setCurrentPage(1);
     }, [entityTypeFilter, debouncedActorQuery, selectedDateRange]);
@@ -443,17 +495,12 @@ export default function AuditPage() {
         loadLogs();
     }, [loadLogs]);
 
-    // Client-side action filter applied on top of server results
-    const visibleLogs = useMemo(
-        () => actionFilter === 'ALL' ? logs : logs.filter((l) => l.action === actionFilter),
-        [logs, actionFilter],
-    );
+    const visibleLogs = logs;
 
-    const hasFilters = entityTypeFilter !== 'ALL' || debouncedActorQuery || actionFilter !== 'ALL' || selectedDateRange?.from;
+    const hasFilters = entityTypeFilter !== 'ALL' || debouncedActorQuery || !!selectedDateRange?.from;
 
     const clearFilters = () => {
         setEntityTypeFilter('ALL');
-        setActionFilter('ALL');
         setActorQueryInput('');
         setSelectedDateRange(undefined);
     };
@@ -461,75 +508,61 @@ export default function AuditPage() {
     return (
         <div className="space-y-6 animate-fade-in pb-10 text-foreground">
             {/* Header */}
-            <div className="flex items-end justify-between">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">
-                        Auditoría
-                    </h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">
+                            Auditoría
+                        </h1>
+                        {total > 0 && <span className="text-sm font-bold text-muted-foreground">{total} {total === 1 ? 'registro' : 'registros'}</span>}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                         Registro de todas las acciones de alto impacto en el sistema.
                     </p>
                 </div>
-                <div className="flex flex-col items-end text-right">
-                    <span className="text-lg font-bold leading-none text-foreground">{total}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
-                        {total === 1 ? 'registro' : 'registros'}
-                    </span>
-                </div>
+                <Button variant="outline" className="flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Exportar
+                </Button>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-                <div className="relative w-full md:max-w-xs">
+            <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center">
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         value={actorQueryInput}
                         onChange={(e) => setActorQueryInput(e.target.value)}
                         placeholder="Buscar por nombre o correo..."
-                        className="pl-10 font-mono text-sm"
+                        className="pl-10 font-mono text-sm w-full"
                     />
                 </div>
 
-                <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-                    <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Tipo de entidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ENTITY_TYPE_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                        <SelectValue placeholder="Tipo de entidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {ENTITY_TYPE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-                    <Select value={actionFilter} onValueChange={setActionFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Tipo de acción" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ACTION_FILTER_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <div className="w-full md:w-auto">
-                        <DatePickerWithRange
-                            date={selectedDateRange}
-                            setDate={setSelectedDateRange}
-                        />
-                    </div>
-
-                    {hasFilters && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                            Limpiar filtros
-                        </Button>
-                    )}
+                <div className="w-full md:w-auto">
+                    <DatePickerWithRange
+                        date={selectedDateRange}
+                        setDate={setSelectedDateRange}
+                    />
                 </div>
+
+                {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs shrink-0">
+                        Limpiar filtros
+                    </Button>
+                )}
             </div>
 
             {/* Table */}
@@ -547,29 +580,28 @@ export default function AuditPage() {
                             <Button variant="outline" onClick={loadLogs}>Reintentar</Button>
                         </div>
                     ) : visibleLogs.length === 0 ? (
-                        <div className="flex min-h-[300px] flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground">
-                            <ShieldAlert className="h-8 w-8" />
-                            <p className="font-medium">No hay registros</p>
-                            {hasFilters && (
-                                <button onClick={clearFilters} className="text-sm underline font-bold hover:opacity-70 transition-opacity">
-                                    Limpiar filtros
-                                </button>
-                            )}
-                        </div>
+                        <TableEmptyState
+                            title={hasFilters ? 'Sin resultados' : 'No hay registros'}
+                            description={hasFilters
+                                ? 'Ningún registro coincide con los filtros aplicados.'
+                                : 'Cuando se registren acciones de alto impacto, aparecerán aquí.'}
+                            actionLabel={hasFilters ? 'Limpiar filtros' : undefined}
+                            onAction={hasFilters ? clearFilters : undefined}
+                        />
                     ) : (
-                        <Table>
+                        <Table className="w-full table-fixed">
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
-                                    <TableHead className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                    <TableHead className="w-[18%] px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                         Fecha
                                     </TableHead>
-                                    <TableHead className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                    <TableHead className="w-[28%] px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                         Actor
                                     </TableHead>
-                                    <TableHead className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                    <TableHead className="w-[16%] px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                         Acción
                                     </TableHead>
-                                    <TableHead className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                    <TableHead className="w-[38%] px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                         Detalles
                                     </TableHead>
                                 </TableRow>
@@ -594,11 +626,11 @@ export default function AuditPage() {
 
                                         {/* Actor */}
                                         <TableCell className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-semibold text-foreground">
+                                            <div className="flex min-w-0 flex-col">
+                                                <span className="truncate text-xs font-semibold text-foreground">
                                                     {log.actor.name ?? 'Sin nombre'}
                                                 </span>
-                                                <span className="text-[10px] font-mono text-muted-foreground">
+                                                <span className="truncate text-[10px] font-mono text-muted-foreground">
                                                     {log.actor.email}
                                                 </span>
                                             </div>
@@ -610,7 +642,7 @@ export default function AuditPage() {
                                         </TableCell>
 
                                         {/* Detalles */}
-                                        <TableCell className="px-6 py-4">
+                                        <TableCell className="px-6 py-4 break-words">
                                             <ChangeDetail entry={log} />
                                         </TableCell>
                                     </TableRow>
