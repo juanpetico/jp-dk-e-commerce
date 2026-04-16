@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck, FolderOpen } from 'lucide-react';
 import { useUser } from '../../store/UserContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -205,6 +205,13 @@ export default function AdminSidebar() {
                     label="Productos"
                     href={`${basePath}/products`}
                     isActive={pathname?.startsWith(`${basePath}/products`) || false}
+                    isCollapsed={isCollapsed}
+                />
+                <NavItem
+                    icon={<FolderOpen className="w-5 h-5" />}
+                    label="Categorías"
+                    href={`${basePath}/categories`}
+                    isActive={pathname?.startsWith(`${basePath}/categories`) || false}
                     isCollapsed={isCollapsed}
                 />
                 <NavItem

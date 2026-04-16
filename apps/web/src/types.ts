@@ -3,6 +3,7 @@ export interface Category {
     name: string;
     slug: string;
     description?: string;
+    _count?: { products: number };
 }
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';

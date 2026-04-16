@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Product } from '@/types';
+import { useSearchParams } from 'next/navigation';
 import {
     Table,
     TableBody,
@@ -30,10 +31,24 @@ interface ProductsTableProps {
 }
 
 export default function ProductsTable({ products }: ProductsTableProps) {
+    const searchParams = useSearchParams();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PUBLISHED' | 'DRAFT'>('ALL');
+    const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get('category') ?? 'ALL');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const categoryOptions = useMemo(() => {
+        const seen = new Set<string>();
+        const options: { slug: string; name: string }[] = [];
+        for (const p of products) {
+            if (!seen.has(p.category.slug)) {
+                seen.add(p.category.slug);
+                options.push({ slug: p.category.slug, name: p.category.name });
+            }
+        }
+        return options.sort((a, b) => a.name.localeCompare(b.name));
+    }, [products]);
 
     const filteredProducts = useMemo(() => {
         const searchValue = search.trim().toLowerCase();
@@ -50,9 +65,13 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 (statusFilter === 'PUBLISHED' && product.isPublished) ||
                 (statusFilter === 'DRAFT' && !product.isPublished);
 
-            return matchesSearch && matchesStatus;
+            const matchesCategory =
+                categoryFilter === 'ALL' ||
+                product.category.slug === categoryFilter;
+
+            return matchesSearch && matchesStatus && matchesCategory;
         });
-    }, [products, search, statusFilter]);
+    }, [products, search, statusFilter, categoryFilter]);
 
     const totalItems = filteredProducts.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -68,7 +87,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [search, statusFilter, itemsPerPage]);
+    }, [search, statusFilter, categoryFilter, itemsPerPage]);
 
     React.useEffect(() => {
         if (currentPage > totalPages) {
@@ -90,12 +109,24 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 </div>
 
                 <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">Todas las categorías</SelectItem>
+                            {categoryOptions.map((cat) => (
+                                <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
                     <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'ALL' | 'PUBLISHED' | 'DRAFT')}>
                         <SelectTrigger className="w-full md:w-[180px]">
                             <SelectValue placeholder="Estado" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="ALL">Todos</SelectItem>
+                            <SelectItem value="ALL">Todos los estados</SelectItem>
                             <SelectItem value="PUBLISHED">Publicados</SelectItem>
                             <SelectItem value="DRAFT">Borradores</SelectItem>
                         </SelectContent>

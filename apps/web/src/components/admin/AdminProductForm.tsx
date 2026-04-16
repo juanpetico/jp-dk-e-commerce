@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import { Product, Category } from '../../types';
-import { X, Upload, Check, Edit2, Plus } from 'lucide-react';
+import { X, Upload, Check, Edit2, Settings2 } from 'lucide-react';
 import { fetchCategories } from '../../services/categoryService';
-import AdminCategoryForm from './AdminCategoryForm';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -60,6 +61,8 @@ interface FormProduct extends Omit<Partial<Product>, 'images' | 'price' | 'origi
 }
 
 const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
+    const pathname = usePathname();
+    const basePath = pathname?.startsWith('/superadmin') ? '/superadmin' : '/admin';
     const [categories, setCategories] = useState<Category[]>([]);
     const [formData, setFormData] = useState<FormProduct>({
         name: '',
@@ -78,7 +81,6 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
         isPublished: false
     });
 
-    const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [imageUrlModal, setImageUrlModal] = useState({ isOpen: false, url: '', index: null as number | null });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const toastShownRef = useRef<{ reversion: boolean; priceExceeded: boolean }>({ reversion: false, priceExceeded: false });
@@ -602,14 +604,15 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                                         </PopoverContent>
                                     </Popover>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCategoryForm(true)}
-                                    className="h-10 w-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0"
-                                    title="Crear nueva categoría"
+                                <Link
+                                    href={`${basePath}/categories`}
+                                    target="_blank"
+                                    className="h-10 px-3 flex items-center gap-1.5 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex-shrink-0 uppercase tracking-wider"
+                                    title="Gestionar categorías"
                                 >
-                                    <Plus className="w-4 h-4" />
-                                </button>
+                                    <Settings2 className="w-3.5 h-3.5" />
+                                    Gestionar
+                                </Link>
                             </div>
                             {errors.categoryId && <p className="text-destructive text-xs">{errors.categoryId}</p>}
                         </div>
@@ -801,20 +804,6 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                     </Button>
                 </div>
             </div >
-
-            {showCategoryForm && (
-                <AdminCategoryForm
-                    onClose={() => setShowCategoryForm(false)}
-                    onSuccess={(newCategory) => {
-                        setCategories(prev => [...prev, newCategory]);
-                        setFormData(prev => ({
-                            ...prev,
-                            category: newCategory,
-                            categoryId: newCategory.id
-                        }));
-                    }}
-                />
-            )}
 
             <Dialog open={imageUrlModal.isOpen} onOpenChange={(open) => !open && setImageUrlModal(prev => ({ ...prev, isOpen: false }))}>
                 <DialogContent className="sm:max-w-md bg-background rounded-2xl shadow-2xl border border-border">

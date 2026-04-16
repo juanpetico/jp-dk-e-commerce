@@ -30,6 +30,34 @@ export const createCategory = async (name: string): Promise<Category> => {
     return json.data;
 };
 
+export const updateCategory = async (id: string, name: string): Promise<Category> => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+    });
+
+    if (!res.ok) {
+        throw new Error('Failed to update category');
+    }
+
+    const json = await res.json();
+    return json.data;
+};
+
+export const deleteCategory = async (id: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.message || 'Failed to delete category');
+    }
+};
+
 export const getCategoryBySlug = async (slug: string): Promise<Category | undefined> => {
     try {
         const res = await fetch(`${API_URL}/categories/slug/${slug}`);
