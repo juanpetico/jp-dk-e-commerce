@@ -3,83 +3,14 @@ import { AppError } from "../middleware/error-handler.js";
 import { createLog } from "./audit.service.js";
 import { getAllProductsUseCase } from "./product/use-cases/get-all-products.js";
 import type { CreateProductData, ProductFilters, ProductVariantInput, Size } from "./product/product.types.js";
-
-// Helper function to generate slug from name
-const generateSlug = (name: string): string => {
-    return name
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove accents
-        .replace(/[^a-z0-9\s-]/g, "") // Remove special chars
-        .trim()
-        .replace(/\s+/g, "-"); // Replace spaces with hyphens
-};
-
+import { createProductUseCase } from "./product/use-cases/create-product.js";
+import { getProductByIdUseCase } from "./product/use-cases/get-product-by-id.js";
+import { getProductBySlugUseCase } from "./product/use-cases/get-product-by-slug.js";
+import { getProductsByCategoryUseCase } from "./product/use-cases/get-products-by-category.js";
 
 export const productService = {
     async createProduct(data: CreateProductData, actorId: string) {
-        const slug = generateSlug(data.name);
-
-        // Verify category exists
-        const category = await prisma.category.findUnique({
-            where: { id: data.categoryId },
-        });
-
-        if (!category) {
-            throw new AppError("Category not found", 404);
-        }
-
-        // Validate price integrity: originalPrice must be greater than price
-        if (data.originalPrice !== undefined && data.originalPrice !== null) {
-            if (data.originalPrice <= data.price) {
-                throw new AppError("Precio inválido: El precio original debe ser mayor que el precio actual", 400);
-            }
-        }
-
-        // Create product with images and variants
-        const product = await prisma.product.create({
-            data: {
-                name: data.name,
-                description: data.description ?? null,
-                price: data.price,
-                originalPrice: data.originalPrice ?? null,
-                discountPercent: data.discountPercent ?? null,
-                categoryId: data.categoryId,
-                isNew: data.isNew ?? true,
-                isSale: data.isSale ?? false,
-                isPublished: data.isPublished ?? false,
-                slug,
-                ...(data.images
-                    ? {
-                        images: {
-                            create: data.images.map((url) => ({ url })),
-                        },
-                    }
-                    : {}),
-                variants: {
-                    create: data.variants.map((v) => ({
-                        size: v.size,
-                        stock: v.stock,
-                    })),
-                },
-            },
-            include: {
-                images: true,
-                category: true,
-                variants: true,
-            },
-        });
-
-        await createLog({
-            actorId,
-            action: "PRODUCT_CREATED",
-            entityType: "PRODUCT",
-            entityId: product.id,
-            newValue: product.name,
-            metadata: { categoryId: product.categoryId, price: product.price },
-        });
-
-        return product;
+        return createProductUseCase(data, actorId);
     },
 
     // ... (getAllProducts, getProductById, getProductBySlug remain similar but ensure filters are correct in getAllProducts if needed)
@@ -89,37 +20,11 @@ export const productService = {
 
     // ... getProductById ...
     async getProductById(id: string) {
-        const product = await prisma.product.findUnique({
-            where: { id },
-            include: {
-                images: true,
-                category: true,
-                variants: true,
-            },
-        });
-
-        if (!product) {
-            throw new AppError("Product not found", 404);
-        }
-
-        return product;
+        return getProductByIdUseCase(id);
     },
 
     async getProductBySlug(slug: string) {
-        const product = await prisma.product.findUnique({
-            where: { slug },
-            include: {
-                images: true,
-                category: true,
-                variants: true,
-            },
-        });
-
-        if (!product) {
-            throw new AppError("Product not found", 404);
-        }
-
-        return product;
+        return getProductBySlugUseCase(slug);
     },
 
     async updateProduct(
@@ -317,18 +222,6 @@ export const productService = {
     },
 
     async getProductsByCategory(categoryId: string) {
-        const products = await prisma.product.findMany({
-            where: { categoryId },
-            include: {
-                images: true,
-                category: true,
-                variants: true,
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-
-        return products;
+        return getProductsByCategoryUseCase(categoryId);
     },
 };

@@ -5,31 +5,10 @@ import { withAudit } from "./audit.service.js";
 import { invalidateAuthCache } from "../middleware/auth.middleware.js";
 import { getUsersUseCase } from "./user/use-cases/get-users.js";
 import { VALID_USER_ROLES, type UserRole } from "./user/user.types.js";
-
-interface ActorInfo { id: string; role: string }
-interface TargetInfo { id: string; role: string; isActive: boolean }
-
-/**
- * Hierarchy guard. Throws AppError on violation.
- * - Only SUPERADMIN can mutate any user.
- * - Nobody can mutate themselves.
- * - role must be a valid enum value if provided.
- */
-export function assertCanMutate(
-    actor: ActorInfo,
-    target: TargetInfo,
-    change: { role?: string; isActive?: boolean }
-): void {
-    if (actor.id === target.id) {
-        throw new AppError("Cannot modify your own account", 403);
-    }
-    if (actor.role !== "SUPERADMIN") {
-        throw new AppError("Forbidden", 403);
-    }
-    if (change.role !== undefined && !VALID_USER_ROLES.includes(change.role as UserRole)) {
-        throw new AppError("Invalid role", 400);
-    }
-}
+import { getAllUsersUseCase } from "./user/use-cases/get-all-users.js";
+import { updateUserRoleUseCase } from "./user/use-cases/update-user-role.js";
+import { toggleUserStatusUseCase } from "./user/use-cases/toggle-user-status.js";
+import { assertCanMutate } from "./user/user.guards.js";
 
 // Helper for consistent User selections and transformations
 const userInclude = {
@@ -182,16 +161,7 @@ export const userService = {
     },
 
     async getAllUsers(params?: { role?: string }) {
-        const users = await prisma.user.findMany({
-            where: {
-                ...(params?.role && params.role !== "ALL" ? { role: params.role as UserRole } : {}),
-            },
-            include: userInclude,
-            orderBy: {
-                createdAt: "desc",
-            },
-        });
-
+        const users = await getAllUsersUseCase(params);
         return users.map(mapUserToResponse);
     },
 
@@ -206,93 +176,11 @@ export const userService = {
     },
 
     async updateUserRole(actorId: string, targetId: string, newRole: string) {
-        const actor = await prisma.user.findUnique({
-            where: { id: actorId },
-            select: { id: true, role: true },
-        });
-        if (!actor) throw new AppError("Actor not found", 404);
-
-        const target = await prisma.user.findUnique({
-            where: { id: targetId },
-            select: { id: true, role: true, isActive: true },
-        });
-        if (!target) throw new AppError("User not found", 404);
-
-        assertCanMutate(actor, target, { role: newRole });
-
-        const updatedUser = await withAudit(
-            actorId,
-            "USER",
-            targetId,
-            "ROLE_CHANGE",
-            target.role,
-            newRole,
-            (tx) =>
-                tx.user.update({
-                    where: { id: targetId },
-                    data: { role: newRole as UserRole },
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        role: true,
-                        isActive: true,
-                        deactivationReason: true,
-                        lastLogin: true,
-                        createdAt: true,
-                    },
-                })
-        );
-
-        invalidateAuthCache(targetId);
-        return updatedUser;
+        return updateUserRoleUseCase(actorId, targetId, newRole);
     },
 
     async toggleUserStatus(actorId: string, targetId: string, newIsActive: boolean, deactivationReason?: string) {
-        const actor = await prisma.user.findUnique({
-            where: { id: actorId },
-            select: { id: true, role: true },
-        });
-        if (!actor) throw new AppError("Actor not found", 404);
-
-        const target = await prisma.user.findUnique({
-            where: { id: targetId },
-            select: { id: true, role: true, isActive: true },
-        });
-        if (!target) throw new AppError("User not found", 404);
-
-        assertCanMutate(actor, target, { isActive: newIsActive });
-
-        const updatedUser = await withAudit(
-            actorId,
-            "USER",
-            targetId,
-            "STATUS_CHANGE",
-            String(target.isActive),
-            String(newIsActive),
-            (tx) =>
-                tx.user.update({
-                    where: { id: targetId },
-                    data: {
-                        isActive: newIsActive,
-                        deactivationReason: newIsActive ? null : deactivationReason ?? null,
-                    },
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        role: true,
-                        isActive: true,
-                        deactivationReason: true,
-                        lastLogin: true,
-                        createdAt: true,
-                    },
-                }),
-            !newIsActive && deactivationReason ? { deactivationReason } : undefined
-        );
-
-        invalidateAuthCache(targetId);
-        return updatedUser;
+        return toggleUserStatusUseCase(actorId, targetId, newIsActive, deactivationReason);
     },
 
     // Address Management
