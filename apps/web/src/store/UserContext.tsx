@@ -27,7 +27,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const checkAuth = async () => {
         try {
-            const response = await fetch(`${API_URL}/users/profile`, {
+            const response = await fetch(`${API_URL}/auth/session`, {
                 credentials: 'include',
             });
 
@@ -37,8 +37,8 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             const data = await response.json();
-            if (data.success) {
-                setUser(data.data);
+            if (data.success && data.data?.authenticated) {
+                setUser(data.data.user);
             } else {
                 setUser(null);
             }
@@ -66,6 +66,10 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const data = await response.json();
 
             if (!response.ok) {
+                if (response.status === 403 && typeof data?.message === 'string' && data.message.trim()) {
+                    toast.error(data.message);
+                    return { success: false };
+                }
                 toast.error(data.message || 'Error al iniciar sesión');
                 return { success: false };
             }

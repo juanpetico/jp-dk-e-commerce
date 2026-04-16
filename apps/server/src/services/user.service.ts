@@ -1,6 +1,36 @@
 import prisma from "../config/prisma.js";
 import bcrypt from "bcrypt";
 import { AppError } from "../middleware/error-handler.js";
+import { withAudit } from "./audit.service.js";
+import { invalidateAuthCache } from "../middleware/auth.middleware.js";
+
+const VALID_ROLES = ["CLIENT", "ADMIN", "SUPERADMIN"] as const;
+type UserRole = (typeof VALID_ROLES)[number];
+
+interface ActorInfo { id: string; role: string }
+interface TargetInfo { id: string; role: string; isActive: boolean }
+
+/**
+ * Hierarchy guard. Throws AppError on violation.
+ * - Only SUPERADMIN can mutate any user.
+ * - Nobody can mutate themselves.
+ * - role must be a valid enum value if provided.
+ */
+export function assertCanMutate(
+    actor: ActorInfo,
+    target: TargetInfo,
+    change: { role?: string; isActive?: boolean }
+): void {
+    if (actor.id === target.id) {
+        throw new AppError("Cannot modify your own account", 403);
+    }
+    if (actor.role !== "SUPERADMIN") {
+        throw new AppError("Forbidden", 403);
+    }
+    if (change.role !== undefined && !VALID_ROLES.includes(change.role as UserRole)) {
+        throw new AppError("Invalid role", 400);
+    }
+}
 
 // Helper for consistent User selections and transformations
 const userInclude = {
@@ -47,8 +77,8 @@ const mapUserToResponse = (user: any) => {
             userWithoutPassword.lastOrder = "-";
         }
 
-        // Default status to Active for now as there's no isDeactivated field in schema
-        userWithoutPassword.status = "Active";
+        // Reflect real isActive from DB
+        userWithoutPassword.status = userWithoutPassword.isActive ? "Active" : "Inactive";
 
         // Transform orders to match frontend expectation (flattening product into item)
         userWithoutPassword.orders = userWithoutPassword.orders.map((order: any) => ({
@@ -152,8 +182,11 @@ export const userService = {
         });
     },
 
-    async getAllUsers() {
+    async getAllUsers(params?: { role?: string }) {
         const users = await prisma.user.findMany({
+            where: {
+                ...(params?.role && params.role !== "ALL" ? { role: params.role as UserRole } : {}),
+            },
             include: userInclude,
             orderBy: {
                 createdAt: "desc",
@@ -161,6 +194,145 @@ export const userService = {
         });
 
         return users.map(mapUserToResponse);
+    },
+
+    async getUsers(params: {
+        search?: string;
+        role?: string;
+        status?: string;
+        cursor?: string;
+        limit?: number;
+    }) {
+        const limit = params.limit ?? 20;
+        const take = limit + 1;
+
+        const where: any = {};
+
+        if (params.search) {
+            where.OR = [
+                { email: { contains: params.search, mode: "insensitive" } },
+                { name: { contains: params.search, mode: "insensitive" } },
+            ];
+        }
+
+        if (params.role && params.role !== "ALL") {
+            where.role = params.role;
+        }
+
+        if (params.status && params.status !== "ALL") {
+            where.isActive = params.status === "ACTIVE";
+        }
+
+        const users = await prisma.user.findMany({
+            where,
+            take,
+            ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                isActive: true,
+                deactivationReason: true,
+                lastLogin: true,
+                createdAt: true,
+            },
+        });
+
+        const hasNextPage = users.length > limit;
+        const items = hasNextPage ? users.slice(0, limit) : users;
+        const lastItem = items[items.length - 1];
+        const nextCursor = hasNextPage && lastItem ? lastItem.id : null;
+
+        return { users: items, nextCursor };
+    },
+
+    async updateUserRole(actorId: string, targetId: string, newRole: string) {
+        const actor = await prisma.user.findUnique({
+            where: { id: actorId },
+            select: { id: true, role: true },
+        });
+        if (!actor) throw new AppError("Actor not found", 404);
+
+        const target = await prisma.user.findUnique({
+            where: { id: targetId },
+            select: { id: true, role: true, isActive: true },
+        });
+        if (!target) throw new AppError("User not found", 404);
+
+        assertCanMutate(actor, target, { role: newRole });
+
+        const updatedUser = await withAudit(
+            actorId,
+            targetId,
+            "ROLE_CHANGE",
+            target.role,
+            newRole,
+            (tx) =>
+                tx.user.update({
+                    where: { id: targetId },
+                    data: { role: newRole as UserRole },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        role: true,
+                        isActive: true,
+                        deactivationReason: true,
+                        lastLogin: true,
+                        createdAt: true,
+                    },
+                })
+        );
+
+        invalidateAuthCache(targetId);
+        return updatedUser;
+    },
+
+    async toggleUserStatus(actorId: string, targetId: string, newIsActive: boolean, deactivationReason?: string) {
+        const actor = await prisma.user.findUnique({
+            where: { id: actorId },
+            select: { id: true, role: true },
+        });
+        if (!actor) throw new AppError("Actor not found", 404);
+
+        const target = await prisma.user.findUnique({
+            where: { id: targetId },
+            select: { id: true, role: true, isActive: true },
+        });
+        if (!target) throw new AppError("User not found", 404);
+
+        assertCanMutate(actor, target, { isActive: newIsActive });
+
+        const updatedUser = await withAudit(
+            actorId,
+            targetId,
+            "STATUS_CHANGE",
+            String(target.isActive),
+            String(newIsActive),
+            (tx) =>
+                tx.user.update({
+                    where: { id: targetId },
+                    data: {
+                        isActive: newIsActive,
+                        deactivationReason: newIsActive ? null : deactivationReason ?? null,
+                    },
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        role: true,
+                        isActive: true,
+                        deactivationReason: true,
+                        lastLogin: true,
+                        createdAt: true,
+                    },
+                })
+        );
+
+        invalidateAuthCache(targetId);
+        return updatedUser;
     },
 
     // Address Management

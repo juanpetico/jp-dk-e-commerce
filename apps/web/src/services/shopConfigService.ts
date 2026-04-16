@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5001/api';
+const API_URL = process.env.NX_API_URL || 'http://localhost:5001/api';
 
 const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
@@ -28,8 +28,7 @@ export interface StoreConfig {
 
 export const shopConfigService = {
     async getConfig(): Promise<StoreConfig> {
-        const res = await fetch(`${API_URL}/shop-config`, {
-            credentials: 'include',
+        const res = await fetch(`${API_URL}/shop-config/public`, {
             headers: JSON_HEADERS,
         });
         if (!res.ok) throw new Error('Error al obtener la configuración');

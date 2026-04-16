@@ -14,6 +14,7 @@ import orderRoutes from "./routes/order.routes.js";
 import cartRoutes from "./routes/cart.routes.js";
 import couponRoutes from "./routes/coupon.routes.js";
 import shopConfigRoutes from "./routes/shop-config.routes.js";
+import auditRoutes from "./routes/audit.routes.js";
 
 dotenv.config();
 
@@ -86,6 +87,7 @@ const createServer = (): Express => {
     app.use("/api/cart", cartRoutes);
     app.use("/api/coupons", couponRoutes);
     app.use("/api/shop-config", shopConfigRoutes);
+    app.use("/api", auditRoutes);
 
     // 404 handler
     app.use((req, res) => {

@@ -9,18 +9,15 @@ import { requireRole } from "../middleware/role.middleware.js";
 
 const router: Router = Router();
 
-// All order routes require authentication
-router.use(authenticate);
-
 // User routes
-router.post("/orders", createOrderValidation, orderController.createOrder);
-router.get("/orders", orderController.getUserOrders);
-router.get("/orders/:id", orderController.getOrderById);
-router.post("/orders/:id/cancel", orderController.cancelOrder);
+router.post("/orders", authenticate, createOrderValidation, orderController.createOrder);
+router.get("/orders", authenticate, orderController.getUserOrders);
+router.get("/orders/:id", authenticate, orderController.getOrderById);
+router.post("/orders/:id/cancel", authenticate, orderController.cancelOrder);
 
 // Admin only routes
-router.get("/orders/all/admin", requireRole("ADMIN", "SUPERADMIN"), orderController.getAllOrders);
-router.put("/orders/:id/status", requireRole("ADMIN", "SUPERADMIN"), orderController.updateOrderStatus);
-router.post("/orders/:id/pay", requireRole("ADMIN", "SUPERADMIN"), orderController.markOrderAsPaid);
+router.get("/orders/all/admin", authenticate, requireRole("ADMIN", "SUPERADMIN"), orderController.getAllOrders);
+router.put("/orders/:id/status", authenticate, requireRole("ADMIN", "SUPERADMIN"), orderController.updateOrderStatus);
+router.post("/orders/:id/pay", authenticate, requireRole("ADMIN", "SUPERADMIN"), orderController.markOrderAsPaid);
 
 export default router;

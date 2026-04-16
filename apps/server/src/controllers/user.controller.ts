@@ -64,6 +64,59 @@ const clearSessionCookie = (res: Response) => {
 
 // Controller functions
 export const userController = {
+    async getSession(req: Request, res: Response, next: NextFunction) {
+        try {
+            const token = req.cookies?.token as string | undefined;
+
+            if (!token) {
+                res.json({
+                    success: true,
+                    data: { authenticated: false, user: null },
+                });
+                return;
+            }
+
+            let decoded: { id: string } | null = null;
+            try {
+                decoded = authService.verifyToken(token) as { id: string };
+            } catch {
+                decoded = null;
+            }
+
+            if (!decoded?.id) {
+                clearSessionCookie(res);
+                res.json({
+                    success: true,
+                    data: { authenticated: false, user: null },
+                });
+                return;
+            }
+
+            let user = null;
+            try {
+                user = await userService.getUserById(decoded.id);
+            } catch {
+                user = null;
+            }
+
+            if (!user) {
+                clearSessionCookie(res);
+                res.json({
+                    success: true,
+                    data: { authenticated: false, user: null },
+                });
+                return;
+            }
+
+            res.json({
+                success: true,
+                data: { authenticated: true, user },
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
     async register(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
@@ -248,7 +301,8 @@ export const userController = {
 
     async getAllUsers(req: Request, res: Response, next: NextFunction) {
         try {
-            const users = await userService.getAllUsers();
+            const role = typeof req.query.role === "string" ? req.query.role : undefined;
+            const users = await userService.getAllUsers(role ? { role } : undefined);
 
             res.json({
                 success: true,
@@ -282,6 +336,80 @@ export const userController = {
                 success: true,
                 message: "Usuario eliminado exitosamente",
             });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // Admin-only: paginated user list with search/filter
+    async listUsers(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const q = req.query as Record<string, string | undefined>;
+            const { search, role, status, cursor, limit } = q;
+            const result = await userService.getUsers({
+                ...(search !== undefined ? { search } : {}),
+                ...(role !== undefined ? { role } : {}),
+                ...(status !== undefined ? { status } : {}),
+                ...(cursor !== undefined ? { cursor } : {}),
+                limit: limit ? parseInt(limit, 10) : 20,
+            });
+
+            res.json({
+                success: true,
+                data: result,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // Admin-only: change a user's role
+    async updateUserRole(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) throw new AppError("Authentication required", 401);
+
+            const targetId = getParam(req, "id");
+            const { role } = req.body;
+
+            if (!role || typeof role !== "string") {
+                throw new AppError("Invalid role", 400);
+            }
+
+            const user = await userService.updateUserRole(req.user.id, targetId, role);
+
+            res.json({ success: true, data: { user } });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // Admin-only: toggle a user's isActive status
+    async updateUserStatus(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            if (!req.user) throw new AppError("Authentication required", 401);
+
+            const targetId = getParam(req, "id");
+            const { isActive, deactivationReason } = req.body;
+
+            if (typeof isActive !== "boolean") {
+                throw new AppError("isActive must be a boolean", 400);
+            }
+
+            const normalizedReason =
+                typeof deactivationReason === "string" ? deactivationReason.trim() : undefined;
+
+            if (!isActive && !normalizedReason) {
+                throw new AppError("deactivationReason is required when deactivating a user", 400);
+            }
+
+            const user = await userService.toggleUserStatus(
+                req.user.id,
+                targetId,
+                isActive,
+                normalizedReason
+            );
+
+            res.json({ success: true, data: { user } });
         } catch (error) {
             next(error);
         }

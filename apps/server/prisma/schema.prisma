@@ -211,18 +211,40 @@ model StoreConfig {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  name        String?
-  email       String       @unique
-  password    String
-  phone       String?
-  role        Role         @default(CLIENT)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  addresses   Address[]
-  cart        Cart?
-  orders      Order[]
-  userCoupons UserCoupon[]
+  id                 String       @id @default(cuid())
+  name               String?
+  email              String       @unique
+  password           String
+  phone              String?
+  role               Role         @default(CLIENT)
+  isActive           Boolean      @default(true)
+  deactivationReason String?
+  lastLogin          DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  addresses          Address[]
+  cart               Cart?
+  orders             Order[]
+  userCoupons        UserCoupon[]
+  auditLogsAsTarget  AuditLog[]   @relation("AuditTarget")
+  auditLogsAsActor   AuditLog[]   @relation("AuditActor")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  action       String
+  targetUserId String
+  actorId      String
+  oldValue     String?
+  newValue     String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  targetUser   User     @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  actor        User     @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([targetUserId])
+  @@index([actorId])
+  @@index([createdAt])
 }
 
 model UserCoupon {

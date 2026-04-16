@@ -144,13 +144,42 @@ export interface User {
     name: string;
     email: string;
     phone?: string;
-    role: string;
+    role: UserRole;
+    isActive?: boolean;
+    deactivationReason?: string | null;
+    lastLogin?: string | null;
     addresses: Address[];
     orders: Order[];
     totalSpent?: number;
     ordersCount?: number;
     lastOrder?: string;
     status?: string;
+}
+
+export type UserRole = 'CLIENT' | 'ADMIN' | 'SUPERADMIN';
+
+export interface AdminUser {
+    id: string;
+    email: string;
+    name: string | null;
+    role: UserRole;
+    isActive: boolean;
+    deactivationReason?: string | null;
+    lastLogin: string | null;
+    createdAt: string;
+}
+
+export interface AuditEntry {
+    id: string;
+    action: 'ROLE_CHANGE' | 'STATUS_CHANGE';
+    oldValue: string | null;
+    newValue: string | null;
+    createdAt: string;
+    actor: {
+        id: string;
+        name: string | null;
+        email: string;
+    };
 }
 
 export interface CartState {

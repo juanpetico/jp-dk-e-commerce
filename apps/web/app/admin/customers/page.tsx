@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '../../../src/components/ui/Button';
+import { useRouter } from 'next/navigation';
 import { Download, Search, Loader2 } from 'lucide-react';
 import {
     Pagination,
@@ -11,27 +11,31 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '../../../src/components/ui/Button';
+import { cn } from '@/lib/utils';
 import { fetchUsers } from '../../../src/services/userService';
 import { User as Customer } from '../../../src/types';
-import { Input } from "@/components/ui/input";
+import { useUser } from '../../../src/store/UserContext';
 
 export default function CustomersPage() {
+    const router = useRouter();
+    const { user: currentUser } = useUser();
+
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState<'ALL' | 'ADMIN' | 'CLIENT'>('ALL');
+    const [roleFilter, setRoleFilter] = useState<'ALL' | 'ADMIN' | 'CLIENT' | 'SUPERADMIN'>('ALL');
 
-    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -39,7 +43,7 @@ export default function CustomersPage() {
         const loadUsers = async () => {
             try {
                 setLoading(true);
-                const data = await fetchUsers();
+                const data = await fetchUsers({ role: roleFilter });
                 setCustomers(data);
                 setError(null);
             } catch (err) {
@@ -51,7 +55,7 @@ export default function CustomersPage() {
         };
 
         loadUsers();
-    }, []);
+    }, [roleFilter]);
 
     const formatPrice = (price: number | undefined) => {
         return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price || 0);
@@ -66,28 +70,28 @@ export default function CustomersPage() {
             month: 'short',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         }).format(date);
     };
 
-    // Filter customers
-    const filteredCustomers = customers.filter(customer => {
+    const filteredCustomers = customers.filter((customer) => {
         const matchesSearch = (customer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'ALL' || customer.role === roleFilter;
-        return matchesSearch && matchesRole;
+        return matchesSearch;
     });
 
-    // Calculate paginated customers
     const totalItems = filteredCustomers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
 
-    // Reset to first page when search, filter or itemsPerPage changes
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, roleFilter, itemsPerPage]);
+
+    const handleManageAsUser = (userId: string) => {
+        router.push(`/superadmin/users?userId=${userId}`);
+    };
 
     return (
         <div className="space-y-6 animate-fade-in text-foreground">
@@ -102,7 +106,6 @@ export default function CustomersPage() {
                 </Button>
             </div>
 
-            {/* Filters Section */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-lg border border-border">
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -115,14 +118,15 @@ export default function CustomersPage() {
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <span className="text-xs font-bold text-muted-foreground uppercase whitespace-nowrap">Filtrar por Rol:</span>
-                    <Select value={roleFilter} onValueChange={(value: any) => setRoleFilter(value)}>
-                        <SelectTrigger className="w-[150px]">
+                    <Select value={roleFilter} onValueChange={(value: 'ALL' | 'ADMIN' | 'CLIENT' | 'SUPERADMIN') => setRoleFilter(value)}>
+                        <SelectTrigger className="w-[160px]">
                             <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Todos</SelectItem>
                             <SelectItem value="CLIENT">Clientes</SelectItem>
                             <SelectItem value="ADMIN">Administradores</SelectItem>
+                            <SelectItem value="SUPERADMIN">Superadmin</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -150,6 +154,7 @@ export default function CustomersPage() {
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Pedidos</th>
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Último Pedido</th>
                                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Estado</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -168,7 +173,11 @@ export default function CustomersPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider ${customer.role === 'ADMIN' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
+                                                <span className={`text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider ${customer.role === 'SUPERADMIN'
+                                                    ? 'bg-red-100 text-red-700'
+                                                    : customer.role === 'ADMIN'
+                                                        ? 'bg-foreground text-background'
+                                                        : 'bg-muted text-muted-foreground'
                                                     }`}>
                                                     {customer.role}
                                                 </span>
@@ -177,13 +186,24 @@ export default function CustomersPage() {
                                             <td className="px-6 py-4 text-sm font-bold text-foreground">{customer.ordersCount || 0}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-foreground">{formatDate(customer.lastOrder)}</td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className={`w-2 h-2 rounded-full inline-block ${customer.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                                <span className={`w-2 h-2 rounded-full inline-block ${customer.status === 'Active' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                {currentUser?.role === 'SUPERADMIN' && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleManageAsUser(customer.id)}
+                                                    >
+                                                        Manage as User
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
+                                        <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">
                                             No se encontraron clientes que coincidan con la búsqueda.
                                         </td>
                                     </tr>
@@ -193,7 +213,6 @@ export default function CustomersPage() {
                     )}
                 </div>
 
-                {/* Pagination Controls */}
                 {!loading && !error && (
                     <div className="flex items-center justify-between px-6 py-4 border-t border-border">
                         <div className="flex items-center gap-4">
@@ -201,7 +220,7 @@ export default function CustomersPage() {
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Mostrar</span>
                                 <Select
                                     value={itemsPerPage.toString()}
-                                    onValueChange={(value) => setItemsPerPage(parseInt(value))}
+                                    onValueChange={(value) => setItemsPerPage(parseInt(value, 10))}
                                 >
                                     <SelectTrigger className="h-8 w-[70px] text-xs font-bold rounded-md bg-background border-border">
                                         <SelectValue />
@@ -225,9 +244,9 @@ export default function CustomersPage() {
                                 <PaginationContent>
                                     <PaginationItem>
                                         <PaginationPrevious
-                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                                             disabled={currentPage === 1}
-                                            className={cn(currentPage === 1 && "pointer-events-none opacity-50 cursor-not-allowed")}
+                                            className={cn(currentPage === 1 && 'pointer-events-none opacity-50 cursor-not-allowed')}
                                         />
                                     </PaginationItem>
 
@@ -248,24 +267,24 @@ export default function CustomersPage() {
                                                     </PaginationLink>
                                                 </PaginationItem>
                                             );
-                                        } else if (
-                                            page === currentPage - 2 ||
-                                            page === currentPage + 2
-                                        ) {
+                                        }
+
+                                        if (page === currentPage - 2 || page === currentPage + 2) {
                                             return (
                                                 <PaginationItem key={page}>
                                                     <PaginationEllipsis />
                                                 </PaginationItem>
                                             );
                                         }
+
                                         return null;
                                     })}
 
                                     <PaginationItem>
                                         <PaginationNext
-                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                                             disabled={currentPage === totalPages}
-                                            className={cn(currentPage === totalPages && "pointer-events-none opacity-50 cursor-not-allowed")}
+                                            className={cn(currentPage === totalPages && 'pointer-events-none opacity-50 cursor-not-allowed')}
                                         />
                                     </PaginationItem>
                                 </PaginationContent>

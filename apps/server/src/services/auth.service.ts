@@ -49,6 +49,22 @@ export const authService = {
             throw new AppError("Invalid credentials", 401);
         }
 
+        if (!user.isActive) {
+            const reason = user.deactivationReason?.trim() || "Sin motivo especificado";
+            throw new AppError(`Cuenta desactivada. Motivo: ${reason}`, 403);
+        }
+
+        // Update lastLogin timestamp
+        try {
+            const prisma = (await import("../config/prisma.js")).default;
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { lastLogin: new Date() },
+            });
+        } catch {
+            // Non-critical — do not block login if lastLogin update fails
+        }
+
         const token = this.generateToken({
             id: user.id,
             email: user.email,
