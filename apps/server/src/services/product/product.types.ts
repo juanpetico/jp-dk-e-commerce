@@ -29,3 +29,17 @@ export interface ProductFilters {
     search?: string;
     isPublished?: boolean;
 }
+
+export interface UpdateProductData {
+    name?: string;
+    description?: string;
+    price?: number;
+    originalPrice?: number;
+    discountPercent?: number;
+    categoryId?: string;
+    variants?: ProductVariantInput[];
+    isNew?: boolean;
+    isSale?: boolean;
+    images?: string[];
+    isPublished?: boolean;
+}

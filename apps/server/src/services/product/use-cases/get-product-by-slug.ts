@@ -1,10 +1,13 @@
 import prisma from "../../../config/prisma.js";
 import { AppError } from "../../../middleware/error-handler.js";
-import { productWithRelationsInclude } from "../product.queries.js";
+import { productWithRelationsInclude, publicProductCascadeWhere } from "../product.queries.js";
 
 export const getProductBySlugUseCase = async (slug: string) => {
-    const product = await prisma.product.findUnique({
-        where: { slug },
+    const product = await prisma.product.findFirst({
+        where: {
+            slug,
+            ...publicProductCascadeWhere,
+        },
         include: productWithRelationsInclude,
     });
 

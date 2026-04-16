@@ -6,8 +6,19 @@ export const productWithRelationsInclude = {
     variants: true,
 } as const;
 
+export const publicProductCascadeWhere = {
+    isPublished: true,
+    category: {
+        isPublished: true,
+    },
+} as const;
+
 export const buildProductWhere = (filters?: ProductFilters) => {
     const where: any = {};
+
+    where.category = {
+        isPublished: true,
+    };
 
     if (filters?.categoryId) {
         where.categoryId = filters.categoryId;
@@ -47,9 +58,7 @@ export const buildProductWhere = (filters?: ProductFilters) => {
         ];
     }
 
-    if (filters?.isPublished !== undefined) {
-        where.isPublished = filters.isPublished;
-    }
+    where.isPublished = true;
 
     return where;
 };
