@@ -2,6 +2,11 @@ import prisma from "../config/prisma.js";
 import { AppError } from "../middleware/error-handler.js";
 import { shopConfigService } from "./shop-config.service.js";
 import { createLog } from "./audit.service.js";
+import { getAllCouponsUseCase } from "./coupon/use-cases/get-all-coupons.js";
+import { createCouponUseCase } from "./coupon/use-cases/create-coupon.js";
+import { updateCouponUseCase } from "./coupon/use-cases/update-coupon.js";
+import { deleteCouponUseCase } from "./coupon/use-cases/delete-coupon.js";
+import type { CouponMutationData, CreateCouponData } from "./coupon/coupon.types.js";
 
 export const couponService = {
     async validateCoupon(code: string, userId: string, currentTotal: number, tx?: any) {
@@ -70,115 +75,19 @@ export const couponService = {
     },
 
     async getAllCoupons() {
-        return await prisma.coupon.findMany({
-            orderBy: { createdAt: "desc" },
-        });
+        return getAllCouponsUseCase();
     },
 
-    async createCoupon(data: any, actorId: string) {
-        const startDate = data.startDate ? new Date(data.startDate) : new Date();
-        startDate.setHours(0, 0, 0, 0);
-
-        let endDate = null;
-        if (data.endDate) {
-            endDate = new Date(data.endDate);
-            endDate.setHours(23, 59, 59, 999);
-        }
-
-        const coupon = await prisma.coupon.create({
-            data: {
-                ...data,
-                startDate,
-                endDate,
-            },
-        });
-
-        await createLog({
-            actorId,
-            action: "COUPON_CREATED",
-            entityType: "COUPON",
-            entityId: coupon.id,
-            newValue: coupon.code,
-            metadata: { description: coupon.description, type: coupon.type, value: coupon.value },
-        });
-
-        return coupon;
+    async createCoupon(data: CreateCouponData, actorId: string) {
+        return createCouponUseCase(data, actorId);
     },
 
-    async updateCoupon(id: string, data: any, actorId: string) {
-        const updateData: any = { ...data };
-
-        if (data.startDate) {
-            const startDate = new Date(data.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            updateData.startDate = startDate;
-        }
-
-        if (data.endDate) {
-            const endDate = new Date(data.endDate);
-            endDate.setHours(23, 59, 59, 999);
-            updateData.endDate = endDate;
-        } else if (data.endDate === null) {
-            updateData.endDate = null;
-        }
-
-        const oldCoupon = await prisma.coupon.findUnique({
-            where: { id }
-        });
-
-        const coupon = await prisma.coupon.update({
-            where: { id },
-            data: updateData,
-        });
-
-        // Sync with shop config if this is an automated coupon
-        await shopConfigService.syncConfigFromCoupon(coupon, oldCoupon?.code);
-
-        if (oldCoupon) {
-            const TRACKED = ['code', 'value', 'type', 'isActive', 'description', 'minAmount', 'maxUses', 'isPublic'] as const;
-            const oldFields: Record<string, unknown> = {};
-            const newFields: Record<string, unknown> = {};
-            for (const key of TRACKED) {
-                if (String(oldCoupon[key]) !== String(coupon[key])) {
-                    oldFields[key] = oldCoupon[key];
-                    newFields[key] = coupon[key];
-                }
-            }
-            if (Object.keys(newFields).length > 0) {
-                await createLog({
-                    actorId,
-                    action: "COUPON_UPDATED",
-                    entityType: "COUPON",
-                    entityId: coupon.id,
-                    oldValue: JSON.stringify(oldFields),
-                    newValue: JSON.stringify(newFields),
-                    metadata: { couponCode: coupon.code },
-                });
-            }
-        }
-
-        return coupon;
+    async updateCoupon(id: string, data: CouponMutationData, actorId: string) {
+        return updateCouponUseCase(id, data, actorId);
     },
 
     async deleteCoupon(id: string, actorId: string) {
-        const coupon = await prisma.coupon.findUnique({ where: { id } });
-
-        const result = await prisma.coupon.delete({
-            where: { id },
-        });
-
-        if (coupon) {
-            await createLog({
-                actorId,
-                action: "COUPON_DELETED",
-                entityType: "COUPON",
-                entityId: id,
-                oldValue: coupon.code,
-                metadata: { description: coupon.description },
-            });
-        }
-
-        return result;
+        return deleteCouponUseCase(id, actorId);
     },
 
     async assignCouponToUser(userId: string, couponCode: string, tx?: any) {
