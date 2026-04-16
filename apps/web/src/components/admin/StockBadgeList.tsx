@@ -12,9 +12,9 @@ export const StockBadgeList: React.FC<StockBadgeListProps> = ({ variants }) => {
     }
 
     const getStockColorClass = (stock: number) => {
-        if (stock <= 5) return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 border-red-200 dark:border-red-800';
-        if (stock < 10) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800';
-        return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 border-green-200 dark:border-green-800';
+if (stock <= 5) return 'bg-red-100 text-red-800 border-red-200';
+        if (stock < 10) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-green-100 text-green-800 border-green-200';
     };
 
     return (

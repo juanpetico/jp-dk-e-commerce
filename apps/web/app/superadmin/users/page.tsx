@@ -256,7 +256,7 @@ export default function UsersPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="px-6 py-4">
-                                                <span className={`rounded-sm px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-zinc-200 text-zinc-700'}`}>
+                                                <span className={`rounded-sm px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${user.isActive ? 'bg-green-100 text-green-800 border-green-200' : 'bg-zinc-200 text-zinc-700'}`}>
                                                     {user.isActive ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             </TableCell>
