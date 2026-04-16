@@ -1,18 +1,7 @@
 import React, { Suspense } from 'react';
 import { fetchProducts } from '../../../src/services/productService';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import ProductListThumbnail from '../../../src/components/admin/ProductListThumbnail';
-import { StockBadgeList } from '../../../src/components/admin/StockBadgeList';
-import { ProductStatusToggle, ProductRowButtons } from '../../../src/components/admin/ProductRowActions';
 import { ProductsClientManager } from '../../../src/components/admin/ProductsClientManager';
+import ProductsTable from '../../../src/components/admin/ProductsTable';
 import { Loader2, Package } from 'lucide-react';
 
 const ProductTableSkeleton = () => (
@@ -54,15 +43,7 @@ const ProductTableSkeleton = () => (
 );
 
 async function ProductsList() {
-    // Note: In a real app, you might want to consider pagination params for fetching
     const products = await fetchProducts({ isPublished: 'all' });
-
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-        }).format(price);
-    };
 
     if (products.length === 0) {
         return (
@@ -82,58 +63,7 @@ async function ProductsList() {
 
     return (
         <ProductsClientManager>
-            <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
-                            <TableHead className="w-[300px] text-xs font-bold uppercase tracking-wider pl-6">Producto</TableHead>
-                            <TableHead className="text-xs font-bold uppercase tracking-wider">SKU</TableHead>
-                            <TableHead className="text-xs font-bold uppercase tracking-wider">Estado</TableHead>
-                            <TableHead className="text-xs font-bold uppercase tracking-wider">Oferta</TableHead>
-                            <TableHead className="text-xs font-bold uppercase tracking-wider">Precio</TableHead>
-                            <TableHead className="text-xs font-bold uppercase tracking-wider">Stock por Talla</TableHead>
-                            <TableHead className="text-right text-xs font-bold uppercase tracking-wider pr-6">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {products.map((product) => (
-                            <TableRow key={product.id} className="group hover:bg-muted/50 transition-colors">
-                                <TableCell className="pl-6">
-                                    <div className="flex items-center gap-4">
-                                        <ProductListThumbnail images={product.images} alt={product.name} />
-                                        <div>
-                                            <span className="font-bold text-sm text-foreground block">{product.name}</span>
-                                            <span className="text-xs text-muted-foreground">{product.category.name}</span>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground font-mono text-xs">{product.slug}</TableCell>
-
-                                {/* Status Column */}
-                                <ProductStatusToggle product={product} />
-
-                                <TableCell>
-                                    <span className={cn(
-                                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                        product.isSale
-                                            ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
-                                    )}>
-                                        {product.isSale ? "En Oferta" : "Normal"}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="font-mono text-sm text-foreground font-bold">{formatPrice(product.price)}</TableCell>
-                                <TableCell>
-                                    <StockBadgeList variants={product.variants || []} />
-                                </TableCell>
-
-                                {/* Actions Column at the end */}
-                                <ProductRowButtons product={product} />
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+            <ProductsTable products={products} />
         </ProductsClientManager>
     );
 }

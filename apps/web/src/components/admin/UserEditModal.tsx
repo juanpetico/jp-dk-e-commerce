@@ -274,10 +274,14 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-            <div className="relative z-10 w-full max-w-3xl rounded-lg border border-border bg-background shadow-2xl">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={onClose}
+        >
+            <div
+                className="relative z-10 w-full max-w-3xl rounded-2xl border-2 border-foreground/20 bg-background shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-center justify-between border-b border-border p-5">
                     <div>
                         <h2 className="font-display text-2xl font-black uppercase tracking-tight text-foreground">

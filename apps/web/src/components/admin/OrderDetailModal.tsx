@@ -86,12 +86,14 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={onClose}
+        >
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-                onClick={onClose}
-            ></div>
-            <div className="bg-background w-full max-w-4xl rounded-lg shadow-2xl relative z-10 flex flex-col max-h-[90vh] animate-slide-in overflow-hidden border border-border">
+                className="bg-background w-full max-w-4xl rounded-2xl shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden border-2 border-foreground/20"
+                onClick={(e) => e.stopPropagation()}
+            >
 
                 {/* Modal Header */}
                 <div className="flex justify-between items-start p-6 border-b border-border">

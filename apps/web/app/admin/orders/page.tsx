@@ -277,7 +277,7 @@ export default function OrdersPage() {
                     <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">Cliente</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Fecha</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">ID</TableHead>

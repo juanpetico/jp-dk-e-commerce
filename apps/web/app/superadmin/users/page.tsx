@@ -13,7 +13,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import UserEditModal from '@/components/admin/UserEditModal';
+import TablePagination from '@/components/admin/TablePagination';
 import { AdminUser, UserRole } from '@/types';
 import { getAdminUsers, getUserById } from '@/services/userService';
 
@@ -45,7 +54,7 @@ export default function UsersPage() {
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 20;
+    const [itemsPerPage, setItemsPerPage] = useState(20);
 
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,7 +177,7 @@ export default function UsersPage() {
                 <p className="text-sm text-muted-foreground">Administra roles, estados de cuenta y trazabilidad de cambios.</p>
             </div>
 
-            <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                 <div className="relative w-full md:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -204,7 +213,7 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <div className="overflow-hidden rounded border border-border bg-card shadow-sm dark:border-none">
                 <div className="overflow-x-auto">
                     {loading ? (
                         <div className="flex min-h-[280px] items-center justify-center gap-3 text-muted-foreground">
@@ -217,79 +226,64 @@ export default function UsersPage() {
                             <Button variant="outline" onClick={loadUsers}>Reintentar</Button>
                         </div>
                     ) : (
-                        <table className="w-full text-left">
-                            <thead className="border-b border-border bg-muted/50">
-                                <tr>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Rol</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Estado</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Ultimo Login</th>
-                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Creado</th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Rol</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Estado</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Ultimo Login</TableHead>
+                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Creado</TableHead>
+                                    <TableHead className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
                                 {paginatedUsers.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                                             No se encontraron usuarios.
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
                                 ) : (
                                     paginatedUsers.map((user) => (
-                                        <tr key={user.id} className="transition-colors hover:bg-muted/40">
-                                            <td className="px-6 py-4 text-sm font-semibold text-foreground">{user.email}</td>
-                                            <td className="px-6 py-4 text-sm text-foreground">{user.name || 'Sin nombre'}</td>
-                                            <td className="px-6 py-4">
+                                        <TableRow key={user.id} className="transition-colors hover:bg-muted/40">
+                                            <TableCell className="px-6 py-4 text-sm font-semibold text-foreground">{user.email}</TableCell>
+                                            <TableCell className="px-6 py-4 text-sm text-foreground">{user.name || 'Sin nombre'}</TableCell>
+                                            <TableCell className="px-6 py-4">
                                                 <span className="rounded-sm bg-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground">
                                                     {user.role}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
+                                            </TableCell>
+                                            <TableCell className="px-6 py-4">
                                                 <span className={`rounded-sm px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-zinc-200 text-zinc-700'}`}>
                                                     {user.isActive ? 'Activo' : 'Inactivo'}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-foreground">{formatDate(user.lastLogin)}</td>
-                                            <td className="px-6 py-4 text-sm text-foreground">{formatDate(user.createdAt)}</td>
-                                            <td className="px-6 py-4 text-right">
+                                            </TableCell>
+                                            <TableCell className="px-6 py-4 text-sm text-foreground">{formatDate(user.lastLogin)}</TableCell>
+                                            <TableCell className="px-6 py-4 text-sm text-foreground">{formatDate(user.createdAt)}</TableCell>
+                                            <TableCell className="px-6 py-4 text-right">
                                                 <Button variant="outline" size="sm" onClick={() => openEditModal(user.id)}>
                                                     Editar
                                                 </Button>
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))
                                 )}
-                            </tbody>
-                        </table>
+                            </TableBody>
+                        </Table>
                     )}
                 </div>
 
                 {!loading && !error && (
-                    <div className="flex items-center justify-between border-t border-border px-6 py-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                            disabled={currentPage === 1}
-                        >
-                            Anterior
-                        </Button>
-
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Pagina {currentPage} de {totalPages}
-                        </span>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                            disabled={currentPage >= totalPages}
-                        >
-                            Siguiente
-                        </Button>
-                    </div>
+                    <TablePagination
+                        currentPage={currentPage}
+                        totalItems={users.length}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                        className="border-t border-border"
+                    />
                 )}
             </div>
 
