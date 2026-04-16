@@ -16,9 +16,12 @@ export const publicProductCascadeWhere = {
 export const buildProductWhere = (filters?: ProductFilters) => {
     const where: any = {};
 
-    where.category = {
-        isPublished: true,
-    };
+    // Only restrict by category.isPublished when filtering published products
+    if (filters?.isPublished !== false) {
+        where.category = {
+            isPublished: true,
+        };
+    }
 
     if (filters?.categoryId) {
         where.categoryId = filters.categoryId;
@@ -58,7 +61,11 @@ export const buildProductWhere = (filters?: ProductFilters) => {
         ];
     }
 
-    where.isPublished = true;
+    // Apply isPublished filter only when explicitly set.
+    // Public store always sends isPublished=true; admin sends nothing (shows all).
+    if (filters?.isPublished !== undefined) {
+        where.isPublished = filters.isPublished;
+    }
 
     return where;
 };
