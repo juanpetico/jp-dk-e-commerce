@@ -16,6 +16,7 @@ interface Category {
     id: string;
     name: string;
     slug: string;
+    isPublished?: boolean;
 }
 
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
@@ -34,7 +35,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/categories?isPublished=true`);
                 const data = await res.json();
                 if (data.success) {
-                    setCategories(data.data);
+                    setCategories((data.data || []).filter((cat: Category) => cat.isPublished !== false));
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -52,15 +53,19 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
                     // Fetch products from API
                     const foundProducts = await fetchProducts({ search: searchTerm });
-                    setProducts(foundProducts);
+                    const safeProducts = foundProducts.filter((p) => p.category?.isPublished !== false);
+                    setProducts(safeProducts);
 
                     // Filter categories locally by name
                     const nameMatches = categories.filter(cat =>
+                        cat.isPublished !== false &&
                         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
                     );
 
                     // Extract categories from found products
-                    const productCategories = foundProducts.map(p => p.category);
+                    const productCategories = safeProducts
+                        .map(p => p.category)
+                        .filter((cat): cat is Category => Boolean(cat && cat.id && cat.isPublished !== false));
 
                     // Merge and deduplicate
                     const uniqueCategoriesMap = new Map<string, Category>();
@@ -198,7 +203,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                                             >
                                                 <div className="w-12 h-12 bg-muted flex-shrink-0 rounded-md overflow-hidden">
                                                     <img
-                                                        src={product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg'}
+                                                        src={product.images && product.images[0] ? product.images[0].url : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E"}
                                                         alt={product.name}
                                                         className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal"
                                                     />

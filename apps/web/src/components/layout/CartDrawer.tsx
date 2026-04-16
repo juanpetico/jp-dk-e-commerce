@@ -203,7 +203,7 @@ const CartDrawer: React.FC = () => {
                                         <div key={`${item.id}-${item.selectedSize}`} className="flex gap-4 relative group">
                                             {/* Product Image */}
                                             <div className="w-24 h-28 flex-shrink-0 bg-muted overflow-hidden relative rounded-sm border border-gray-300">
-                                                <img src={item.images[0]?.url || '/placeholder.jpg'} alt={item.name} className="w-full h-full object-cover" />
+                                                <img src={item.images[0]?.url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E"} alt={item.name} className="w-full h-full object-cover" />
                                             </div>
 
                                             {/* Product Details */}

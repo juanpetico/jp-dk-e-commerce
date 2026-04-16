@@ -26,9 +26,11 @@ const parseOrigins = (): string[] => {
     return ["http://localhost:3000", "http://localhost:3001"];
 };
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 300,
+    limit: isDev ? 5000 : 300,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     message: { success: false, message: "Too many requests, please try again later" },
@@ -36,7 +38,7 @@ const globalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 10,
+    limit: isDev ? 100 : 10,
     standardHeaders: "draft-7",
     legacyHeaders: false,
     skipSuccessfulRequests: true,

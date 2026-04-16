@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
-import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Ticket, Zap, BarChart2 } from 'lucide-react';
+import { PlusCircle, Plus, Loader2, TrendingUp, DollarSign, Users, Trash2, Eye, AlertTriangle, RefreshCw, Tag, Search, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Ticket, Zap, BarChart2, Download } from 'lucide-react';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
 import { Coupon, Order } from '@/types';
@@ -11,6 +11,7 @@ import CouponModal from '@/components/admin/coupon';
 import TriggersConfigCard from '@/components/admin/marketing/TriggersConfigCard';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { getCouponStatus, getCouponStats } from '@/lib/coupon-utils';
 
 const PAGE_SIZE = 9;
@@ -253,21 +254,30 @@ export default function MarketingPage() {
         <div className="animate-fade-in text-foreground pb-20 space-y-6">
 
             {/* Page Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground leading-none">Marketing</h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground leading-none">Marketing</h1>
+                        {!loading && <span className="text-sm font-bold text-muted-foreground">{filteredSorted.length} {filteredSorted.length === 1 ? 'cupón' : 'cupones'}</span>}
+                    </div>
                     <p className="text-muted-foreground text-sm mt-1">Cupones, campañas y drivers de fidelización</p>
                 </div>
-                <Button
-                    onClick={() => {
-                        setEditingCoupon(null);
-                        setIsModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs shrink-0"
-                >
-                    <PlusCircle className="w-4 h-4" />
-                    Crear Cupón
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Exportar
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            setEditingCoupon(null);
+                            setIsModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs shrink-0"
+                    >
+                        <PlusCircle className="w-4 h-4" />
+                        Crear Cupón
+                    </Button>
+                </div>
             </div>
 
             {/* Stats summary strip */}
@@ -365,32 +375,21 @@ export default function MarketingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {!loading && !error && coupons.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
-                    <div className="p-4 rounded-full bg-muted">
-                      <Tag className="h-10 w-10 text-muted-foreground" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-semibold text-lg">Sin cupones todavía</p>
-                      <p className="text-muted-foreground text-sm">Crea tu primer cupón para empezar a medir resultados.</p>
-                    </div>
-                    <Button onClick={() => { setEditingCoupon(null); setIsModalOpen(true); }} className="gap-2">
-                      <PlusCircle className="h-4 w-4" />
-                      Crear primer cupón
-                    </Button>
-                  </div>
+                    <TableEmptyState
+                        className="col-span-full"
+                        title="Sin cupones todavía"
+                        description="Crea tu primer cupón para empezar a medir resultados."
+                        actionLabel="Crear primer cupón"
+                        onAction={() => { setEditingCoupon(null); setIsModalOpen(true); }}
+                    />
                 ) : filteredSorted.length === 0 && hasActiveFilters ? (
-                    <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 col-span-full">
-                        <div className="p-4 rounded-full bg-muted">
-                            <Search className="h-10 w-10 text-muted-foreground" />
-                        </div>
-                        <div className="text-center">
-                            <p className="font-semibold text-lg">No hay cupones que coincidan</p>
-                            <p className="text-muted-foreground text-sm">Intenta con otros filtros o limpia la búsqueda.</p>
-                        </div>
-                        <Button onClick={clearFilters} variant="outline" className="gap-2">
-                            Limpiar filtros
-                        </Button>
-                    </div>
+                    <TableEmptyState
+                        className="col-span-full"
+                        title="No hay cupones que coincidan"
+                        description="Intenta con otros filtros o limpia la búsqueda."
+                        actionLabel="Limpiar filtros"
+                        onAction={clearFilters}
+                    />
                 ) : (
                 <>
                 {paginated.map(coupon => {

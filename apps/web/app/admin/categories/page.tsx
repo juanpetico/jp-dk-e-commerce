@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Loader2, FolderOpen, Plus, PenLine, Trash2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Loader2, FolderOpen, Plus, PenLine, Trash2, AlertTriangle, ExternalLink, Search, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -54,10 +61,56 @@ export default function CategoriesPage() {
 
     const [blockedCategory, setBlockedCategory] = useState<Category | null>(null);
 
-    const totalItems = categories.length;
+    const [searchInput, setSearchInput] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'VISIBLE' | 'HIDDEN'>('ALL');
+    const [productsFilter, setProductsFilter] = useState<'ALL' | 'WITH' | 'WITHOUT'>('ALL');
+    const [sortBy, setSortBy] = useState<'NAME_ASC' | 'NAME_DESC' | 'PRODUCTS_ASC' | 'PRODUCTS_DESC'>('NAME_ASC');
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(searchInput.trim()), 300);
+        return () => clearTimeout(t);
+    }, [searchInput]);
+
+    useEffect(() => { setCurrentPage(1); }, [debouncedSearch, statusFilter, productsFilter, sortBy]);
+
+    const filteredCategories = useMemo(() => {
+        let result = [...categories];
+
+        if (debouncedSearch) {
+            const q = debouncedSearch.toLowerCase();
+            result = result.filter((c) => c.name.toLowerCase().includes(q));
+        }
+        if (statusFilter === 'VISIBLE') result = result.filter((c) => c.isPublished ?? true);
+        if (statusFilter === 'HIDDEN')  result = result.filter((c) => !(c.isPublished ?? true));
+        if (productsFilter === 'WITH')    result = result.filter((c) => (c._count?.products ?? 0) > 0);
+        if (productsFilter === 'WITHOUT') result = result.filter((c) => (c._count?.products ?? 0) === 0);
+
+        result.sort((a, b) => {
+            if (sortBy === 'NAME_ASC')       return a.name.localeCompare(b.name);
+            if (sortBy === 'NAME_DESC')      return b.name.localeCompare(a.name);
+            if (sortBy === 'PRODUCTS_ASC')   return (a._count?.products ?? 0) - (b._count?.products ?? 0);
+            if (sortBy === 'PRODUCTS_DESC')  return (b._count?.products ?? 0) - (a._count?.products ?? 0);
+            return 0;
+        });
+
+        return result;
+    }, [categories, debouncedSearch, statusFilter, productsFilter, sortBy]);
+
+    const hasFilters = debouncedSearch !== '' || statusFilter !== 'ALL' || productsFilter !== 'ALL' || sortBy !== 'NAME_ASC';
+
+    const clearFilters = () => {
+        setSearchInput('');
+        setDebouncedSearch('');
+        setStatusFilter('ALL');
+        setProductsFilter('ALL');
+        setSortBy('NAME_ASC');
+    };
+
+    const totalItems = filteredCategories.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedCategories = categories.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedCategories = filteredCategories.slice(startIndex, startIndex + itemsPerPage);
 
     const load = async () => {
         try {
@@ -194,20 +247,82 @@ export default function CategoriesPage() {
         <div className="space-y-6 animate-fade-in text-foreground">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Categorías</h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Categorías</h1>
+                        {!loading && <span className="text-sm font-bold text-muted-foreground">{totalItems} {totalItems === 1 ? 'categoría' : 'categorías'}</span>}
+                    </div>
                     <p className="text-muted-foreground text-sm">Gestiona las categorías del catálogo</p>
                 </div>
-                <Button
-                    onClick={() => {
-                        setCreateName('');
-                        setCreateError('');
-                        setCreateOpen(true);
-                    }}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 flex items-center gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Nueva Categoría
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Exportar
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            setCreateName('');
+                            setCreateError('');
+                            setCreateOpen(true);
+                        }}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Nueva Categoría
+                    </Button>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Buscar por nombre..."
+                        className="pl-10 font-mono text-sm w-full"
+                    />
+                </div>
+
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                    <SelectTrigger className="w-full md:w-[160px]">
+                        <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Todos los estados</SelectItem>
+                        <SelectItem value="VISIBLE">Visible</SelectItem>
+                        <SelectItem value="HIDDEN">Oculta</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <Select value={productsFilter} onValueChange={(v) => setProductsFilter(v as typeof productsFilter)}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Productos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Todos los productos</SelectItem>
+                        <SelectItem value="WITH">Con productos</SelectItem>
+                        <SelectItem value="WITHOUT">Sin productos</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                        <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="NAME_ASC">Nombre A→Z</SelectItem>
+                        <SelectItem value="NAME_DESC">Nombre Z→A</SelectItem>
+                        <SelectItem value="PRODUCTS_DESC">Más productos</SelectItem>
+                        <SelectItem value="PRODUCTS_ASC">Menos productos</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs shrink-0">
+                        Limpiar filtros
+                    </Button>
+                )}
             </div>
 
             <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden">
@@ -221,17 +336,29 @@ export default function CategoriesPage() {
                         <p>{error}</p>
                         <Button variant="outline" onClick={() => void load()}>Reintentar</Button>
                     </div>
-                ) : categories.length === 0 ? (
+                ) : filteredCategories.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3">
                         <div className="bg-muted p-4 rounded-full">
                             <FolderOpen className="w-8 h-8 text-muted-foreground" />
                         </div>
-                        <h3 className="font-bold text-lg text-foreground">No hay categorías</h3>
-                        <p className="text-muted-foreground text-sm">Crea la primera categoría para organizar el catálogo.</p>
-                        <Button onClick={() => setCreateOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nueva Categoría
-                        </Button>
+                        {categories.length === 0 ? (
+                            <>
+                                <h3 className="font-bold text-lg text-foreground">No hay categorías</h3>
+                                <p className="text-muted-foreground text-sm">Crea la primera categoría para organizar el catálogo.</p>
+                                <Button onClick={() => setCreateOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nueva Categoría
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="font-bold text-lg text-foreground">Sin resultados</h3>
+                                <p className="text-muted-foreground text-sm">Ninguna categoría coincide con los filtros aplicados.</p>
+                                <Button variant="outline" size="sm" onClick={clearFilters}>
+                                    Limpiar filtros
+                                </Button>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -239,7 +366,6 @@ export default function CategoriesPage() {
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Nombre</TableHead>
-                                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Slug</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Productos</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Estado</TableHead>
                                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">Acciones</TableHead>
@@ -253,7 +379,6 @@ export default function CategoriesPage() {
                                     return (
                                         <TableRow key={cat.id} className="transition-colors hover:bg-muted/40">
                                             <TableCell className="px-6 py-4 font-bold text-sm text-foreground">{cat.name}</TableCell>
-                                            <TableCell className="px-6 py-4 font-mono text-xs text-muted-foreground">{cat.slug}</TableCell>
                                             <TableCell className="px-6 py-4">
                                                 {count > 0 ? (
                                                     <Link

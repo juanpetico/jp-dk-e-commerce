@@ -176,7 +176,7 @@ const LookbookCard = ({ product }: { product: Product }) => {
             <div className="relative aspect-[3/4] overflow-hidden bg-neutral-900 mb-4">
                 <Link href={`/product/${product.slug}`}>
                     <img
-                        src={product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg'}
+                        src={product.images && product.images[0] ? product.images[0].url : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E"}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                     />

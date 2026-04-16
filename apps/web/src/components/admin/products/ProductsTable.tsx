@@ -25,6 +25,8 @@ import ProductListThumbnail from '@/components/admin/products/ProductListThumbna
 import { StockBadgeList } from '@/components/admin/products/StockBadgeList';
 import { ProductStatusToggle, ProductRowButtons } from '@/components/admin/products/ProductRowActions';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
+import { useAdminProducts } from '@/components/admin/products/ProductsClientManager';
 import { cn } from '@/lib/utils';
 
 interface ProductsTableProps {
@@ -78,6 +80,11 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+    const { setFilteredCount } = useAdminProducts();
+    React.useEffect(() => {
+        setFilteredCount(totalItems);
+    }, [totalItems]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', {
@@ -165,8 +172,15 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                     <TableBody>
                         {paginatedProducts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
-                                    No se encontraron productos con esos filtros.
+                                <TableCell colSpan={7} className="py-0">
+                                    <TableEmptyState
+                                        title={hasFilters ? 'No hay productos que coincidan' : 'Sin productos todavía'}
+                                        description={hasFilters
+                                            ? 'Intenta con otros filtros o limpia la búsqueda.'
+                                            : 'Agrega productos al catálogo para verlos aquí.'}
+                                        actionLabel={hasFilters ? 'Limpiar filtros' : undefined}
+                                        onAction={hasFilters ? clearFilters : undefined}
+                                    />
                                 </TableCell>
                             </TableRow>
                         ) : (

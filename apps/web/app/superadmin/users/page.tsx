@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Edit, Loader2, Search } from 'lucide-react';
+import { Edit, Loader2, Search, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import UserEditModal from '@/components/admin/users/UserEditModal';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { AdminUser, UserRole } from '@/types';
 import { getAdminUsers, getUserById } from '@/services/userService';
 
@@ -181,9 +182,18 @@ export default function UsersPage() {
 
     return (
         <div className="space-y-6 animate-fade-in text-foreground">
-            <div>
-                <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Gestion de Usuarios</h1>
-                <p className="text-sm text-muted-foreground">Administra roles, estados de cuenta y trazabilidad de cambios.</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Gestión de Usuarios</h1>
+                        {!loading && <span className="text-sm font-bold text-muted-foreground">{users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</span>}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Administra roles, estados de cuenta y trazabilidad de cambios.</p>
+                </div>
+                <Button variant="outline" className="flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Exportar
+                </Button>
             </div>
 
             <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -256,8 +266,15 @@ export default function UsersPage() {
                             <TableBody>
                                 {paginatedUsers.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
-                                            No se encontraron usuarios.
+                                        <TableCell colSpan={7} className="px-0 py-0">
+                                            <TableEmptyState
+                                                title={hasFilters ? 'No hay usuarios que coincidan' : 'Sin usuarios todavía'}
+                                                description={hasFilters
+                                                    ? 'Intenta con otros filtros o limpia la búsqueda.'
+                                                    : 'Cuando existan usuarios administrativos, aparecerán aquí.'}
+                                                actionLabel={hasFilters ? 'Limpiar filtros' : undefined}
+                                                onAction={hasFilters ? clearFilters : undefined}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ) : (

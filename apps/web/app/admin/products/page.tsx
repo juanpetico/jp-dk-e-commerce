@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { fetchProducts } from '../../../src/services/productService';
 import { ProductsClientManager } from '../../../src/components/admin/products/ProductsClientManager';
 import ProductsTable from '../../../src/components/admin/products/ProductsTable';
-import { Loader2, Package } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const ProductTableSkeleton = () => (
     <div className="bg-white dark:bg-black rounded shadow-sm border border-gray-200 dark:border-none overflow-hidden relative">
@@ -44,22 +44,6 @@ const ProductTableSkeleton = () => (
 
 async function ProductsList() {
     const products = await fetchProducts({ isPublished: 'all' });
-
-    if (products.length === 0) {
-        return (
-            <div className="bg-card rounded shadow-sm border border-border p-24 text-center">
-                <div className="flex flex-col items-center justify-center space-y-3">
-                    <div className="bg-muted p-4 rounded-full">
-                        <Package className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="font-bold text-lg text-foreground">No hay productos registrados</h3>
-                    <p className="text-muted-foreground max-w-xs mx-auto">
-                        Comienza añadiendo tu primer producto al catálogo.
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <ProductsClientManager>

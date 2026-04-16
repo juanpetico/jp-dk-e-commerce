@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { fetchUsers } from '../../../src/services/userService';
 import { User as Customer } from '../../../src/types';
 import { useUser } from '../../../src/store/UserContext';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 
 export default function CustomersPage() {
     const router = useRouter();
@@ -104,7 +105,10 @@ export default function CustomersPage() {
         <div className="space-y-6 animate-fade-in text-foreground">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Clientes</h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Clientes</h1>
+                        {!loading && <span className="text-sm font-bold text-muted-foreground">{filteredCustomers.length} {filteredCustomers.length === 1 ? 'cliente' : 'clientes'}</span>}
+                    </div>
                     <p className="text-muted-foreground text-sm">Gestiona usuarios y roles</p>
                 </div>
                 <Button variant="outline" className="flex items-center gap-2">
@@ -218,8 +222,15 @@ export default function CustomersPage() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">
-                                            No se encontraron clientes que coincidan con la búsqueda.
+                                        <td colSpan={7} className="px-0 py-0">
+                                            <TableEmptyState
+                                                title={hasFilters ? 'No hay clientes que coincidan' : 'Sin clientes todavía'}
+                                                description={hasFilters
+                                                    ? 'Intenta con otros filtros o limpia la búsqueda.'
+                                                    : 'Cuando se registren clientes, aparecerán en esta tabla.'}
+                                                actionLabel={hasFilters ? 'Limpiar filtros' : undefined}
+                                                onAction={hasFilters ? clearFilters : undefined}
+                                            />
                                         </td>
                                     </tr>
                                 )}

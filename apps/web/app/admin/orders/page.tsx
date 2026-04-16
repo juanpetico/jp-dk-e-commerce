@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Eye, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Eye, Loader2, Download } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import {
     fetchAllOrders,
     updateOrderStatus,
@@ -12,6 +13,7 @@ import OrderDetailModal from '@/components/admin/orders/OrderDetailModal';
 import OrderFilters from '@/components/admin/orders/OrderFilters';
 import OrderStatusSelect from '@/components/admin/orders/OrderStatusSelect';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { toast } from 'sonner';
 import {
     Table,
@@ -203,24 +205,18 @@ export default function OrdersPage() {
 
     return (
         <div className="space-y-6 animate-fade-in pb-10">
-            <div className="flex justify-between items-end">
+            <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Pedidos</h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Pedidos</h1>
+                        {orders !== null && <span className="text-sm font-bold text-muted-foreground">{orders?.length || 0} {(orders?.length || 0) === 1 ? 'pedido' : 'pedidos'}</span>}
+                    </div>
                     <p className="text-muted-foreground text-sm">Gestiona y procesa las órdenes de compra</p>
                 </div>
-                <div className="flex flex-col items-end gap-3">
-                    <button
-                        onClick={handleExportCSV}
-                        className="flex items-center gap-2 bg-background border border-zinc-300 dark:border-border px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all text-foreground shadow-sm group"
-                    >
-                        <FileSpreadsheet className="w-4 h-4 text-green-600 group-hover:text-green-700 transition-colors" />
-                        Exportar CSV
-                    </button>
-                    <div className="text-sm text-muted-foreground flex flex-col items-end text-right">
-                        <span className="font-bold text-foreground text-lg leading-none">{orders?.length || 0}</span>
-                        <span className="text-[10px] uppercase font-bold tracking-tighter">{(orders?.length || 0) === 1 ? 'Pedido encontrado' : 'Pedidos encontrados'}</span>
-                    </div>
-                </div>
+                <Button variant="outline" onClick={handleExportCSV} className="flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Exportar
+                </Button>
             </div>
 
             <OrderFilters
@@ -232,25 +228,14 @@ export default function OrdersPage() {
                 <OrderTableSkeleton />
             ) : orders.length === 0 ? (
                 <div className="bg-card rounded shadow-sm border border-border p-24 text-center">
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                        <div className="bg-muted p-4 rounded-full">
-                            <Eye className="w-8 h-8 text-muted-foreground" />
-                        </div>
-                        <h3 className="font-bold text-lg text-foreground">No se encontraron pedidos</h3>
-                        <p className="text-muted-foreground max-w-xs mx-auto">
-                            {activeFiltersCount > 0
-                                ? 'Prueba ajustando los filtros para encontrar lo que buscas.'
-                                : 'Aún no hay pedidos en el sistema.'}
-                        </p>
-                        {activeFiltersCount > 0 && (
-                            <button
-                                onClick={() => handleFilterChange({})}
-                                className="text-foreground underline font-bold text-sm hover:opacity-70 transition-opacity"
-                            >
-                                Limpiar todos los filtros
-                            </button>
-                        )}
-                    </div>
+                    <TableEmptyState
+                        title={activeFiltersCount > 0 ? 'No hay pedidos que coincidan' : 'Sin pedidos todavía'}
+                        description={activeFiltersCount > 0
+                            ? 'Intenta con otros filtros o limpia la búsqueda.'
+                            : 'Cuando entren pedidos, aparecerán en esta tabla.'}
+                        actionLabel={activeFiltersCount > 0 ? 'Limpiar filtros' : undefined}
+                        onAction={activeFiltersCount > 0 ? () => handleFilterChange({}) : undefined}
+                    />
                 </div>
             ) : (
                 <div className="relative">

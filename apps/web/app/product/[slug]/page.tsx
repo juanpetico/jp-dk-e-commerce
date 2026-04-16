@@ -29,6 +29,11 @@ const ProductPage: React.FC = () => {
     useEffect(() => {
         if (slug) {
             fetchProductBySlug(slug).then((data) => {
+                if (!data || data.category?.isPublished === false) {
+                    router.replace('/');
+                    return;
+                }
+
                 setProduct(data);
                 if (data) {
                     if (data.images && data.images.length > 0 && data.images[0]) {
@@ -52,7 +57,7 @@ const ProductPage: React.FC = () => {
                 setLoading(false);
             });
         }
-    }, [slug]);
+    }, [slug, router]);
 
     useEffect(() => {
         if (product && quantity > maxStock && maxStock > 0) {
@@ -65,7 +70,7 @@ const ProductPage: React.FC = () => {
     }, [selectedSize, maxStock, quantity, product]);
 
     if (loading) return <div className="h-screen flex items-center justify-center">Cargando producto...</div>;
-    if (!product) return <div className="h-screen flex items-center justify-center">Producto no encontrado</div>;
+    if (!product) return <div className="h-screen flex items-center justify-center">Redirigiendo...</div>;
 
     const handleAddToCart = async () => {
         if (product && selectedSize) {
@@ -101,20 +106,22 @@ const ProductPage: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <nav className="flex mb-8 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                <span className="hover:text-black dark:hover:text-white cursor-pointer">Inicio</span>
-                <span className="mx-2">/</span>
-                <span className="hover:text-black dark:hover:text-white cursor-pointer">{product.category.name}</span>
-                <span className="mx-2">/</span>
-                <span className="text-black dark:text-white font-medium">{product.name}</span>
-            </nav>
+            {product.category?.isPublished !== false && (
+                <nav className="flex mb-8 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    <span className="hover:text-black dark:hover:text-white cursor-pointer">Inicio</span>
+                    <span className="mx-2">/</span>
+                    <span className="hover:text-black dark:hover:text-white cursor-pointer">{product.category.name}</span>
+                    <span className="mx-2">/</span>
+                    <span className="text-black dark:text-white font-medium">{product.name}</span>
+                </nav>
+            )}
 
             <div className="lg:grid lg:grid-cols-12 lg:gap-12">
                 {/* Gallery */}
                 <div className="lg:col-span-7">
                     <div className="relative aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden mb-4 border border-gray-100 dark:border-gray-800">
                         <ImageMagnifier
-                            src={selectedImage || (product.images && product.images[0] ? product.images[0].url : '/placeholder.jpg')}
+                            src={selectedImage || (product.images && product.images[0] ? product.images[0].url : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E")}
                             alt={product.name}
                             className="w-full h-full"
                         />

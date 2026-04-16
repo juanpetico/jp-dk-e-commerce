@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Product } from '@/types';
 import AdminProductForm from '@/components/admin/products/AdminProductForm';
@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 interface AdminProductsContextType {
     openEditModal: (product: Product) => void;
+    setFilteredCount: (n: number) => void;
 }
 
 const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
@@ -30,6 +31,7 @@ interface ProductsClientManagerProps {
 export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ children }) => {
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+    const [filteredCount, setFilteredCount] = useState(0);
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -77,16 +79,25 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
     };
 
     return (
-        <AdminProductsContext.Provider value={{ openEditModal }}>
+        <AdminProductsContext.Provider value={{ openEditModal, setFilteredCount }}>
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Productos</h1>
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">Productos</h1>
+                        <span className="text-sm font-bold text-muted-foreground">{filteredCount} {filteredCount === 1 ? 'producto' : 'productos'}</span>
+                    </div>
                     <p className="text-muted-foreground text-sm">Gestiona el catálogo de tu tienda</p>
                 </div>
-                <Button onClick={openCreateModal} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Nuevo Producto
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Exportar
+                    </Button>
+                    <Button onClick={openCreateModal} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        Nuevo Producto
+                    </Button>
+                </div>
             </div>
 
             {children}

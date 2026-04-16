@@ -152,6 +152,7 @@ export const fetchProducts = async (filters?: Record<string, any>): Promise<Prod
         console.warn("API disconnect, using mock data", error);
         // Basic local filtering for mock data if API fails
         let filteredMock = [...MOCK_PRODUCTS];
+        filteredMock = filteredMock.filter((p) => p.isPublished && p.category?.isPublished !== false);
 
         if (filters) {
             if (filters.search) {
@@ -173,7 +174,7 @@ export const fetchProducts = async (filters?: Record<string, any>): Promise<Prod
 export const fetchProductById = async (id: string): Promise<Product | undefined> => {
     try {
         const res = await fetch(`${API_URL}/products/${id}`);
-        if (!res.ok) throw new Error('Failed to fetch product');
+        if (!res.ok) return undefined;
         const json = await res.json();
         return json.data;
     } catch (error) {
@@ -189,7 +190,7 @@ export const fetchProductById = async (id: string): Promise<Product | undefined>
 export const fetchProductBySlug = async (slug: string): Promise<Product | undefined> => {
     try {
         const res = await fetch(`${API_URL}/products/slug/${slug}`);
-        if (!res.ok) throw new Error('Failed to fetch product');
+        if (!res.ok) return undefined;
         const json = await res.json();
         return json.data;
     } catch (error) {

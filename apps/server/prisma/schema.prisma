@@ -59,6 +59,8 @@ model Category {
   isPublished Boolean   @default(true)
   sortOrder   Int       @default(0)
   products    Product[]
+
+  @@index([isPublished])
 }
 
 model Coupon {
@@ -164,6 +166,7 @@ model Product {
 
   @@index([categoryId])
   @@index([slug])
+  @@index([isPublished])
 }
 
 model ProductImage {
