@@ -1,8 +1,8 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
-import OrderDetailModal from '@/components/admin/OrderDetailModal';
-import ReportModal from '@/components/admin/ReportModal';
+import OrderDetailModal from '@/components/admin/orders/OrderDetailModal';
+import ReportModal from '@/components/admin/shared/ReportModal';
 import { AdminDashboardHeader } from './AdminDashboardHeader';
 import { DashboardKpiCards } from './DashboardKpiCards';
 import { DashboardSalesTrendChart } from './DashboardSalesTrendChart';

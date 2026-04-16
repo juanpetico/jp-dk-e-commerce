@@ -8,7 +8,7 @@ import { fetchAllOrders } from '@/services/orderService';
 import { Coupon, Order } from '@/types';
 import { toast } from 'sonner';
 import CouponModal from '@/components/admin/coupon';
-import TriggersConfigCard from '@/components/admin/TriggersConfigCard';
+import TriggersConfigCard from '@/components/admin/marketing/TriggersConfigCard';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
 import { getCouponStatus, getCouponStats } from '@/lib/coupon-utils';

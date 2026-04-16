@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Eye } from 'lucide-react';
 import { ORDER_STATUS_LABELS, getOrderStatusColor } from '@/services/orderService';
-import TablePagination from '@/components/admin/TablePagination';
+import TablePagination from '@/components/admin/shared/TablePagination';
 import { formatPrice } from '@/lib/utils';
 import { Order } from '@/types';
 

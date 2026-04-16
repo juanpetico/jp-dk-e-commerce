@@ -4,7 +4,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Product } from '@/types';
-import AdminProductForm from '@/components/admin/AdminProductForm';
+import AdminProductForm from '@/components/admin/products/AdminProductForm';
 import { createProduct, updateProduct } from '@/services/productService';
 import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';

@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { fetchProducts } from '../../../src/services/productService';
-import { ProductsClientManager } from '../../../src/components/admin/ProductsClientManager';
-import ProductsTable from '../../../src/components/admin/ProductsTable';
+import { ProductsClientManager } from '../../../src/components/admin/products/ProductsClientManager';
+import ProductsTable from '../../../src/components/admin/products/ProductsTable';
 import { Loader2, Package } from 'lucide-react';
 
 const ProductTableSkeleton = () => (

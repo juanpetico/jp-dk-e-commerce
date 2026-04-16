@@ -21,8 +21,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import UserEditModal from '@/components/admin/UserEditModal';
-import TablePagination from '@/components/admin/TablePagination';
+import UserEditModal from '@/components/admin/users/UserEditModal';
+import TablePagination from '@/components/admin/shared/TablePagination';
 import { AdminUser, UserRole } from '@/types';
 import { getAdminUsers, getUserById } from '@/services/userService';
 

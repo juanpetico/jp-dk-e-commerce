@@ -20,10 +20,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import ProductListThumbnail from '@/components/admin/ProductListThumbnail';
-import { StockBadgeList } from '@/components/admin/StockBadgeList';
-import { ProductStatusToggle, ProductRowButtons } from '@/components/admin/ProductRowActions';
-import TablePagination from '@/components/admin/TablePagination';
+import ProductListThumbnail from '@/components/admin/products/ProductListThumbnail';
+import { StockBadgeList } from '@/components/admin/products/StockBadgeList';
+import { ProductStatusToggle, ProductRowButtons } from '@/components/admin/products/ProductRowActions';
+import TablePagination from '@/components/admin/shared/TablePagination';
 import { cn } from '@/lib/utils';
 
 interface ProductsTableProps {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OrderStatus } from '../../../src/types';
+import { OrderStatus } from '@/types';
 import { Search, X, Filter } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/DatePicker';

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import AdminSidebar from '../../src/components/admin/AdminSidebar';
+import AdminSidebar from '../../src/components/admin/shared/AdminSidebar';
 import { useUser } from '../../src/store/UserContext';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';

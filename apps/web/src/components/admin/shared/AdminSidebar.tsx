@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck, FolderOpen } from 'lucide-react';
-import { useUser } from '../../store/UserContext';
+import { useUser } from '@/store/UserContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 

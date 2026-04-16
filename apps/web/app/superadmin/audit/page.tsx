@@ -22,7 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import TablePagination from '@/components/admin/TablePagination';
+import TablePagination from '@/components/admin/shared/TablePagination';
 import { AuditEntry } from '@/types';
 import { fetchAuditLogs } from '@/services/auditService';
 

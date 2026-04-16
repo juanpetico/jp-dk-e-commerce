@@ -9,10 +9,10 @@ import {
     getOrderStatusColor
 } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types';
-import OrderDetailModal from '@/components/admin/OrderDetailModal';
-import OrderFilters from '@/components/admin/OrderFilters';
-import OrderStatusSelect from '@/components/admin/OrderStatusSelect';
-import TablePagination from '@/components/admin/TablePagination';
+import OrderDetailModal from '@/components/admin/orders/OrderDetailModal';
+import OrderFilters from '@/components/admin/orders/OrderFilters';
+import OrderStatusSelect from '@/components/admin/orders/OrderStatusSelect';
+import TablePagination from '@/components/admin/shared/TablePagination';
 import { toast } from 'sonner';
 import {
     Table,

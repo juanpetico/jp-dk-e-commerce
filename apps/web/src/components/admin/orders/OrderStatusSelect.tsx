@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { OrderStatus } from '../../types';
-import { getOrderStatusColor, ORDER_STATUS_LABELS } from '../../services/orderService';
+import { OrderStatus } from '@/types';
+import { getOrderStatusColor, ORDER_STATUS_LABELS } from '@/services/orderService';
 import { Loader2 } from 'lucide-react';
-import { confirm } from '../../utils/confirm';
+import { confirm } from '@/utils/confirm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
