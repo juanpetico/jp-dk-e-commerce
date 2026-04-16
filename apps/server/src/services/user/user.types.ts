@@ -9,3 +9,32 @@ export interface UserListParams {
     cursor?: string;
     limit?: number;
 }
+
+export interface CreateUserData {
+    email: string;
+    password: string;
+    name?: string;
+    role?: "CLIENT" | "ADMIN";
+}
+
+export interface UpdateUserData {
+    name?: string;
+    email?: string;
+    password?: string;
+    phone?: string;
+}
+
+export interface AddressMutationData {
+    name: string;
+    rut?: string;
+    street: string;
+    city?: string;
+    comuna: string;
+    region: string;
+    zipCode?: string;
+    country: string;
+    phone: string;
+    company?: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+}

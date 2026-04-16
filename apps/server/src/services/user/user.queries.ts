@@ -11,6 +11,27 @@ export const adminUserListSelect = {
     createdAt: true,
 } as const;
 
+export const userInclude = {
+    addresses: {
+        where: { isActive: true },
+    },
+    orders: {
+        include: {
+            items: {
+                include: {
+                    product: {
+                        include: {
+                            images: true,
+                        },
+                    },
+                },
+            },
+            shippingAddress: true,
+            billingAddress: true,
+        },
+    },
+} as const;
+
 export const buildUsersWhere = (params: UserListParams) => {
     const where: any = {};
 
