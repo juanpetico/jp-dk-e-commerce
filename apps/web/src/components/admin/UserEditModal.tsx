@@ -174,13 +174,11 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
             return;
         }
 
-        if (selectedRole === 'SUPERADMIN') {
-            const accepted = await confirm(
-                'Promover a Superadmin',
-                'Esta accion otorga privilegios completos sobre la plataforma. Deseas continuar?'
-            );
-            if (!accepted) return;
-        }
+        const accepted = await confirm(
+            'Cambiar rol',
+            `¿Cambiar el rol de ${user.email} a ${roleLabel(selectedRole)}?`
+        );
+        if (!accepted) return;
 
         try {
             setSaving(true);
@@ -426,7 +424,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                             )}
 
                             {activeTab === 'AUDIT' && (
-                                <div className="space-y-3">
+                                <div className="flex flex-col gap-3">
                                     {loadingAudit && auditItems.length === 0 ? (
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -438,7 +436,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="space-y-2">
+                                            <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
                                                 {auditItems.map((item) => (
                                                     <div key={item.id} className="rounded-md border border-border p-3">
                                                         <div className="flex items-start justify-between gap-3">
@@ -453,7 +451,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                                                                     Por {item.actor.name || 'Sin nombre'} ({item.actor.email})
                                                                 </p>
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</span>
+                                                            <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(item.createdAt)}</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -463,6 +461,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                                                 <Button
                                                     type="button"
                                                     variant="outline"
+                                                    size="sm"
                                                     onClick={() => loadAudit(true)}
                                                     disabled={loadingAudit}
                                                 >
@@ -479,10 +478,16 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
             </div>
 
             {isReasonModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => !saving && setIsReasonModalOpen(false)} />
-                    <div className="relative z-10 w-full max-w-lg rounded-lg border border-border bg-background p-5 shadow-2xl">
-                        <h3 className="text-lg font-bold text-foreground">Motivo de desactivacion</h3>
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={(e) => { e.stopPropagation(); if (!saving) setIsReasonModalOpen(false); }}
+                    />
+                    <div className="relative z-10 w-full max-w-lg rounded-xl border-2 bg-background p-5 shadow-2xl">
+                        <h3 className="text-lg font-bold text-destructive">Motivo de desactivacion</h3>
                         <p className="mt-1 text-sm text-muted-foreground">
                             Este texto se guardara y se mostrara al usuario cuando intente iniciar sesion.
                         </p>
@@ -502,7 +507,7 @@ export default function UserEditModal({ userId, open, onClose, onUpdated }: User
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setIsReasonModalOpen(false)}
+                                onClick={(e) => { e.stopPropagation(); setIsReasonModalOpen(false); }}
                                 disabled={saving}
                             >
                                 Cancelar

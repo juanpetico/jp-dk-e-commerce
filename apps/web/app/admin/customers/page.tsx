@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Download, Search, Loader2 } from 'lucide-react';
+import { Download, Search, Loader2, UserCog } from 'lucide-react';
 import {
     Pagination,
     PaginationContent,
@@ -190,13 +190,15 @@ export default function CustomersPage() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 {currentUser?.role === 'SUPERADMIN' && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleManageAsUser(customer.id)}
-                                                    >
-                                                        Manage as User
-                                                    </Button>
+                                                    <div className="flex justify-end">
+                                                        <button
+                                                            onClick={() => handleManageAsUser(customer.id)}
+                                                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                            title="Gestionar como usuario"
+                                                        >
+                                                            <UserCog className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>

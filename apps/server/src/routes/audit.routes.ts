@@ -31,6 +31,7 @@ router.get(
             const result = await listLogs({
                 take,
                 skip,
+                ...(q.userId !== undefined ? { userId: q.userId } : {}),
                 ...(q.entityType !== undefined ? { entityType: q.entityType } : {}),
                 ...(q.entityId !== undefined ? { entityId: q.entityId } : {}),
                 ...(q.actorId !== undefined ? { actorId: q.actorId } : {}),

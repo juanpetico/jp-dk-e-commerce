@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Search } from 'lucide-react';
+import { Edit, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/Button';
@@ -263,9 +263,13 @@ export default function UsersPage() {
                                             <TableCell className="px-6 py-4 text-sm text-foreground">{formatDate(user.lastLogin)}</TableCell>
                                             <TableCell className="px-6 py-4 text-sm text-foreground">{formatDate(user.createdAt)}</TableCell>
                                             <TableCell className="px-6 py-4 text-right">
-                                                <Button variant="outline" size="sm" onClick={() => openEditModal(user.id)}>
-                                                    Editar
-                                                </Button>
+                                                <button
+                                                    onClick={() => openEditModal(user.id)}
+                                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
                                             </TableCell>
                                         </TableRow>
                                     ))

@@ -118,10 +118,15 @@ export const toggleUserStatus = async (
 
 export const getUserAuditLog = async (
     userId: string,
-    limit = 20,
-    cursor?: string
+    limit = 10,
+    cursor?: string        // cursor = próximo skip como string numérico
 ): Promise<{ items: AuditEntry[]; nextCursor: string | null }> => {
-    const url = withQuery(`${API_URL}/admin/audit/users/${userId}`, { limit, cursor });
+    const skip = cursor ? parseInt(cursor, 10) : 0;
+    const url = withQuery(`${API_URL}/admin/audit-logs`, {
+        userId,
+        take: limit,
+        skip,
+    });
 
     const res = await fetch(url, { credentials: 'include' });
     const json = await res.json().catch(() => ({}));
@@ -130,5 +135,9 @@ export const getUserAuditLog = async (
         throw new Error(json.message || 'No se pudo obtener la auditoría de usuario');
     }
 
-    return json.data as { items: AuditEntry[]; nextCursor: string | null };
+    const { items, total } = json.data as { items: AuditEntry[]; total: number };
+    const nextSkip = skip + items.length;
+    const nextCursor = nextSkip < total ? String(nextSkip) : null;
+
+    return { items, nextCursor };
 };

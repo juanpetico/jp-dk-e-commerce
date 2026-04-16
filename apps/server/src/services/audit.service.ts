@@ -34,6 +34,8 @@ export interface ListLogsParams {
     entityType?: string;
     entityId?: string;
     actorId?: string;
+    /** OR filter: (entityId=userId AND entityType=USER) OR actorId=userId */
+    userId?: string;
     take?: number;
     skip?: number;
 }
@@ -108,11 +110,18 @@ export async function listLogs(params: ListLogsParams): Promise<ListLogsResult> 
     const take = Math.min(params.take ?? 20, 100);
     const skip = params.skip ?? 0;
 
-    const where: Prisma.AuditLogWhereInput = {
-        ...(params.entityType ? { entityType: params.entityType } : {}),
-        ...(params.entityId ? { entityId: params.entityId } : {}),
-        ...(params.actorId ? { actorId: params.actorId } : {}),
-    };
+    const where: Prisma.AuditLogWhereInput = params.userId
+        ? {
+              OR: [
+                  { entityId: params.userId, entityType: "USER" },
+                  { actorId: params.userId },
+              ],
+          }
+        : {
+              ...(params.entityType ? { entityType: params.entityType } : {}),
+              ...(params.entityId ? { entityId: params.entityId } : {}),
+              ...(params.actorId ? { actorId: params.actorId } : {}),
+          };
 
     const [total, items] = await prisma.$transaction([
         prisma.auditLog.count({ where }),

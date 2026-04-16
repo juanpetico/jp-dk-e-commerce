@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, Tags } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck } from 'lucide-react';
 import { useUser } from '../../store/UserContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -184,14 +184,14 @@ export default function AdminSidebar() {
                 {isSuperAdmin && (
                     <>
                         <NavItem
-                            icon={<Users className="w-5 h-5" />}
+                            icon={<UserCog className="w-5 h-5" />}
                             label="Usuarios"
                             href="/superadmin/users"
                             isActive={pathname?.startsWith('/superadmin/users') || false}
                             isCollapsed={isCollapsed}
                         />
                         <NavItem
-                            icon={<Settings className="w-5 h-5" />}
+                            icon={<ShieldCheck className="w-5 h-5" />}
                             label="Auditoría"
                             href="/superadmin/audit"
                             isActive={pathname?.startsWith('/superadmin/audit') || false}
