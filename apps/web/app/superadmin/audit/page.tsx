@@ -41,22 +41,24 @@ const ENTITY_TYPE_OPTIONS = [
 ];
 
 const ACTION_CONFIG: Record<string, { label: string; className: string }> = {
-    ROLE_CHANGE:             { label: 'Cambio de Rol',       className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-    STATUS_CHANGE:           { label: 'Cambio de Estado',    className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
-    PRODUCT_CREATED:         { label: 'Producto Creado',     className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-    PRODUCT_DELETED:         { label: 'Producto Eliminado',  className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-    PRODUCT_PRICE_CHANGE:    { label: 'Cambio de Precio',    className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-    PRODUCT_STOCK_CHANGE:    { label: 'Cambio de Stock',     className: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
-    PRODUCT_PUBLISHED:       { label: 'Publicado',           className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
-    PRODUCT_UNPUBLISHED:     { label: 'Despublicado',        className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+    ROLE_CHANGE:             { label: 'Estado de Usuario',   className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+    STATUS_CHANGE:           { label: 'Estado de Usuario',   className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+    PRODUCT_CREATED:         { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    PRODUCT_DELETED:         { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    PRODUCT_PRICE_CHANGE:    { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    PRODUCT_STOCK_CHANGE:    { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    PRODUCT_PUBLISHED:       { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+    PRODUCT_UNPUBLISHED:     { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
     ORDER_STATUS_CHANGE:     { label: 'Estado de Orden',     className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300' },
-    CATEGORY_CREATED:        { label: 'Categoría Creada',    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-    CATEGORY_DELETED:        { label: 'Categoría Eliminada', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-    STORE_CONFIG_CHANGE:     { label: 'Config. Tienda',      className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
-    COUPON_CREATED:          { label: 'Cupón Creado',        className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-    COUPON_UPDATED:          { label: 'Cupón Modificado',    className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
-    COUPON_DELETED:          { label: 'Cupón Eliminado',     className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-    PRODUCT_SALE_CHANGE:     { label: 'Oferta',              className: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300' },
+    CATEGORY_CREATED:        { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+    CATEGORY_PUBLISHED:      { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+    CATEGORY_UNPUBLISHED:    { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+    CATEGORY_DELETED:        { label: 'Estado de Categoría', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+    STORE_CONFIG_CHANGE:     { label: 'Estado de Configuración', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+    COUPON_CREATED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    COUPON_UPDATED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    COUPON_DELETED:          { label: 'Estado de Cupón',     className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
+    PRODUCT_SALE_CHANGE:     { label: 'Estado de Producto',  className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
 };
 
 const ACTION_FILTER_OPTIONS = [
@@ -155,12 +157,15 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
     switch (action) {
         case 'ROLE_CHANGE':
             return (
-                <div className="flex items-center gap-0.5 flex-wrap">
-                    <OldVal>{ROLE_LABELS[oldValue ?? ''] ?? oldValue ?? '—'}</OldVal>
-                    <DiffArrow />
-                    <NewVal className="text-blue-600 dark:text-blue-400">
-                        {ROLE_LABELS[newValue ?? ''] ?? newValue ?? '—'}
-                    </NewVal>
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{(metadata?.targetEmail as string | undefined) ?? 'Sin correo'}</span>
+                    <div className="flex items-center gap-0.5 flex-wrap">
+                        <OldVal>{ROLE_LABELS[oldValue ?? ''] ?? oldValue ?? '—'}</OldVal>
+                        <DiffArrow />
+                        <NewVal className="text-blue-600 dark:text-blue-400">
+                            {ROLE_LABELS[newValue ?? ''] ?? newValue ?? '—'}
+                        </NewVal>
+                    </div>
                 </div>
             );
 
@@ -168,8 +173,10 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
             const wasActive = oldValue === 'true';
             const isActive = newValue === 'true';
             const reason = metadata?.deactivationReason as string | undefined;
+            const targetEmail = metadata?.targetEmail as string | undefined;
             return (
                 <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{targetEmail ?? 'Sin correo'}</span>
                     <div className="flex items-center gap-0.5 flex-wrap">
                         <OldVal>{wasActive ? 'Activo' : 'Inactivo'}</OldVal>
                         <DiffArrow />
@@ -267,6 +274,25 @@ const ChangeDetail = ({ entry }: { entry: AuditEntry }) => {
 
         case 'CATEGORY_CREATED':
             return <span className="text-xs text-muted-foreground">{newValue ?? '—'}</span>;
+
+        case 'CATEGORY_PUBLISHED':
+        case 'CATEGORY_UNPUBLISHED': {
+            const wasVisible = oldValue === 'true';
+            const isVisible = newValue === 'true';
+            const categoryName = (metadata?.categoryName as string | undefined) ?? 'Categoría';
+            return (
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] text-muted-foreground">{categoryName}</span>
+                    <div className="flex items-center gap-0.5 flex-wrap">
+                        <OldVal>{wasVisible ? 'Visible' : 'Oculta'}</OldVal>
+                        <DiffArrow />
+                        <NewVal className={isVisible ? 'text-teal-600 dark:text-teal-400' : 'text-zinc-500 dark:text-zinc-400'}>
+                            {isVisible ? 'Visible' : 'Oculta'}
+                        </NewVal>
+                    </div>
+                </div>
+            );
+        }
 
         case 'CATEGORY_DELETED':
             return <span className="text-xs text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;

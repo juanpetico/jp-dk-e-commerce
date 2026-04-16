@@ -56,6 +56,9 @@ export const updateCategoryFieldsUseCase = async (
             entityId: category.id,
             oldValue: String(existing.isPublished),
             newValue: String(updateData.isPublished),
+            metadata: {
+                categoryName: category.name,
+            },
         });
 
         await triggerStorefrontRevalidation();

@@ -15,7 +15,7 @@ export const updateUserRoleUseCase = async (actorId: string, targetId: string, n
 
     const target = await prisma.user.findUnique({
         where: { id: targetId },
-        select: { id: true, role: true, isActive: true },
+        select: { id: true, role: true, isActive: true, email: true },
     });
     if (!target) throw new AppError("User not found", 404);
 
@@ -33,7 +33,10 @@ export const updateUserRoleUseCase = async (actorId: string, targetId: string, n
                 where: { id: targetId },
                 data: { role: newRole as UserRole },
                 select: adminUserListSelect,
-            })
+            }),
+        {
+            targetEmail: target.email,
+        }
     );
 
     invalidateAuthCache(targetId);

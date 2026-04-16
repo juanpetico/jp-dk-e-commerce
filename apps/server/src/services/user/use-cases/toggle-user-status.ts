@@ -19,7 +19,7 @@ export const toggleUserStatusUseCase = async (
 
     const target = await prisma.user.findUnique({
         where: { id: targetId },
-        select: { id: true, role: true, isActive: true },
+        select: { id: true, role: true, isActive: true, email: true },
     });
     if (!target) throw new AppError("User not found", 404);
 
@@ -41,7 +41,10 @@ export const toggleUserStatusUseCase = async (
                 },
                 select: adminUserListSelect,
             }),
-        !newIsActive && deactivationReason ? { deactivationReason } : undefined
+        {
+            targetEmail: target.email,
+            ...(!newIsActive && deactivationReason ? { deactivationReason } : {}),
+        }
     );
 
     invalidateAuthCache(targetId);
