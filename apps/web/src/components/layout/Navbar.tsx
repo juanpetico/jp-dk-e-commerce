@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCart } from '../../store/CartContext';
 import { useUser } from '../../store/UserContext';
-import { Search, User, ShoppingBag, Menu, X, ChevronDown, LayoutDashboard, Package, Settings, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Search, User, ShoppingBag, Menu, X, ChevronDown, MonitorCog, Package, Settings, LogOut, LogIn, UserPlus } from 'lucide-react';
 import SearchOverlay from './SearchOverlay';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -47,7 +47,7 @@ const Navbar: React.FC = () => {
 
     useEffect(() => {
         import('../../services/categoryService').then(({ fetchCategories }) => {
-            fetchCategories().then(data => {
+            fetchCategories({ isPublished: true }).then(data => {
                 if (data && data.length > 0) {
                     const mapped = data.map(cat => ({
                         label: cat.name,
@@ -220,12 +220,12 @@ const Navbar: React.FC = () => {
                                                 <div className="py-1">
                                                     {(user.role === 'ADMIN' || user.role === 'SUPERADMIN') && (
                                                         <Link
-                                                            href={user.role === 'SUPERADMIN' ? "/superadmin" : "/admin"}
+                                                            href={user.role === 'SUPERADMIN' ? '/superadmin/dashboard' : '/admin/dashboard'}
                                                             onClick={() => setIsUserDropdownOpen(false)}
                                                             className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
                                                         >
-                                                            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                                                            Dashboard
+                                                            <MonitorCog className="w-4 h-4 text-muted-foreground" />
+                                                            Panel
                                                         </Link>
                                                     )}
                                                     <Link href="/profile" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
@@ -233,12 +233,10 @@ const Navbar: React.FC = () => {
                                                         Perfil
                                                     </Link>
 
-                                                    {user.role !== 'SUPERADMIN' && (
-                                                        <Link href="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
-                                                            <Package className="w-4 h-4 text-muted-foreground" />
-                                                            Pedidos
-                                                        </Link>
-                                                    )}
+                                                    <Link href="/orders" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                        <Package className="w-4 h-4 text-muted-foreground" />
+                                                        Pedidos
+                                                    </Link>
 
                                                     <Link
                                                         href={user.role === 'SUPERADMIN' ? "/superadmin/settings" : "/profile"}

@@ -59,6 +59,8 @@ export default function UsersPage() {
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const hasFilters = debouncedSearch !== '' || roleFilter !== 'ALL' || statusFilter !== 'ALL';
+
     useEffect(() => {
         const timeout = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400);
         return () => clearTimeout(timeout);
@@ -154,6 +156,13 @@ export default function UsersPage() {
         clearUserIdQueryParam();
     };
 
+    const clearFilters = () => {
+        setSearchInput('');
+        setDebouncedSearch('');
+        setRoleFilter('ALL');
+        setStatusFilter('ALL');
+    };
+
     const handleUserUpdated = (updated: AdminUser) => {
         setUsers((prev) => prev.map((user) => (user.id === updated.id ? updated : user)));
     };
@@ -210,6 +219,12 @@ export default function UsersPage() {
                             <SelectItem value="INACTIVE">Inactivos</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    {hasFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                            Limpiar filtros
+                        </Button>
+                    )}
                 </div>
             </div>
 

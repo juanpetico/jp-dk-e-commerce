@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DateRange } from 'react-day-picker';
 import { OrderStatus } from '@/types';
-import { Search, X, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/DatePicker';
+import { DatePickerWithRange } from '@/components/ui/DateRangePicker';
 import { format } from 'date-fns';
 
 interface FilterValues {
@@ -21,25 +23,21 @@ interface OrderFiltersProps {
 
 export default function OrderFilters({ onFilterChange, activeFiltersCount }: OrderFiltersProps) {
     const [status, setStatus] = useState<OrderStatus | ''>('');
-    const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [search, setSearch] = useState('');
-
-    // Debounce para búsqueda
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
     const handleSearchChange = (value: string) => {
         setSearch(value);
 
-        // Limpiar timeout anterior
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
 
-        // Crear nuevo timeout
         const timeout = setTimeout(() => {
-            applyFilters({ search: value });
-        }, 500);
+            const trimmedValue = value.trim();
+            applyFilters({ search: trimmedValue.length > 0 ? trimmedValue : undefined });
+        }, 400);
 
         setSearchTimeout(timeout);
     };
@@ -50,32 +48,28 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
         applyFilters({ status: newStatus || undefined });
     };
 
-    const handleStartDateChange = (date?: Date) => {
-        setStartDate(date);
-        applyFilters({ startDate: date ? format(date, 'yyyy-MM-dd') : undefined });
-    };
-
-    const handleEndDateChange = (date?: Date) => {
-        setEndDate(date);
-        applyFilters({ endDate: date ? format(date, 'yyyy-MM-dd') : undefined });
+    const handleDateRangeChange = (newRange: DateRange | undefined) => {
+        setDateRange(newRange);
+        applyFilters({
+            startDate: newRange?.from ? format(newRange.from, 'yyyy-MM-dd') : undefined,
+            endDate: newRange?.to ? format(newRange.to, 'yyyy-MM-dd') : undefined,
+        });
     };
 
     const applyFilters = (partialFilters: Partial<FilterValues> = {}) => {
         // Combinar valores actuales con los cambios parciales
         const finalStatus = 'status' in partialFilters ? partialFilters.status : (status || undefined);
+        const finalSearch = 'search' in partialFilters ? partialFilters.search : (search.trim() || undefined);
 
-        // Handle search
-        const finalSearch = 'search' in partialFilters ? partialFilters.search : (search || undefined);
-
-        // Handle dates - if passed in partial, use it, otherwise use state formatted
+        // Handle dates - if passed in partial, use it, otherwise use date range state
         let finalStartDate = 'startDate' in partialFilters ? partialFilters.startDate : undefined;
-        if (!('startDate' in partialFilters) && startDate) {
-            finalStartDate = format(startDate, 'yyyy-MM-dd');
+        if (!('startDate' in partialFilters) && dateRange?.from) {
+            finalStartDate = format(dateRange.from, 'yyyy-MM-dd');
         }
 
         let finalEndDate = 'endDate' in partialFilters ? partialFilters.endDate : undefined;
-        if (!('endDate' in partialFilters) && endDate) {
-            finalEndDate = format(endDate, 'yyyy-MM-dd');
+        if (!('endDate' in partialFilters) && dateRange?.to) {
+            finalEndDate = format(dateRange.to, 'yyyy-MM-dd');
         }
 
         const filters: FilterValues = {
@@ -97,45 +91,29 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
 
     const clearFilters = () => {
         setStatus('');
-        setStartDate(undefined);
-        setEndDate(undefined);
+        setDateRange(undefined);
         setSearch('');
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
         onFilterChange({});
     };
 
     return (
-        <div className="bg-card border border-border rounded-xl p-4 mb-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-muted-foreground" />
-                    <h3 className="font-bold text-sm uppercase text-foreground tracking-wide">Filtros</h3>
-                </div>
-                {activeFiltersCount > 0 && (
-                    <button
-                        onClick={clearFilters}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-destructive hover:text-destructive/90 transition-colors bg-destructive/10 px-2 py-1 rounded-md"
-                    >
-                        <X className="w-3 h-3" />
-                        Limpiar filtros ({activeFiltersCount})
-                    </button>
-                )}
+        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between mb-6">
+            <div className="relative w-full md:max-w-xs">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                    type="text"
+                    placeholder="Buscar por nombre o correo..."
+                    value={search}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full pl-10 pr-3 h-10 text-sm border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Búsqueda */}
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por ID o cliente..."
-                        value={search}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full pl-10 pr-3 h-10 text-sm border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-                    />
-                </div>
-
-                {/* Estado */}
-                <div>
                     <Select value={status === '' ? 'ALL' : status} onValueChange={handleStatusChange}>
                         <SelectTrigger className={`w-full h-10 bg-background border border-input rounded-md text-sm focus:ring-2 focus:ring-ring ${status === '' ? 'text-muted-foreground' : 'text-foreground'}`}>
                             <SelectValue placeholder="Estado del pedido" />
@@ -151,23 +129,19 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
                     </Select>
                 </div>
 
-                {/* Fecha Inicio */}
                 <div>
-                    <DatePicker
-                        date={startDate}
-                        setDate={handleStartDateChange}
-                        placeholder="Desde"
+                    <DatePickerWithRange
+                        date={dateRange}
+                        setDate={handleDateRangeChange}
+                        className="w-full md:w-auto"
                     />
                 </div>
 
-                {/* Fecha Fin */}
-                <div>
-                    <DatePicker
-                        date={endDate}
-                        setDate={handleEndDateChange}
-                        placeholder="Hasta"
-                    />
-                </div>
+                {activeFiltersCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                        Limpiar filtros
+                    </Button>
+                )}
             </div>
         </div>
     );

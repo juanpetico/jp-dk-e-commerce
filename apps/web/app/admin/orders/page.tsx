@@ -5,8 +5,7 @@ import { Eye, Loader2, FileSpreadsheet } from 'lucide-react';
 import {
     fetchAllOrders,
     updateOrderStatus,
-    ORDER_STATUS_LABELS,
-    getOrderStatusColor
+    ORDER_STATUS_LABELS
 } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types';
 import OrderDetailModal from '@/components/admin/orders/OrderDetailModal';
@@ -22,7 +21,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+
+type OrderFiltersState = {
+    status?: OrderStatus;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+};
 
 const OrderTableSkeleton = () => (
     <div className="bg-card rounded shadow-sm border border-border dark:border-none overflow-hidden relative">
@@ -36,7 +41,7 @@ const OrderTableSkeleton = () => (
                 <table className="w-full text-left">
                     <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
                                 <th key={i} className="px-6 py-4">
                                     <div className="h-2 w-12 bg-muted rounded"></div>
                                 </th>
@@ -48,11 +53,10 @@ const OrderTableSkeleton = () => (
                             <tr key={row}>
                                 <td className="px-6 py-4"><div className="h-4 w-16 bg-muted rounded"></div></td>
                                 <td className="px-6 py-4"><div className="h-4 w-24 bg-muted rounded"></div></td>
-                                <td className="px-6 py-4"><div className="h-4 w-32 bg-muted rounded"></div></td>
                                 <td className="px-6 py-4"><div className="h-4 w-8 bg-muted rounded mx-auto"></div></td>
                                 <td className="px-6 py-4"><div className="h-4 w-20 bg-muted rounded"></div></td>
                                 <td className="px-6 py-4"><div className="h-6 w-24 bg-muted rounded-full"></div></td>
-                                <td className="px-6 py-4 text-right"><div className="h-8 w-20 bg-muted rounded ml-auto"></div></td>
+                                <td className="px-6 py-4 text-right"><div className="h-8 w-8 bg-muted rounded-lg ml-auto"></div></td>
                             </tr>
                         ))}
                     </tbody>
@@ -78,18 +82,24 @@ export default function OrdersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Estado para filtros
-    const [filters, setFilters] = useState<{
-        status?: OrderStatus;
-        startDate?: string;
-        endDate?: string;
-        search?: string;
-    }>({});
+    const [filters, setFilters] = useState<OrderFiltersState>({});
 
     const loadOrders = useCallback(async (currentFilters = filters) => {
         try {
             setLoading(true);
-            const data = await fetchAllOrders(currentFilters);
-            setOrders(data);
+            const { search, ...serverFilters } = currentFilters;
+            const data = await fetchAllOrders(serverFilters);
+
+            const normalizedSearch = search?.trim().toLowerCase();
+            const filteredData = normalizedSearch
+                ? data.filter((order) => {
+                    const customerName = (order.customerName || order.user?.name || '').toLowerCase();
+                    const customerEmail = (order.customerEmail || order.user?.email || '').toLowerCase();
+                    return customerName.includes(normalizedSearch) || customerEmail.includes(normalizedSearch);
+                })
+                : data;
+
+            setOrders(filteredData);
         } catch (error) {
             console.error('Error loading orders:', error);
             toast.error('Error al cargar las órdenes');
@@ -102,7 +112,7 @@ export default function OrdersPage() {
         loadOrders();
     }, [loadOrders]);
 
-    const handleFilterChange = (newFilters: any) => {
+    const handleFilterChange = (newFilters: OrderFiltersState) => {
         setFilters(newFilters);
         setCurrentPage(1); // Reset to first page when filtering
         // loadOrders se ejecutará automáticamente por el useEffect
@@ -137,28 +147,6 @@ export default function OrdersPage() {
             style: 'currency',
             currency: 'CLP',
         }).format(price);
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffHours < 1) {
-            return 'Hace menos de 1 h';
-        } else if (diffHours < 24) {
-            return `Hace ${diffHours} h`;
-        } else if (diffDays < 7) {
-            return `Hace ${diffDays} d`;
-        } else {
-            return date.toLocaleDateString('es-CL', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
-        }
     };
 
     const handleExportCSV = () => {
@@ -205,7 +193,6 @@ export default function OrdersPage() {
 
     // Calculate paginated orders
     const totalItems = orders?.length || 0;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedOrders = orders?.slice(startIndex, startIndex + itemsPerPage) || [];
 
@@ -280,11 +267,10 @@ export default function OrdersPage() {
                                 <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">Cliente</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Fecha</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest">ID</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-center">Productos</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Total</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Estado</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-right pr-6">Detalles</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-right pr-6">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -317,11 +303,6 @@ export default function OrdersPage() {
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>
-                                            <span className="font-mono text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                                                #{order.id.slice(0, 8)}
-                                            </span>
-                                        </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 <span className="text-xs font-bold text-foreground">
@@ -342,12 +323,15 @@ export default function OrdersPage() {
                                             />
                                         </TableCell>
                                         <TableCell className="text-right pr-6">
-                                            <button
-                                                onClick={() => handleViewOrder(order)}
-                                                className="inline-flex items-center gap-2 bg-background border border-border px-3 py-1.5 rounded text-[9px] font-black uppercase tracking-widest hover:bg-muted transition-all text-foreground shadow-sm"
-                                            >
-                                                Ver <Eye className="w-3.5 h-3.5" />
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleViewOrder(order)}
+                                                    className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                                    title="Ver detalles"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}

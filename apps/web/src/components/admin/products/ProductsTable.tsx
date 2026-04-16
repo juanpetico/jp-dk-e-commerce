@@ -20,6 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/Button';
 import ProductListThumbnail from '@/components/admin/products/ProductListThumbnail';
 import { StockBadgeList } from '@/components/admin/products/StockBadgeList';
 import { ProductStatusToggle, ProductRowButtons } from '@/components/admin/products/ProductRowActions';
@@ -95,6 +96,14 @@ export default function ProductsTable({ products }: ProductsTableProps) {
         }
     }, [currentPage, totalPages]);
 
+    const hasFilters = search.trim() !== '' || statusFilter !== 'ALL' || categoryFilter !== 'ALL';
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatusFilter('ALL');
+        setCategoryFilter('ALL');
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -131,6 +140,12 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                             <SelectItem value="DRAFT">Borradores</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    {hasFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                            Limpiar filtros
+                        </Button>
+                    )}
                 </div>
             </div>
 

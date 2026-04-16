@@ -315,8 +315,8 @@ export default function MarketingPage() {
 
             {/* Search and filter bar */}
             {coupons.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                    <div className="relative flex-1 min-w-[180px]">
+                <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+                    <div className="relative w-full md:max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                         <input
                             type="text"
@@ -326,38 +326,40 @@ export default function MarketingPage() {
                             className="w-full pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground"
                         />
                     </div>
-                    <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
-                        <option value="ALL">Todos los estados</option>
-                        <option value="ACTIVO">Activo</option>
-                        <option value="INACTIVO">Inactivo</option>
-                        <option value="EXPIRADO">Expirado</option>
-                    </select>
-                    <select value={filterType} onChange={e => setFilterType(e.target.value as typeof filterType)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
-                        <option value="ALL">Todos los tipos</option>
-                        <option value="PERCENTAGE">Porcentaje</option>
-                        <option value="FIXED_AMOUNT">Monto fijo</option>
-                    </select>
-                    <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
-                        className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground min-w-[140px]">
-                        <option value="createdAt">Más reciente</option>
-                        <option value="code">Código A→Z</option>
-                        <option value="usedCount">Más usado</option>
-                        <option value="roi">Mayor ROI</option>
-                        <option value="revenue">Mayor ingreso</option>
-                    </select>
-                    <button onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-                        className="p-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
-                        title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}>
-                        {sortDir === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
-                    </button>
-                    {hasActiveFilters && (
-                        <button onClick={clearFilters}
-                            className="px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground bg-card border border-border rounded-lg hover:bg-muted transition-colors uppercase tracking-wide">
-                            Limpiar
+
+                    <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
+                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
+                            className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
+                            <option value="ALL">Todos los estados</option>
+                            <option value="ACTIVO">Activo</option>
+                            <option value="INACTIVO">Inactivo</option>
+                            <option value="EXPIRADO">Expirado</option>
+                        </select>
+                        <select value={filterType} onChange={e => setFilterType(e.target.value as typeof filterType)}
+                            className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground">
+                            <option value="ALL">Todos los tipos</option>
+                            <option value="PERCENTAGE">Porcentaje</option>
+                            <option value="FIXED_AMOUNT">Monto fijo</option>
+                        </select>
+                        <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
+                            className="px-3 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none cursor-pointer text-foreground min-w-[140px]">
+                            <option value="createdAt">Más reciente</option>
+                            <option value="code">Código A→Z</option>
+                            <option value="usedCount">Más usado</option>
+                            <option value="roi">Mayor ROI</option>
+                            <option value="revenue">Mayor ingreso</option>
+                        </select>
+                        <button onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                            className="p-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors"
+                            title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}>
+                            {sortDir === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                         </button>
-                    )}
+                        {hasActiveFilters && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                                Limpiar filtros
+                            </Button>
+                        )}
+                    </div>
                 </div>
             )}
 

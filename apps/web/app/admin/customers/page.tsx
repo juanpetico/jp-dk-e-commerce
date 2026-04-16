@@ -80,6 +80,8 @@ export default function CustomersPage() {
         return matchesSearch;
     });
 
+    const hasFilters = searchTerm.trim() !== '' || roleFilter !== 'ALL';
+
     const totalItems = filteredCustomers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -91,6 +93,11 @@ export default function CustomersPage() {
 
     const handleManageAsUser = (userId: string) => {
         router.push(`/superadmin/users?userId=${userId}`);
+    };
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setRoleFilter('ALL');
     };
 
     return (
@@ -106,8 +113,8 @@ export default function CustomersPage() {
                 </Button>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-lg border border-border">
-                <div className="relative w-full md:w-96">
+            <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+                <div className="relative w-full md:max-w-xs">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder="Buscar por nombre o email..."
@@ -116,10 +123,10 @@ export default function CustomersPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <span className="text-xs font-bold text-muted-foreground uppercase whitespace-nowrap">Filtrar por Rol:</span>
+
+                <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                     <Select value={roleFilter} onValueChange={(value: 'ALL' | 'ADMIN' | 'CLIENT' | 'SUPERADMIN') => setRoleFilter(value)}>
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="w-full md:w-[170px]">
                             <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -129,6 +136,12 @@ export default function CustomersPage() {
                             <SelectItem value="SUPERADMIN">Superadmin</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    {hasFilters && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                            Limpiar filtros
+                        </Button>
+                    )}
                 </div>
             </div>
 
