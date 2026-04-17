@@ -1,0 +1,90 @@
+{
+  "name": "03 · Solicitud de Reseñas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Diario 11:00 (Santiago)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/automation/review-requests?daysSinceDelivery=7&limit=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-api-key",
+              "value": "={{$env.INTERNAL_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-list-reviews",
+      "name": "Listar pedidos pendientes de reseña",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "split-orders",
+      "name": "Por cada pedido",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.BACKEND_API_URL}}/api/automation/review-requests/{{$json.orderId}}/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-api-key",
+              "value": "={{$env.INTERNAL_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-notify-review",
+      "name": "Enviar email de reseña",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Diario 11:00 (Santiago)": {
+      "main": [[{ "node": "Listar pedidos pendientes de reseña", "type": "main", "index": 0 }]]
+    },
+    "Listar pedidos pendientes de reseña": {
+      "main": [[{ "node": "Por cada pedido", "type": "main", "index": 0 }]]
+    },
+    "Por cada pedido": {
+      "main": [[{ "node": "Enviar email de reseña", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [{ "name": "marketing" }]
+}

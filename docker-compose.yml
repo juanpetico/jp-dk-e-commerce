@@ -15,6 +15,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ecommerce-network
     healthcheck:
@@ -43,11 +44,66 @@ services:
       postgres:
         condition: service_healthy
 
+  # n8n - Marketing & Loyalty Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ecommerce-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # --- Auth básica (protege la UI en desarrollo) ---
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-admin123}
+
+      # --- Host / URLs ---
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      GENERIC_TIMEZONE: America/Santiago
+
+      # --- Persistencia en PostgreSQL (schema separado) ---
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: ecommerce_user
+      DB_POSTGRESDB_PASSWORD: ecommerce_password
+      DB_POSTGRESDB_SCHEMA: public
+
+      # --- Encriptación de credenciales (cambiar en producción) ---
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-dev-encryption-key-change-me}
+
+      # --- Conexión al backend desde dentro del contenedor ---
+      # host.docker.internal permite al contenedor hablar con el host (donde corre el server de desarrollo)
+      BACKEND_API_URL: http://host.docker.internal:5001
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-dev-internal-api-key-change-me}
+
+      # --- Configuración de ejecución ---
+      EXECUTIONS_MODE: regular
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      N8N_METRICS: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+    networks:
+      - ecommerce-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 # Volumes for data persistence
 volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  n8n_data:
     driver: local
 
 # Network for service communication

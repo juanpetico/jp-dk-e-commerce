@@ -1,0 +1,90 @@
+{
+  "name": "02 · Acceso VIP",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Diario 09:00 (Santiago)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.BACKEND_API_URL}}/api/automation/vip-candidates?limit=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-api-key",
+              "value": "={{$env.INTERNAL_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-list-vip",
+      "name": "Listar candidatos VIP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "split-vip",
+      "name": "Por cada candidato",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.BACKEND_API_URL}}/api/automation/vip-candidates/{{$json.userId}}/grant",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-internal-api-key",
+              "value": "={{$env.INTERNAL_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-grant-vip",
+      "name": "Otorgar acceso VIP y enviar email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Diario 09:00 (Santiago)": {
+      "main": [[{ "node": "Listar candidatos VIP", "type": "main", "index": 0 }]]
+    },
+    "Listar candidatos VIP": {
+      "main": [[{ "node": "Por cada candidato", "type": "main", "index": 0 }]]
+    },
+    "Por cada candidato": {
+      "main": [[{ "node": "Otorgar acceso VIP y enviar email", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "tags": [{ "name": "loyalty" }]
+}
