@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Eye, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
@@ -68,7 +69,10 @@ const OrderTableSkeleton = () => (
     </div>
 );
 
-export default function OrdersPage() {
+function OrdersPageInner() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
     const [orders, setOrders] = useState<Order[] | null>(null);
     const [loading, setLoading] = useState(true);
     const [isMounted, setIsMounted] = useState(false);
@@ -97,7 +101,8 @@ export default function OrdersPage() {
                 ? data.filter((order) => {
                     const customerName = (order.customerName || order.user?.name || '').toLowerCase();
                     const customerEmail = (order.customerEmail || order.user?.email || '').toLowerCase();
-                    return customerName.includes(normalizedSearch) || customerEmail.includes(normalizedSearch);
+                    const orderId = order.id.toLowerCase();
+                    return customerName.includes(normalizedSearch) || customerEmail.includes(normalizedSearch) || orderId.includes(normalizedSearch);
                 })
                 : data;
 
@@ -113,6 +118,16 @@ export default function OrdersPage() {
     useEffect(() => {
         loadOrders();
     }, [loadOrders]);
+
+    useEffect(() => {
+        const orderId = searchParams.get('orderId');
+        if (!orderId || !orders) return;
+        const found = orders.find((o) => o.id === orderId);
+        if (found) {
+            setSelectedOrder(found);
+            setIsModalOpen(true);
+        }
+    }, [orders, searchParams]);
 
     const handleFilterChange = (newFilters: OrderFiltersState) => {
         setFilters(newFilters);
@@ -250,7 +265,8 @@ export default function OrdersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">Cliente</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest pl-6">ID</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest">Cliente</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Fecha</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-center">Productos</TableHead>
                                     <TableHead className="text-[10px] font-black uppercase tracking-widest">Total</TableHead>
@@ -262,6 +278,11 @@ export default function OrdersPage() {
                                 {paginatedOrders.map((order) => (
                                     <TableRow key={order.id} className="group hover:bg-muted/50 transition-colors">
                                         <TableCell className="pl-6">
+                                            <span className="font-mono text-xs font-bold text-foreground">
+                                                #{order.id.slice(-8).toUpperCase()}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-foreground uppercase tracking-tight">
                                                     {order.customerName || order.user?.name || 'Invitado'}
@@ -337,10 +358,23 @@ export default function OrdersPage() {
 
             <OrderDetailModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    if (searchParams.get('orderId')) {
+                        router.replace(pathname);
+                    }
+                }}
                 order={selectedOrder}
                 onStatusChange={handleStatusChange}
             />
         </div>
+    );
+}
+
+export default function OrdersPage() {
+    return (
+        <Suspense>
+            <OrdersPageInner />
+        </Suspense>
     );
 }

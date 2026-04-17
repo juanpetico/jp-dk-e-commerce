@@ -19,9 +19,10 @@ interface OrderDetailModalProps {
     onClose: () => void;
     order: Order | null;
     onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+    onRedirect?: () => void;
 }
 
-export default function OrderDetailModal({ isOpen, onClose, order, onStatusChange }: OrderDetailModalProps) {
+export default function OrderDetailModal({ isOpen, onClose, order, onStatusChange, onRedirect }: OrderDetailModalProps) {
     if (!isOpen || !order) return null;
 
     const { shipping, billing, customer } = buildOrderSnapshotData(order);
@@ -43,7 +44,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
             onClick={onClose}
         >
             <div
@@ -55,15 +56,16 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusChang
                     onClose={onClose}
                     onStatusChange={handleStatusChange}
                     statusEditable={!!onStatusChange}
+                    onRedirect={onRedirect}
                 />
 
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="px-6 py-4 overflow-y-auto custom-scrollbar flex-1">
                     <OrderCustomerSummary customer={customer} />
                     <OrderAddresses shipping={shipping} billing={billing} />
                     <OrderItemsList order={order} />
-                    <OrderTotals order={order} />
                 </div>
 
+                <OrderTotals order={order} />
                 <OrderDetailFooter onClose={onClose} />
             </div>
         </div>

@@ -7,6 +7,7 @@ import {
     updateProfileValidation,
     addressValidation,
 } from "../controllers/user.controller.js";
+import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireRole, requireSuperadmin } from "../middleware/role.middleware.js";
 
@@ -34,6 +35,7 @@ router.delete("/users/:id", authenticate, requireRole("SUPERADMIN"), userControl
 
 // SUPERADMIN-only admin user management routes
 router.get("/admin/users", authenticate, requireSuperadmin, userController.listUsers);
+router.get("/admin/users/:userId/coupons", authenticate, requireRole("ADMIN", "SUPERADMIN"), couponController.getAdminUserCoupons);
 router.patch("/admin/users/:id/role", authenticate, requireSuperadmin, userController.updateUserRole);
 router.patch("/admin/users/:id/status", authenticate, requireSuperadmin, userController.updateUserStatus);
 

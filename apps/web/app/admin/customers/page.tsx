@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Download, Search, Loader2, UserCog } from 'lucide-react';
+import CustomerDrawer from '../../../src/components/admin/users/CustomerDrawer';
 import {
     Pagination,
     PaginationContent,
@@ -39,6 +40,15 @@ export default function CustomersPage() {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
+    const openDrawer = (id: string) => {
+        setDrawerUserId(id);
+        setDrawerOpen(true);
+    };
+    const closeDrawer = () => setDrawerOpen(false);
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -83,6 +93,16 @@ export default function CustomersPage() {
 
     const hasFilters = searchTerm.trim() !== '' || roleFilter !== 'ALL';
 
+    const totalClientes = customers.length;
+    const totalLtv = customers.reduce((acc, customer) => acc + (customer.totalSpent || 0), 0);
+    const gastoPromedioLtv = totalClientes > 0 ? totalLtv / totalClientes : 0;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const nuevosUltimos30Dias = customers.filter((customer) => {
+        if (!customer.createdAt) return false;
+        const createdAt = new Date(customer.createdAt).getTime();
+        return !Number.isNaN(createdAt) && createdAt >= thirtyDaysAgo;
+    }).length;
+
     const totalItems = filteredCustomers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -102,6 +122,7 @@ export default function CustomersPage() {
     };
 
     return (
+        <>
         <div className="space-y-6 animate-fade-in text-foreground">
             <div className="flex justify-between items-center">
                 <div>
@@ -115,6 +136,23 @@ export default function CustomersPage() {
                     <Download className="w-4 h-4" />
                     Exportar
                 </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="rounded border border-border bg-card p-4 shadow-sm">
+                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{totalClientes}</p>
+                    <p className="text-sm text-muted-foreground">Total Clientes</p>
+                </div>
+
+                <div className="rounded border border-border bg-card p-4 shadow-sm">
+                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{formatPrice(gastoPromedioLtv)}</p>
+                    <p className="text-sm text-muted-foreground">Gasto Promedio (LTV)</p>
+                </div>
+
+                <div className="rounded border border-border bg-card p-4 shadow-sm">
+                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{nuevosUltimos30Dias}</p>
+                    <p className="text-sm text-muted-foreground">Nuevos (Últimos 30 días)</p>
+                </div>
             </div>
 
             <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -177,7 +215,11 @@ export default function CustomersPage() {
                             <tbody className="divide-y divide-border">
                                 {paginatedCustomers.length > 0 ? (
                                     paginatedCustomers.map((customer) => (
-                                        <tr key={customer.id} className="hover:bg-muted/50 transition-colors">
+                                        <tr
+                            key={customer.id}
+                            className="hover:bg-muted/50 transition-colors cursor-pointer"
+                            onClick={() => openDrawer(customer.id)}
+                        >
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center font-display font-bold text-xs uppercase">
@@ -209,7 +251,10 @@ export default function CustomersPage() {
                                                 {currentUser?.role === 'SUPERADMIN' && (
                                                     <div className="flex justify-end">
                                                         <button
-                                                            onClick={() => handleManageAsUser(customer.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleManageAsUser(customer.id);
+                                                            }}
                                                             className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                                                             title="Gestionar como usuario"
                                                         >
@@ -320,5 +365,8 @@ export default function CustomersPage() {
                 )}
             </div>
         </div>
+
+        <CustomerDrawer userId={drawerUserId} open={drawerOpen} onClose={closeDrawer} />
+        </>
     );
 }

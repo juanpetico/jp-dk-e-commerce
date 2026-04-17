@@ -106,7 +106,7 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     type="text"
-                    placeholder="Buscar por nombre o correo..."
+                    placeholder="Buscar por nombre, correo o ID..."
                     value={search}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10"

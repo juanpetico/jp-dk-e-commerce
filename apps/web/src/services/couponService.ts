@@ -1,5 +1,12 @@
 import { Coupon } from '../types';
 
+export interface UserCouponRecord {
+    id: string;
+    isUsed: boolean;
+    assignedAt: string;
+    coupon: Coupon;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
@@ -116,4 +123,14 @@ export const fetchMyCoupons = async (): Promise<any[]> => {
         console.error('Error fetching user coupons:', error);
         throw error;
     }
+};
+
+export const fetchAdminUserCoupons = async (userId: string): Promise<UserCouponRecord[]> => {
+    const res = await fetch(`${API_URL}/admin/users/${userId}/coupons`, {
+        credentials: 'include',
+        headers: JSON_HEADERS,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) throw new Error(json.message || 'No se pudieron obtener los cupones del usuario');
+    return json.data as UserCouponRecord[];
 };

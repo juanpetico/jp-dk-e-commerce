@@ -146,6 +146,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
+    createdAt?: string;
     phone?: string;
     role: UserRole;
     isActive?: boolean;

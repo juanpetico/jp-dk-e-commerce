@@ -70,14 +70,14 @@ export const formatOrderDate = (createdAt: string) => {
 export const getStatusColor = (status: OrderStatus) => {
     switch (status) {
         case 'DELIVERED':
-            return 'bg-green-100 text-green-800 border-green-200';
+            return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50';
         case 'SHIPPED':
-            return 'bg-purple-100 text-purple-800 border-purple-200';
+            return 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50';
         case 'CANCELLED':
-            return 'bg-red-100 text-red-800 border-red-200';
+            return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50';
         case 'CONFIRMED':
-            return 'bg-blue-100 text-blue-800 border-blue-200';
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50';
         default:
-            return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50';
     }
 };

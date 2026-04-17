@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Package, Phone, Truck, User, X } from 'lucide-react';
+import { ExternalLink, FileText, Phone, Truck, User, X } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -22,9 +22,10 @@ interface OrderDetailHeaderProps {
     onClose: () => void;
     onStatusChange: (status: string) => void;
     statusEditable: boolean;
+    onRedirect?: () => void;
 }
 
-export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditable }: OrderDetailHeaderProps) {
+export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditable, onRedirect }: OrderDetailHeaderProps) {
     return (
         <div className="flex justify-between items-start p-6 border-b border-border">
             <div className="space-y-1">
@@ -47,9 +48,20 @@ export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditab
                 </div>
                 <p className="text-sm text-muted-foreground">Realizado el {formatOrderDate(order.createdAt)}</p>
             </div>
-            <button onClick={onClose} className="text-muted-foreground hover:text-destructive transition-colors">
-                <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-1">
+                {onRedirect && (
+                    <button
+                        onClick={onRedirect}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
+                        title="Ver en Pedidos"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                    </button>
+                )}
+                <button onClick={onClose} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded hover:bg-muted">
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
         </div>
     );
 }
@@ -60,28 +72,17 @@ interface OrderCustomerSummaryProps {
 
 export function OrderCustomerSummary({ customer }: OrderCustomerSummaryProps) {
     return (
-        <div className="mb-6 border border-zinc-300 dark:border-border rounded-xl bg-muted/30 overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="p-6 border-b md:border-b-0 md:border-r border-zinc-300 dark:border-border">
-                    <h3 className="font-display font-bold uppercase tracking-wider text-sm text-foreground mb-3 flex items-center gap-2">
-                        <User className="w-5 h-5 text-muted-foreground" />
-                        Cliente
-                    </h3>
-                    <div>
-                        <p className="font-bold text-foreground text-lg leading-tight">{customer.name}</p>
-                        <p className="text-muted-foreground text-sm mt-1">{customer.email}</p>
-                    </div>
-                </div>
-                <div className="p-6">
-                    <h3 className="font-display font-bold uppercase tracking-wider text-sm text-foreground mb-3 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-muted-foreground" />
-                        Contacto
-                    </h3>
-                    <div>
-                        <p className="font-bold text-foreground text-lg leading-tight">{customer.phone}</p>
-                        <p className="text-muted-foreground text-[10px] uppercase font-black tracking-widest mt-1">Móvil Verificado</p>
-                    </div>
-                </div>
+        <div className="mb-4 border border-zinc-300 dark:border-border rounded-lg bg-muted/20 px-4 py-2.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+                <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="font-black text-sm text-foreground uppercase tracking-tight truncate">{customer.name}</span>
+            </div>
+            <div className="w-px h-4 bg-border shrink-0" />
+            <span className="text-xs text-muted-foreground flex-1 text-center truncate">{customer.email}</span>
+            <div className="w-px h-4 bg-border shrink-0" />
+            <div className="flex items-center gap-1.5 flex-1 justify-end">
+                <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground font-mono">{customer.phone}</span>
             </div>
         </div>
     );
@@ -94,42 +95,40 @@ interface OrderAddressesProps {
 
 export function OrderAddresses({ shipping, billing }: OrderAddressesProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="border border-zinc-300 dark:border-border rounded-xl p-6 bg-card shadow-sm hover:border-foreground transition-colors group">
-                <div className="flex items-center gap-2 mb-4 text-foreground">
-                    <Truck className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    <h3 className="font-display font-bold uppercase tracking-wider text-xs">Dirección de Envío</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <div className="border border-zinc-300 dark:border-border rounded-lg p-3.5 bg-card hover:border-foreground transition-colors group">
+                <div className="flex items-center gap-1.5 mb-2 text-foreground">
+                    <Truck className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <h3 className="font-display font-bold uppercase tracking-wider text-[10px]">Envío</h3>
                 </div>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                    <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{shipping.name}</p>
+                <div className="space-y-0.5 text-xs text-muted-foreground">
+                    <p className="font-black text-foreground text-xs uppercase tracking-tight">{shipping.name}</p>
+                    {shipping.rut && <p className="font-mono">RUT: {shipping.rut}</p>}
                     <p>{shipping.street}</p>
                     <p>{shipping.comuna}, {shipping.region}</p>
-                    <p>Chile</p>
-                    {shipping.zipCode && <p className="mt-2 font-mono text-xs">CP: {shipping.zipCode}</p>}
-                    {shipping.rut && <p className="font-mono text-xs">RUT: {shipping.rut}</p>}
-                    <p className="text-xs">Tel: {shipping.phone}</p>
-                    <div className="mt-4 pt-4 border-t border-dashed border-zinc-300 dark:border-border text-[10px] flex justify-between items-center">
-                        <span className="font-black text-foreground uppercase tracking-widest">Método</span>
-                        <span className="bg-muted text-foreground px-2 py-1 rounded font-black uppercase tracking-tighter">
+                    {shipping.zipCode && <p className="font-mono">CP: {shipping.zipCode}</p>}
+                    <p>Tel: {shipping.phone}</p>
+                    <div className="mt-2 pt-2 border-t border-dashed border-zinc-300 dark:border-border flex justify-between items-center">
+                        <span className="font-black text-foreground uppercase tracking-widest text-[10px]">Método</span>
+                        <span className="bg-muted text-foreground px-1.5 py-0.5 rounded font-black uppercase tracking-tighter text-[10px]">
                             {shipping.method}
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div className="border border-zinc-300 dark:border-border rounded-xl p-6 bg-card shadow-sm hover:border-foreground transition-colors group">
-                <div className="flex items-center gap-2 mb-4 text-foreground">
-                    <FileText className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    <h3 className="font-display font-bold uppercase tracking-wider text-xs">Dirección de Facturación</h3>
+            <div className="border border-zinc-300 dark:border-border rounded-lg p-3.5 bg-card hover:border-foreground transition-colors group">
+                <div className="flex items-center gap-1.5 mb-2 text-foreground">
+                    <FileText className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <h3 className="font-display font-bold uppercase tracking-wider text-[10px]">Facturación</h3>
                 </div>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                    <p className="font-black text-foreground text-base mb-2 uppercase tracking-tight">{billing.name}</p>
-                    {billing.company && <p className="font-bold text-primary text-sm mb-1">{billing.company}</p>}
+                <div className="space-y-0.5 text-xs text-muted-foreground">
+                    <p className="font-black text-foreground text-xs uppercase tracking-tight">{billing.name}</p>
+                    {billing.company && <p className="font-bold text-primary text-xs">{billing.company}</p>}
+                    {billing.rut && <p className="font-mono">RUT: {billing.rut}</p>}
                     <p>{billing.street}</p>
                     <p>{billing.comuna}, {billing.region}</p>
-                    <p>Chile</p>
-                    <p className="mt-2 font-mono text-xs">RUT: {billing.rut}</p>
-                    <p className="text-xs">Tel: {billing.phone}</p>
+                    {billing.phone && <p>Tel: {billing.phone}</p>}
                 </div>
             </div>
         </div>
@@ -180,25 +179,25 @@ interface OrderTotalsProps {
 
 export function OrderTotals({ order }: OrderTotalsProps) {
     return (
-        <div className="flex justify-end border-t border-zinc-300 dark:border-border pt-6">
-            <div className="w-full md:w-1/2 lg:w-1/3 space-y-2">
-                <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter text-muted-foreground px-1">
+        <div className="border-t border-zinc-300 dark:border-border bg-muted/10 px-6 py-3">
+            <div className="flex items-center justify-end gap-6 flex-wrap">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-tighter text-muted-foreground">
                     <span>Subtotal</span>
                     <span className="font-mono text-foreground text-sm">{formatPrice(order.subtotal)}</span>
                 </div>
-                {order.coupon && (
-                    <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter text-primary px-1">
-                        <span>Cupón: {order.coupon.code}</span>
+                {order.discountAmount > 0 && (
+                    <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-tighter text-primary">
+                        <span>Cupón{order.coupon ? ` ${order.coupon.code}` : ''}</span>
                         <span className="font-mono text-sm">-{formatPrice(order.discountAmount)}</span>
                     </div>
                 )}
-                <div className="flex justify-between text-[11px] font-black uppercase tracking-tighter text-muted-foreground px-1">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-tighter text-muted-foreground">
                     <span>Envío</span>
                     <span className="font-mono text-foreground text-sm">{formatPrice(order.shippingCost)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-black border-t-2 border-dashed border-zinc-400 dark:border-border pt-3 mt-4 px-1">
+                <div className="flex items-center gap-2 text-base font-black border-l-2 border-foreground/30 pl-6">
                     <span className="uppercase tracking-tight text-foreground">Total</span>
-                    <span className="text-foreground font-mono">{formatPrice(order.total)}</span>
+                    <span className="text-foreground font-mono text-lg">{formatPrice(order.total)}</span>
                 </div>
             </div>
         </div>

@@ -20,6 +20,14 @@ export const orderWithRelationsInclude = {
             phone: true,
         },
     },
+    coupon: {
+        select: {
+            id: true,
+            code: true,
+            type: true,
+            value: true,
+        },
+    },
 } as const;
 
 export const orderWithAddressesInclude = {
