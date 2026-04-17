@@ -1,4 +1,4 @@
-import { ModalTab } from './UserEditModal.types';
+import { ModalTab } from './types';
 
 export const USER_EDIT_TABS: Array<{ key: ModalTab; label: string }> = [
     { key: 'PROFILE', label: 'Perfil' },

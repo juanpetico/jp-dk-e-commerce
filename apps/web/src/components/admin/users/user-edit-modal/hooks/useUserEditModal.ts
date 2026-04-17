@@ -6,8 +6,8 @@ import { useUser } from '@/store/UserContext';
 import { confirm } from '@/utils/confirm';
 import { AdminUser, UserRole } from '@/types';
 import { getUserById, toggleUserStatus, updateUserRole } from '@/services/userService';
-import { ModalTab, UserEditModalProps } from './UserEditModal.types';
-import { isPermissionError, roleLabel } from './UserEditModal.utils';
+import { ModalTab, UserEditModalProps } from '../types';
+import { isPermissionError, roleLabel } from '../utils';
 
 type BaseParams = Pick<UserEditModalProps, 'userId' | 'open' | 'onClose' | 'onUpdated'>;
 
@@ -91,10 +91,7 @@ export function useUserEditModal({ userId, open, onClose, onUpdated }: BaseParam
             return;
         }
 
-        const accepted = await confirm(
-            'Cambiar rol',
-            `¿Cambiar el rol de ${user.email} a ${roleLabel(selectedRole)}?`
-        );
+        const accepted = await confirm('Cambiar rol', `¿Cambiar el rol de ${user.email} a ${roleLabel(selectedRole)}?`);
         if (!accepted) return;
 
         try {

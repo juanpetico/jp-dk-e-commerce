@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AuditEntry } from '@/types';
 import { getUserAuditLog } from '@/services/userService';
-import { ModalTab } from './UserEditModal.types';
+import { ModalTab } from '../types';
 
 interface UseUserAuditParams {
     userId: string | null;
@@ -23,21 +23,24 @@ export function useUserAudit({ userId, open, activeTab }: UseUserAuditParams) {
         setLoadingAudit(false);
     }, []);
 
-    const loadAudit = useCallback(async (append = false) => {
-        if (!userId) return;
+    const loadAudit = useCallback(
+        async (append = false) => {
+            if (!userId) return;
 
-        try {
-            setLoadingAudit(true);
-            const result = await getUserAuditLog(userId, 10, append ? auditNextCursor ?? undefined : undefined);
-            setAuditItems((prev) => (append ? [...prev, ...result.items] : result.items));
-            setAuditNextCursor(result.nextCursor);
-        } catch (error) {
-            console.error('Error loading user audit:', error);
-            toast.error('No se pudo cargar la auditoria');
-        } finally {
-            setLoadingAudit(false);
-        }
-    }, [auditNextCursor, userId]);
+            try {
+                setLoadingAudit(true);
+                const result = await getUserAuditLog(userId, 10, append ? auditNextCursor ?? undefined : undefined);
+                setAuditItems((prev) => (append ? [...prev, ...result.items] : result.items));
+                setAuditNextCursor(result.nextCursor);
+            } catch (error) {
+                console.error('Error loading user audit:', error);
+                toast.error('No se pudo cargar la auditoria');
+            } finally {
+                setLoadingAudit(false);
+            }
+        },
+        [auditNextCursor, userId]
+    );
 
     useEffect(() => {
         if (!open || !userId) {

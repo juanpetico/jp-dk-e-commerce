@@ -9,11 +9,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { AdminUser, AuditEntry, UserRole } from '@/types';
-import { USER_ROLE_OPTIONS } from './UserEditModal.constants';
-import { ModalTab } from './UserEditModal.types';
-import { formatDate, mapAuditValue, roleLabel } from './UserEditModal.utils';
+import { USER_ROLE_OPTIONS } from '../constants';
+import { ModalTab } from '../types';
+import { formatDate, mapAuditValue, roleLabel } from '../utils';
 
-interface UserEditModalTabsContentProps {
+interface TabsContentProps {
     activeTab: ModalTab;
     user: AdminUser;
     selectedRole: UserRole;
@@ -48,7 +48,7 @@ export function UserEditModalTabsContent({
     onSaveRole,
     onToggleStatus,
     onLoadMoreAudit,
-}: UserEditModalTabsContentProps) {
+}: TabsContentProps) {
     if (activeTab === 'PROFILE') {
         return (
             <div className="grid gap-4 md:grid-cols-2">
@@ -56,7 +56,7 @@ export function UserEditModalTabsContent({
                 <UserInfoCard label="Correo" value={user.email} />
                 <UserInfoCard label="Rol actual" value={roleLabel(user.role)} />
                 <UserInfoCard label="Estado" value={user.isActive ? 'Activo' : 'Inactivo'} />
-                <UserInfoCard label="Último login" value={formatDate(user.lastLogin)} />
+                <UserInfoCard label="Ultimo login" value={formatDate(user.lastLogin)} />
                 <UserInfoCard label="Creado" value={formatDate(user.createdAt)} />
             </div>
         );
@@ -116,7 +116,11 @@ export function UserEditModalTabsContent({
 
                 {isOwnUser && <p className="text-sm text-destructive">No puedes modificar tu propio estado.</p>}
 
-                <Button variant={user.isActive ? 'destructive' : 'default'} onClick={onToggleStatus} disabled={saving || isOwnUser}>
+                <Button
+                    variant={user.isActive ? 'destructive' : 'default'}
+                    onClick={onToggleStatus}
+                    disabled={saving || isOwnUser}
+                >
                     {saving ? 'Guardando...' : user.isActive ? 'Desactivar cuenta' : 'Activar cuenta'}
                 </Button>
             </div>
@@ -136,7 +140,7 @@ export function UserEditModalTabsContent({
                 </div>
             ) : (
                 <>
-                    <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
+                    <div className="max-h-[340px] space-y-2 overflow-y-auto pr-1">
                         {auditItems.map((item) => (
                             <div key={item.id} className="rounded-md border border-border p-3">
                                 <div className="flex items-start justify-between gap-3">
@@ -151,14 +155,22 @@ export function UserEditModalTabsContent({
                                             Por {item.actor.name || 'Sin nombre'} ({item.actor.email})
                                         </p>
                                     </div>
-                                    <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDate(item.createdAt)}</span>
+                                    <span className="whitespace-nowrap text-xs text-muted-foreground">
+                                        {formatDate(item.createdAt)}
+                                    </span>
                                 </div>
                             </div>
                         ))}
                     </div>
 
                     {auditNextCursor && (
-                        <Button type="button" variant="outline" size="sm" onClick={onLoadMoreAudit} disabled={loadingAudit}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onLoadMoreAudit}
+                            disabled={loadingAudit}
+                        >
                             {loadingAudit ? 'Cargando...' : 'Cargar mas'}
                         </Button>
                     )}

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/Button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface DeactivationReasonDialogProps {
     open: boolean;
@@ -22,10 +22,7 @@ export function DeactivationReasonDialog({
     if (!open) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-        >
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
             <div
                 className="absolute inset-0 bg-black/50"
                 onClick={(e) => {
@@ -33,6 +30,7 @@ export function DeactivationReasonDialog({
                     if (!saving) onClose();
                 }}
             />
+
             <div className="relative z-10 w-full max-w-lg rounded-xl border-2 bg-background p-5 shadow-2xl">
                 <h3 className="text-lg font-bold text-destructive">Motivo de desactivacion</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
