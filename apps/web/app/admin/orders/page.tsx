@@ -219,7 +219,7 @@ function OrdersPageInner() {
     }, [itemsPerPage]);
 
     return (
-        <div className="space-y-6 animate-fade-in pb-10">
+        <div className="animate-fade-in pb-10 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <div className="flex items-baseline gap-3">

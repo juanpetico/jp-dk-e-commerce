@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
@@ -74,9 +75,15 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
-            <div className="bg-background rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-2 border-foreground/20">
+    return createPortal(
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+            onClick={onClose}
+        >
+            <div
+                className="bg-background rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-2 border-foreground/20"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="p-6 border-b border-border flex items-center bg-muted/30 relative">
                     <button onClick={onClose} className="absolute left-6 text-muted-foreground hover:text-foreground transition-colors">
                         <X className="w-6 h-6" />
@@ -125,7 +132,8 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
                 onSave={saveImageUrl}
                 onCancel={closeImageUrlModal}
             />
-        </div>
+        </div>,
+        document.body
     );
 };
 

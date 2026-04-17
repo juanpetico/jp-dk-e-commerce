@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Download, Search, Loader2, UserCog } from 'lucide-react';
+import { Download, Search, Loader2, UserCog, Users, TrendingUp, UserPlus } from 'lucide-react';
 import CustomerDrawer from '../../../src/components/admin/users/CustomerDrawer';
 import {
     Pagination,
@@ -138,20 +138,33 @@ export default function CustomersPage() {
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded border border-border bg-card p-4 shadow-sm">
-                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{totalClientes}</p>
-                    <p className="text-sm text-muted-foreground">Total Clientes</p>
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                        <Users className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Clientes</p>
+                        <p className="text-2xl font-black font-mono leading-none">{totalClientes}</p>
+                    </div>
                 </div>
-
-                <div className="rounded border border-border bg-card p-4 shadow-sm">
-                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{formatPrice(gastoPromedioLtv)}</p>
-                    <p className="text-sm text-muted-foreground">Gasto Promedio (LTV)</p>
+                <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                        <TrendingUp className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Gasto Promedio (LTV)</p>
+                        <p className="text-lg font-black font-mono leading-none truncate">{formatPrice(gastoPromedioLtv)}</p>
+                    </div>
                 </div>
-
-                <div className="rounded border border-border bg-card p-4 shadow-sm">
-                    <p className="font-display text-3xl font-black tracking-tight text-foreground">{nuevosUltimos30Dias}</p>
-                    <p className="text-sm text-muted-foreground">Nuevos (Últimos 30 días)</p>
+                <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                        <UserPlus className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nuevos (30 días)</p>
+                        <p className="text-2xl font-black font-mono leading-none">{nuevosUltimos30Dias}</p>
+                    </div>
                 </div>
             </div>
 

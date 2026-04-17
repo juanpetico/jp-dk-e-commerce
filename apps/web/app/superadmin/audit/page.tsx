@@ -506,7 +506,7 @@ export default function AuditPage() {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in pb-10 text-foreground">
+        <div className="animate-fade-in pb-10 text-foreground space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
