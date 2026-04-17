@@ -259,12 +259,12 @@ const Navbar: React.FC = () => {
                                             </>
                                         ) : (
                                             <div className="py-1">
-                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-foreground hover:bg-muted/50 font-bold flex items-center gap-3 transition-colors">
+                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className="px-4 py-2 text-sm text-foreground hover:bg-muted/50 font-bold flex items-center gap-3 transition-colors">
                                                     <LogIn className="w-4 h-4 text-muted-foreground" />
                                                     Iniciar sesión
                                                 </Link>
-                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
-                                                    <UserPlus className="w-4 h-4" />
+                                                <Link href="/login" onClick={() => setIsUserDropdownOpen(false)} className=" px-4 py-2 text-sm text-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors">
+                                                    <UserPlus className="w-4 h-4 text-muted-foreground" />
                                                     Crear cuenta
                                                 </Link>
                                             </div>

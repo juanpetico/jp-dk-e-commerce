@@ -4,9 +4,13 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { User, Address } from '../types';
 
+export type LoginResult =
+    | { success: true; role: string }
+    | { success: false; reason: 'invalid_credentials' | 'account_disabled' | 'unknown' };
+
 interface UserContextType {
     user: User | null;
-    login: (email: string, password: string) => Promise<{ success: boolean; role?: string }>;
+    login: (email: string, password: string) => Promise<LoginResult>;
     register: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; welcomeCoupon?: any }>;
     logout: () => Promise<void>;
     isAuthenticated: boolean;
@@ -54,7 +58,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         checkAuth();
     }, []);
 
-    const login = async (email: string, password: string): Promise<{ success: boolean; role?: string }> => {
+    const login = async (email: string, password: string): Promise<LoginResult> => {
         try {
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
@@ -68,10 +72,14 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!response.ok) {
                 if (response.status === 403 && typeof data?.message === 'string' && data.message.trim()) {
                     toast.error(data.message);
-                    return { success: false };
+                    return { success: false, reason: 'account_disabled' };
+                }
+                if (response.status === 401) {
+                    toast.error(data.message || 'Credenciales inválidas');
+                    return { success: false, reason: 'invalid_credentials' };
                 }
                 toast.error(data.message || 'Error al iniciar sesión');
-                return { success: false };
+                return { success: false, reason: 'unknown' };
             }
 
             if (data.success) {
@@ -79,11 +87,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 toast.success('Sesión iniciada correctamente');
                 return { success: true, role: data.data.user.role };
             }
-            return { success: false };
+            return { success: false, reason: 'unknown' };
         } catch (error: any) {
             toast.error(error.message || 'Ocurrió un error inesperado');
             console.error('Login error:', error);
-            return { success: false };
+            return { success: false, reason: 'unknown' };
         }
     };
 

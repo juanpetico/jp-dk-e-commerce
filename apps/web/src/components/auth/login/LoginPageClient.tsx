@@ -17,6 +17,7 @@ export default function LoginPageClient() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loginFailed, setLoginFailed] = useState(false);
 
     const { login } = useUser();
     const router = useRouter();
@@ -27,7 +28,10 @@ export default function LoginPageClient() {
 
     const handleEmailSubmit = (event: FormEvent) => {
         event.preventDefault();
-        if (email) setStep('password');
+        if (email) {
+            setLoginFailed(false);
+            setStep('password');
+        }
     };
 
     const handlePasswordSubmit = async (event: FormEvent) => {
@@ -35,7 +39,14 @@ export default function LoginPageClient() {
 
         try {
             const result = await login(email, password);
-            if (!result.success) return;
+
+            if (!result.success) {
+                if (result.reason === 'invalid_credentials') {
+                    setLoginFailed(true);
+                    setPassword('');
+                }
+                return;
+            }
 
             router.push(resolvePostLoginRedirect(redirectUrl, result.role));
         } catch (error) {
@@ -63,8 +74,9 @@ export default function LoginPageClient() {
                             email={email}
                             password={password}
                             showPassword={showPassword}
-                            onBack={() => setStep('email')}
-                            onPasswordChange={setPassword}
+                            loginFailed={loginFailed}
+                            onBack={() => { setStep('email'); setLoginFailed(false); }}
+                            onPasswordChange={(v) => { setPassword(v); setLoginFailed(false); }}
                             onToggleShowPassword={() => setShowPassword((current) => !current)}
                             onSubmit={handlePasswordSubmit}
                         />

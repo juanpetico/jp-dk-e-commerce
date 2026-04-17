@@ -10,8 +10,6 @@ export default function SettingsPage() {
     const router = useRouter();
 
     const handleLogoutAll = () => {
-        // En un caso real, esto llamaría a una API para invalidar todos los tokens.
-        // Por ahora, simulamos cerrando la sesión local.
         logout();
         router.push('/login');
     };

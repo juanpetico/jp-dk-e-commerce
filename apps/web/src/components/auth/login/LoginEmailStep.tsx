@@ -46,10 +46,15 @@ export default function LoginEmailStep({ email, onEmailChange, onSubmit }: Login
                 Continuar
             </Button>
 
-            <div className="pt-2 text-center text-sm text-muted-foreground">
-                ¿No tienes cuenta?{' '}
-                <Link href="/register" className="font-bold text-[#92400e] transition-colors hover:text-[#78350f] hover:underline">
-                    Crear cuenta
+            <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
+                <span>
+                    ¿No tienes cuenta?{' '}
+                    <Link href="/register" className="font-bold text-[#92400e] transition-colors hover:text-[#78350f] hover:underline">
+                        Crear cuenta
+                    </Link>
+                </span>
+                <Link href="/forgot-password" className="transition-colors hover:text-foreground hover:underline">
+                    ¿Olvidaste tu clave?
                 </Link>
             </div>
         </form>

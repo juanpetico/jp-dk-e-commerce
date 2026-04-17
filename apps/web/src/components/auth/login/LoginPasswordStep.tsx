@@ -12,6 +12,7 @@ interface LoginPasswordStepProps {
     email: string;
     password: string;
     showPassword: boolean;
+    loginFailed: boolean;
     onBack: () => void;
     onPasswordChange: (value: string) => void;
     onToggleShowPassword: () => void;
@@ -22,6 +23,7 @@ export default function LoginPasswordStep({
     email,
     password,
     showPassword,
+    loginFailed,
     onBack,
     onPasswordChange,
     onToggleShowPassword,
@@ -49,7 +51,7 @@ export default function LoginPasswordStep({
                             value={password}
                             onChange={(e) => onPasswordChange(e.target.value)}
                             placeholder="••••••••"
-                            className="h-12 pl-10 pr-11 focus-visible:ring-2 focus-visible:ring-[#78350f]"
+                            className={`h-12 pl-10 pr-11 focus-visible:ring-2 focus-visible:ring-[#78350f] ${loginFailed ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
                             autoFocus
                             autoComplete="current-password"
                         />
@@ -65,18 +67,34 @@ export default function LoginPasswordStep({
                     </div>
                 </div>
 
+                {loginFailed && (
+                    <div className="animate-fade-in rounded-md border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/30">
+                        <p className="mb-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+                            Contraseña incorrecta.
+                        </p>
+                        <Link
+                            href="/forgot-password"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-[#78350f] underline-offset-2 transition-colors hover:underline dark:text-amber-400"
+                        >
+                            ¿Olvidaste tu contraseña? → Recuperar acceso
+                        </Link>
+                    </div>
+                )}
+
                 <Button
                     type="submit"
                     className="w-full cursor-pointer rounded bg-[#78350f] py-6 text-lg font-bold normal-case text-white shadow-lg transition-all hover:bg-[#451a03] active:scale-[0.98]"
                 >
-                    Iniciar Sesion
+                    Iniciar Sesión
                 </Button>
 
-                <div className="pt-2 text-center">
-                    <Link href="/forgot-password" className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline">
-                        ¿Olvidaste tu contraseña?
-                    </Link>
-                </div>
+                {!loginFailed && (
+                    <div className="pt-2 text-center">
+                        <Link href="/forgot-password" className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline">
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                    </div>
+                )}
             </form>
         </div>
     );
