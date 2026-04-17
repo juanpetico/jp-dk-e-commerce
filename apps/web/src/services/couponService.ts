@@ -7,6 +7,11 @@ export interface UserCouponRecord {
     coupon: Coupon;
 }
 
+export interface MyCoupon {
+    id: string;
+    coupon: Coupon;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
@@ -106,7 +111,7 @@ export const deleteCoupon = async (id: string): Promise<void> => {
 /**
  * Obtener los cupones activos del usuario (Billetera)
  */
-export const fetchMyCoupons = async (): Promise<any[]> => {
+export const fetchMyCoupons = async (): Promise<MyCoupon[]> => {
     try {
         const res = await fetch(`${API_URL}/coupons/my-coupons`, {
             credentials: 'include',
@@ -118,7 +123,7 @@ export const fetchMyCoupons = async (): Promise<any[]> => {
         }
 
         const json = await res.json();
-        return json.data;
+        return json.data as MyCoupon[];
     } catch (error) {
         console.error('Error fetching user coupons:', error);
         throw error;
