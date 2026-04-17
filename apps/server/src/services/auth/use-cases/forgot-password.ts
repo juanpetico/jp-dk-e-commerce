@@ -3,7 +3,7 @@ import prisma from "../../../config/prisma.js";
 import { sendPasswordResetEmail } from "../../email/use-cases/send-password-reset.js";
 
 const EXPIRES_IN_MS = 15 * 60 * 1000;
-const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:3000";
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://jpdk.cl";
 
 export const forgotPasswordUseCase = async (email: string): Promise<void> => {
     const user = await prisma.user.findUnique({ where: { email } });
