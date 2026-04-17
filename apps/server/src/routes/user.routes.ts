@@ -6,6 +6,8 @@ import {
     loginValidation,
     updateProfileValidation,
     addressValidation,
+    forgotPasswordValidation,
+    resetPasswordValidation,
 } from "../controllers/user.controller.js";
 import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -18,6 +20,9 @@ router.post("/auth/register", registerValidation, userController.register);
 router.post("/auth/login", loginValidation, userController.login);
 router.post("/auth/logout", userController.logout);
 router.get("/auth/session", userController.getSession);
+router.post("/auth/forgot-password", forgotPasswordValidation, userController.forgotPassword);
+router.post("/auth/reset-password", resetPasswordValidation, userController.resetPassword);
+router.get("/auth/validate-reset-token", userController.validateResetToken);
 
 // Protected routes (requires authentication)
 router.get("/users/profile", authenticate, userController.getProfile);

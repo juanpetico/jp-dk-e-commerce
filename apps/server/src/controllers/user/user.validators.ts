@@ -1,5 +1,20 @@
 import { body } from "express-validator";
 
+export const forgotPasswordValidation = [
+    body("email")
+        .trim()
+        .isEmail()
+        .normalizeEmail()
+        .withMessage("Correo electrónico inválido"),
+];
+
+export const resetPasswordValidation = [
+    body("token").notEmpty().isLength({ min: 64, max: 64 }).withMessage("Token inválido"),
+    body("password")
+        .isLength({ min: 8, max: 128 })
+        .withMessage("La contraseña debe tener entre 8 y 128 caracteres"),
+];
+
 export const registerValidation = [
     body("email")
         .trim()

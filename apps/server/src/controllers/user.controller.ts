@@ -2,6 +2,7 @@ import {
     addAddress,
     deleteAddress,
     deleteUser,
+    forgotPassword,
     getAllUsers,
     getProfile,
     getSession,
@@ -10,6 +11,8 @@ import {
     login,
     logout,
     register,
+    resetPassword,
+    validateResetToken,
     updateAddress,
     updateProfile,
     updateUserRole,
@@ -17,18 +20,30 @@ import {
 } from "./user/user.handlers.js";
 import {
     addressValidation,
+    forgotPasswordValidation,
     loginValidation,
     registerValidation,
+    resetPasswordValidation,
     updateProfileValidation,
 } from "./user/user.validators.js";
 
-export { registerValidation, loginValidation, updateProfileValidation, addressValidation };
+export {
+    registerValidation,
+    loginValidation,
+    updateProfileValidation,
+    addressValidation,
+    forgotPasswordValidation,
+    resetPasswordValidation,
+};
 
 export const userController = {
     getSession,
     register,
     login,
     logout,
+    forgotPassword,
+    resetPassword,
+    validateResetToken,
     getProfile,
     updateProfile,
     addAddress,
