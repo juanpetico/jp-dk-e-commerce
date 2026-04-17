@@ -1,0 +1,78 @@
+import React from 'react';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/Button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { UsersRoleFilter, UsersStatusFilter } from './UsersPage.types';
+
+interface UsersPageFiltersProps {
+    searchInput: string;
+    roleFilter: UsersRoleFilter;
+    statusFilter: UsersStatusFilter;
+    hasFilters: boolean;
+    onSearchInputChange: (value: string) => void;
+    onRoleFilterChange: (value: UsersRoleFilter) => void;
+    onStatusFilterChange: (value: UsersStatusFilter) => void;
+    onClearFilters: () => void;
+}
+
+export default function UsersPageFilters({
+    searchInput,
+    roleFilter,
+    statusFilter,
+    hasFilters,
+    onSearchInputChange,
+    onRoleFilterChange,
+    onStatusFilterChange,
+    onClearFilters,
+}: UsersPageFiltersProps) {
+    return (
+        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    value={searchInput}
+                    onChange={(event) => onSearchInputChange(event.target.value)}
+                    placeholder="Buscar por email o nombre..."
+                    className="pl-10"
+                />
+            </div>
+
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+                <Select value={roleFilter} onValueChange={(value) => onRoleFilterChange(value as UsersRoleFilter)}>
+                    <SelectTrigger className="w-full md:w-[170px]">
+                        <SelectValue placeholder="Rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Todos los roles</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
+                        <SelectItem value="SUPERADMIN">Superadmin</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as UsersStatusFilter)}>
+                    <SelectTrigger className="w-full md:w-[170px]">
+                        <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">Todos los estados</SelectItem>
+                        <SelectItem value="ACTIVE">Activos</SelectItem>
+                        <SelectItem value="INACTIVE">Inactivos</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={onClearFilters} className="text-xs">
+                        Limpiar filtros
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+}
