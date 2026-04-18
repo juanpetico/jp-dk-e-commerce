@@ -1,4 +1,5 @@
 import { Order, TopProduct } from '@/types';
+import { DashboardCustomerRetention, DashboardRetentionRange } from '@/types';
 import {
     CategorySalesPoint,
     DashboardAnalytics,
@@ -20,6 +21,7 @@ export interface DashboardFacade {
     categoryData: CategorySalesPoint[];
     topProducts: TopProduct[];
     topProductsLoading: boolean;
+    customerRetention: DashboardCustomerRetention | null;
 
     dateRange: DashboardDateRange | undefined;
     defaultDateRange: DashboardDateRange;
@@ -31,6 +33,10 @@ export interface DashboardFacade {
     attributionQuickRanges: DashboardAttributionQuickRange[];
     selectedAttributionQuickRange: DashboardAttributionQuickRange;
     setAttributionQuickRange: (range: DashboardAttributionQuickRange) => void;
+
+    retentionQuickRanges: DashboardRetentionRange[];
+    selectedRetentionQuickRange: DashboardRetentionRange;
+    setRetentionQuickRange: (range: DashboardRetentionRange) => void;
 
     currentPage: number;
     itemsPerPage: number;

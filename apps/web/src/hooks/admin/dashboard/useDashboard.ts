@@ -15,8 +15,10 @@ import { useTopProducts } from './useTopProducts';
 import { DashboardFacade } from './types';
 import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 import { DashboardAttributionQuickRange } from '@/lib/dashboard/types';
+import { DashboardRetentionRange } from '@/types';
 
 const ATTRIBUTION_QUICK_RANGES: DashboardAttributionQuickRange[] = ['1D', '7D', '1M'];
+const RETENTION_QUICK_RANGES: DashboardRetentionRange[] = ['1D', '7D', '1M'];
 
 export function useDashboard(): DashboardFacade {
     const data = useAdminDashboardData();
@@ -24,6 +26,12 @@ export function useDashboard(): DashboardFacade {
     const topProducts = useTopProducts();
     const shopConfig = useShopConfigPublic();
     const [selectedAttributionQuickRange, setSelectedAttributionQuickRange] = useState<DashboardAttributionQuickRange>('1M');
+    const [selectedRetentionQuickRange, setSelectedRetentionQuickRange] = useState<DashboardRetentionRange>('1M');
+
+    const setRetentionQuickRange = (range: DashboardRetentionRange) => {
+        setSelectedRetentionQuickRange(range);
+        void data.reloadData(range);
+    };
 
     const attributionDateRange = useMemo(
         () => resolveDashboardQuickRange(selectedAttributionQuickRange),
@@ -74,6 +82,7 @@ export function useDashboard(): DashboardFacade {
         categoryData,
         topProducts: topProducts.topProducts,
         topProductsLoading: topProducts.loading,
+        customerRetention: data.customerRetention,
 
         dateRange: dateRange.dateRange,
         defaultDateRange: dateRange.defaultDateRange,
@@ -85,6 +94,10 @@ export function useDashboard(): DashboardFacade {
         attributionQuickRanges: ATTRIBUTION_QUICK_RANGES,
         selectedAttributionQuickRange,
         setAttributionQuickRange: setSelectedAttributionQuickRange,
+
+        retentionQuickRanges: RETENTION_QUICK_RANGES,
+        selectedRetentionQuickRange,
+        setRetentionQuickRange,
 
         currentPage: pagination.currentPage,
         itemsPerPage: pagination.itemsPerPage,

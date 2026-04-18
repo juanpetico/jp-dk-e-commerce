@@ -12,6 +12,7 @@ import { cancelOrderUseCase } from "./order/use-cases/cancel-order.js";
 import { createOrderUseCase } from "./order/use-cases/create-order.js";
 import { getTopProductsUseCase } from "./order/use-cases/get-top-products.js";
 import { getDashboardCartFunnelUseCase } from "./order/use-cases/get-dashboard-cart-funnel.js";
+import { getDashboardCustomerRetentionUseCase } from "./order/use-cases/get-dashboard-customer-retention.js";
 import type { OrderFilters, OrderItemInput, OrderStatus } from "./order/order.types.js";
 
 export const orderService = {
@@ -49,5 +50,9 @@ export const orderService = {
 
     async getDashboardCartFunnel() {
         return getDashboardCartFunnelUseCase();
+    },
+
+    async getDashboardCustomerRetention(range?: "1D" | "7D" | "1M") {
+        return getDashboardCustomerRetentionUseCase(range);
     },
 };

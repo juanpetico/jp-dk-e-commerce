@@ -241,3 +241,22 @@ export interface DashboardCartFunnel {
     potentialRevenue: number;
     hoursInactiveThreshold: number;
 }
+
+export type DashboardRetentionRange = '1D' | '7D' | '1M';
+
+export interface DashboardCustomerRetention {
+    range: DashboardRetentionRange;
+    from: string;
+    to: string;
+    retentionRate: number;
+    previousRetentionRate: number;
+    retentionGrowth: number;
+    activeCustomers: number;
+    newCustomers: number;
+    repeatCustomers: number;
+    revenueSplit: {
+        newRevenue: number;
+        repeatRevenue: number;
+        totalRevenue: number;
+    };
+}

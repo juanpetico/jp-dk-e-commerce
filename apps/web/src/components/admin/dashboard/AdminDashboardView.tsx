@@ -7,6 +7,7 @@ import { AdminDashboardHeader } from './AdminDashboardHeader';
 import { DashboardKpiCards } from './DashboardKpiCards';
 import { DashboardSalesTrendChart } from './DashboardSalesTrendChart';
 import { DashboardCategoryChart } from './DashboardCategoryChart';
+import { DashboardCustomerRetentionCard } from './DashboardCustomerRetentionCard';
 import { DashboardRecentOrdersTable } from './DashboardRecentOrdersTable';
 import { DashboardTopProductsTable } from './DashboardTopProductsTable';
 import { DashboardFacade } from '@/hooks/admin/dashboard/types';
@@ -67,12 +68,19 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DashboardCategoryChart categoryData={dashboard.categoryData} />
-                <DashboardTopProductsTable
-                    topProducts={dashboard.topProducts}
-                    loading={dashboard.topProductsLoading}
-                    basePath={basePath}
+                <DashboardCustomerRetentionCard
+                    metrics={dashboard.customerRetention}
+                    quickRanges={dashboard.retentionQuickRanges}
+                    selectedQuickRange={dashboard.selectedRetentionQuickRange}
+                    onQuickRangeSelect={dashboard.setRetentionQuickRange}
                 />
             </div>
+
+            <DashboardTopProductsTable
+                topProducts={dashboard.topProducts}
+                loading={dashboard.topProductsLoading}
+                basePath={basePath}
+            />
 
             <DashboardRecentOrdersTable
                 basePath={basePath}

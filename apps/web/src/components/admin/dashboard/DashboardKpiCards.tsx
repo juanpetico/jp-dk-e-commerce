@@ -54,7 +54,7 @@ export function DashboardKpiCards({
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32">
                 <div className="flex justify-between items-start w-full">
                     <div>
-                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Impacto Marketing</p>
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Impacto EN Marketing</p>
                     </div>
                     <span className="bg-fuchsia-700 p-2 rounded-lg text-white shadow-md shadow-fuchsia-700/20">
                         <Megaphone className="w-5 h-5" />

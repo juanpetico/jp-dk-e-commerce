@@ -1,4 +1,4 @@
-import { DashboardCartFunnel, Order, OrderStatus, TopProduct } from '../types';
+import { DashboardCartFunnel, DashboardCustomerRetention, DashboardRetentionRange, Order, OrderStatus, TopProduct } from '../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -285,6 +285,30 @@ export const fetchDashboardCartFunnel = async (): Promise<DashboardCartFunnel> =
         return json.data;
     } catch (error) {
         console.error('Error fetching cart funnel data:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener KPI de retención de clientes (admin)
+ */
+export const fetchDashboardCustomerRetention = async (
+    range: DashboardRetentionRange = '1M'
+): Promise<DashboardCustomerRetention> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/customer-retention?range=${range}`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch customer retention data');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching customer retention data:', error);
         throw error;
     }
 };

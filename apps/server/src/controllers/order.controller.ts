@@ -8,6 +8,7 @@ import {
     updateOrderStatus,
     getTopProducts,
     getDashboardCartFunnel,
+    getDashboardCustomerRetention,
 } from "./order/order.handlers.js";
 import { createOrderValidation } from "./order/order.validators.js";
 
@@ -23,4 +24,5 @@ export const orderController = {
     cancelOrder,
     getTopProducts,
     getDashboardCartFunnel,
+    getDashboardCustomerRetention,
 };
