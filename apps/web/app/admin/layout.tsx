@@ -1,5 +1,5 @@
 import React from 'react';
-import AdminSidebar from '../../src/components/admin/AdminSidebar';
+import AdminSidebar from '../../src/components/admin/shared/AdminSidebar';
 
 export default function AdminLayout({
     children,
@@ -9,7 +9,7 @@ export default function AdminLayout({
     return (
         <div className="flex bg-background text-foreground min-h-screen select-none">
             <AdminSidebar />
-            <main className="flex-1 p-8 overflow-y-auto max-h-screen">
+            <main className="flex-1 p-8">
                 {children}
             </main>
         </div>

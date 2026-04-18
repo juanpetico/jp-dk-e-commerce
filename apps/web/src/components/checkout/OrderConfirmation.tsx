@@ -43,8 +43,8 @@ export function OrderConfirmation({
             />
             <div className="max-w-xl w-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
                 <div className="flex justify-center">
-                    <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-4">
-                        <Check className="w-16 h-16 text-green-600 dark:text-green-400" />
+<div className="rounded-full bg-green-100 p-4">
+                        <Check className="w-16 h-16 text-green-600" />
                     </div>
                 </div>
 

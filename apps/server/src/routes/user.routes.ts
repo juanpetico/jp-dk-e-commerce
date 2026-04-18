@@ -4,28 +4,46 @@ import {
     userController,
     registerValidation,
     loginValidation,
+    updateProfileValidation,
+    addressValidation,
+    forgotPasswordValidation,
+    resetPasswordValidation,
+    checkEmailValidation,
 } from "../controllers/user.controller.js";
+import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
-import { requireRole } from "../middleware/role.middleware.js";
+import { requireRole, requireSuperadmin } from "../middleware/role.middleware.js";
 
 const router: Router = Router();
 
 // Public routes
 router.post("/auth/register", registerValidation, userController.register);
+router.post("/auth/check-email", checkEmailValidation, userController.checkEmailAvailability);
 router.post("/auth/login", loginValidation, userController.login);
+router.post("/auth/logout", userController.logout);
+router.get("/auth/session", userController.getSession);
+router.post("/auth/forgot-password", forgotPasswordValidation, userController.forgotPassword);
+router.post("/auth/reset-password", resetPasswordValidation, userController.resetPassword);
+router.get("/auth/validate-reset-token", userController.validateResetToken);
 
 // Protected routes (requires authentication)
 router.get("/users/profile", authenticate, userController.getProfile);
-router.put("/users/profile", authenticate, userController.updateProfile);
+router.put("/users/profile", authenticate, updateProfileValidation, userController.updateProfile);
 
 // Address routes
-router.post("/users/address", authenticate, userController.addAddress);
-router.put("/users/address/:id", authenticate, userController.updateAddress);
+router.post("/users/address", authenticate, addressValidation, userController.addAddress);
+router.put("/users/address/:id", authenticate, addressValidation, userController.updateAddress);
 router.delete("/users/address/:id", authenticate, userController.deleteAddress);
 
 // Admin only routes
 router.get("/users", authenticate, requireRole("ADMIN", "SUPERADMIN"), userController.getAllUsers);
 router.get("/users/:id", authenticate, requireRole("ADMIN", "SUPERADMIN"), userController.getUserById);
 router.delete("/users/:id", authenticate, requireRole("SUPERADMIN"), userController.deleteUser);
+
+// SUPERADMIN-only admin user management routes
+router.get("/admin/users", authenticate, requireSuperadmin, userController.listUsers);
+router.get("/admin/users/:userId/coupons", authenticate, requireRole("ADMIN", "SUPERADMIN"), couponController.getAdminUserCoupons);
+router.patch("/admin/users/:id/role", authenticate, requireSuperadmin, userController.updateUserRole);
+router.patch("/admin/users/:id/status", authenticate, requireSuperadmin, userController.updateUserStatus);
 
 export default router;

@@ -4,9 +4,14 @@ import { userService } from "./user.service.js";
 import { couponService } from "./coupon.service.js";
 import { shopConfigService } from "./shop-config.service.js";
 import { AppError } from "../middleware/error-handler.js";
+import { sendWelcomeEmail } from "./email/use-cases/send-welcome.js";
+import { forgotPasswordUseCase } from "./auth/use-cases/forgot-password.js";
+import { resetPasswordUseCase } from "./auth/use-cases/reset-password.js";
+import { validateResetTokenUseCase } from "./auth/use-cases/validate-reset-token.js";
+import type { TokenValidationResult } from "./auth/use-cases/validate-reset-token.js";
 
 export const authService = {
-    async register(data: { email: string; password: string; name?: string }) {
+    async register(data: { email: string; password: string; name?: string; phone?: string }) {
         const existingUser = await userService.getUserByEmail(data.email);
         if (existingUser) {
             throw new AppError("User already exists", 400);
@@ -24,6 +29,14 @@ export const authService = {
                     code: storeConfig.welcomeCouponCode,
                     message: "¡Bienvenido! Tienes un nuevo cupón en tu perfil"
                 };
+
+                void sendWelcomeEmail({
+                    userName: user.name ?? "Cliente",
+                    userEmail: user.email,
+                    couponCode: storeConfig.welcomeCouponCode,
+                    couponValue: storeConfig.welcomeCouponValue,
+                    couponType: storeConfig.welcomeCouponType,
+                });
             }
         } catch (error) {
             console.error("Error asignando cupón de bienvenida:", error);
@@ -38,6 +51,11 @@ export const authService = {
         return { user, token, welcomeCoupon };
     },
 
+    async isEmailAvailable(email: string) {
+        const existingUser = await userService.getUserByEmail(email.trim());
+        return !existingUser;
+    },
+
     async login(email: string, password: string) {
         const user = await userService.getUserByEmailWithPassword(email);
         if (!user) {
@@ -47,6 +65,22 @@ export const authService = {
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             throw new AppError("Invalid credentials", 401);
+        }
+
+        if (!user.isActive) {
+            const reason = user.deactivationReason?.trim() || "Sin motivo especificado";
+            throw new AppError(`Cuenta desactivada. Motivo: ${reason}`, 403);
+        }
+
+        // Update lastLogin timestamp
+        try {
+            const prisma = (await import("../config/prisma.js")).default;
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { lastLogin: new Date() },
+            });
+        } catch {
+            // Non-critical — do not block login if lastLogin update fails
         }
 
         const token = this.generateToken({
@@ -83,5 +117,17 @@ export const authService = {
         } catch (error) {
             throw new AppError("Invalid token", 401);
         }
+    },
+
+    async forgotPassword(email: string): Promise<void> {
+        await forgotPasswordUseCase(email);
+    },
+
+    async resetPassword(token: string, newPassword: string): Promise<void> {
+        await resetPasswordUseCase(token, newPassword);
+    },
+
+    async validateResetToken(token: string): Promise<TokenValidationResult> {
+        return validateResetTokenUseCase(token);
     },
 };

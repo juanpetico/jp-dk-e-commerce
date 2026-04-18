@@ -1,144 +1,37 @@
-import prisma from "../config/prisma.js";
-import { AppError } from "../middleware/error-handler.js";
-import _slugify from "slugify";
-const slugify = (_slugify as any).default || _slugify;
-
-// Helper function to generate slug from name
-const generateSlug = async (name: string, excludeId?: string): Promise<string> => {
-    let slug = slugify(name, {
-        lower: true,
-        strict: true,
-        trim: true,
-    });
-
-    // Check if slug exists
-    let slugExists = await prisma.category.findUnique({
-        where: { slug },
-    });
-
-    // If excluding an ID (update case), and the found category is the same one, it's fine
-    if (slugExists && excludeId && slugExists.id === excludeId) {
-        return slug;
-    }
-
-    if (slugExists) {
-        let counter = 1;
-        let newSlug = `${slug}-${counter}`;
-        while (await prisma.category.findUnique({ where: { slug: newSlug } })) {
-            counter++;
-            newSlug = `${slug}-${counter}`;
-        }
-        slug = newSlug;
-    }
-
-    return slug;
-};
+import { createCategoryUseCase } from "./category/use-cases/create-category.js";
+import { deleteCategoryUseCase } from "./category/use-cases/delete-category.js";
+import { getAllCategoriesUseCase } from "./category/use-cases/get-all-categories.js";
+import { getCategoryByIdUseCase } from "./category/use-cases/get-category-by-id.js";
+import { getCategoryBySlugUseCase } from "./category/use-cases/get-category-by-slug.js";
+import { updateCategoryFieldsUseCase } from "./category/use-cases/update-category-fields.js";
+import type { CategoryFieldsUpdateInput, CategoryFilters } from "./category/category.types.js";
 
 export const categoryService = {
-    async createCategory(name: string) {
-        const slug = await generateSlug(name);
-
-        const category = await prisma.category.create({
-            data: {
-                name,
-                slug,
-            },
-        });
-
-        return category;
+    async createCategory(name: string, actorId: string) {
+        return createCategoryUseCase(name, actorId);
     },
 
-    async getAllCategories() {
-        const categories = await prisma.category.findMany({
-            include: {
-                _count: {
-                    select: { products: true },
-                },
-            },
-            orderBy: {
-                name: "asc",
-            },
-        });
-
-        return categories;
+    async getAllCategories(filters?: CategoryFilters) {
+        return getAllCategoriesUseCase(filters);
     },
 
     async getCategoryById(id: string) {
-        const category = await prisma.category.findUnique({
-            where: { id },
-            include: {
-                products: {
-                    include: {
-                        images: true,
-                    },
-                },
-            },
-        });
-
-        if (!category) {
-            throw new AppError("Category not found", 404);
-        }
-
-        return category;
+        return getCategoryByIdUseCase(id);
     },
 
-    async getCategoryBySlug(slug: string) {
-        const category = await prisma.category.findUnique({
-            where: { slug },
-            include: {
-                products: {
-                    include: {
-                        images: true,
-                    },
-                },
-            },
-        });
-
-        if (!category) {
-            throw new AppError("Category not found", 404);
-        }
-
-        return category;
+    async getCategoryBySlug(slug: string, filters?: CategoryFilters) {
+        return getCategoryBySlugUseCase(slug, filters);
     },
 
     async updateCategory(id: string, name: string) {
-        const slug = await generateSlug(name, id);
-
-        const category = await prisma.category.update({
-            where: { id },
-            data: {
-                name,
-                slug,
-            },
-        });
-
-        return category;
+        return this.updateCategoryFields(id, { name });
     },
 
-    async deleteCategory(id: string) {
-        // Check if category has products
-        const category = await prisma.category.findUnique({
-            where: { id },
-            include: {
-                _count: {
-                    select: { products: true },
-                },
-            },
-        });
+    async updateCategoryFields(id: string, fields: CategoryFieldsUpdateInput, actorId?: string) {
+        return updateCategoryFieldsUseCase(id, fields, actorId);
+    },
 
-        if (!category) {
-            throw new AppError("Category not found", 404);
-        }
-
-        if (category._count.products > 0) {
-            throw new AppError(
-                "Cannot delete category with existing products",
-                400
-            );
-        }
-
-        await prisma.category.delete({
-            where: { id },
-        });
+    async deleteCategory(id: string, actorId: string) {
+        return deleteCategoryUseCase(id, actorId);
     },
 };

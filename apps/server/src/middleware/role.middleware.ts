@@ -15,3 +15,15 @@ export const requireRole = (...roles: string[]) => {
         next();
     };
 };
+
+export const requireSuperadmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+        next(new AppError("Authentication required", 401));
+        return;
+    }
+    if (req.user.role !== "SUPERADMIN") {
+        next(new AppError("Forbidden", 403));
+        return;
+    }
+    next();
+};

@@ -1,15 +1,6 @@
-const API_URL = 'http://localhost:5001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
-const getAuthHeaders = (): HeadersInit => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
+const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
 export interface StoreConfig {
     id: string;
@@ -37,8 +28,8 @@ export interface StoreConfig {
 
 export const shopConfigService = {
     async getConfig(): Promise<StoreConfig> {
-        const res = await fetch(`${API_URL}/shop-config`, {
-            headers: getAuthHeaders(),
+        const res = await fetch(`${API_URL}/shop-config/public`, {
+            headers: JSON_HEADERS,
         });
         if (!res.ok) throw new Error('Error al obtener la configuración');
         const json = await res.json();
@@ -48,7 +39,8 @@ export const shopConfigService = {
     async updateConfig(data: Partial<StoreConfig>): Promise<StoreConfig> {
         const res = await fetch(`${API_URL}/shop-config`, {
             method: 'PATCH',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify(data),
         });
         if (!res.ok) {

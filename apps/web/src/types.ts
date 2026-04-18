@@ -2,7 +2,10 @@ export interface Category {
     id: string;
     name: string;
     slug: string;
+    isPublished?: boolean;
+    sortOrder?: number;
     description?: string;
+    _count?: { products: number };
 }
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
@@ -43,6 +46,7 @@ export interface Product {
     variants: ProductVariant[];
     slug: string;
     isPublished: boolean;
+    createdAt?: string;
 }
 
 export interface ProductVariant {
@@ -73,8 +77,8 @@ export interface Address {
     isDefault: boolean;
 }
 
-// OrderStatus del backend: PENDING | CONFIRMED | SHIPPED | DELIVERED | CANCELLED
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+// OrderStatus del backend: PENDING | CONFIRMED | DELIVERED | CANCELLED
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED';
 
 export interface OrderItem {
     id: string;
@@ -143,8 +147,12 @@ export interface User {
     id: string;
     name: string;
     email: string;
+    createdAt?: string;
     phone?: string;
-    role: string;
+    role: UserRole;
+    isActive?: boolean;
+    deactivationReason?: string | null;
+    lastLogin?: string | null;
     addresses: Address[];
     orders: Order[];
     totalSpent?: number;
@@ -153,8 +161,102 @@ export interface User {
     status?: string;
 }
 
+export type UserRole = 'CLIENT' | 'ADMIN' | 'SUPERADMIN';
+
+export interface AdminUser {
+    id: string;
+    email: string;
+    name: string | null;
+    role: UserRole;
+    isActive: boolean;
+    deactivationReason?: string | null;
+    lastLogin: string | null;
+    createdAt: string;
+}
+
+export type AuditAction =
+    | 'ROLE_CHANGE'
+    | 'STATUS_CHANGE'
+    | 'PRODUCT_CREATED'
+    | 'PRODUCT_DELETED'
+    | 'PRODUCT_PRICE_CHANGE'
+    | 'PRODUCT_STOCK_CHANGE'
+    | 'PRODUCT_PUBLISHED'
+    | 'PRODUCT_UNPUBLISHED'
+    | 'ORDER_STATUS_CHANGE'
+    | 'CATEGORY_CREATED'
+    | 'CATEGORY_PUBLISHED'
+    | 'CATEGORY_UNPUBLISHED'
+    | 'CATEGORY_DELETED'
+    | 'STORE_CONFIG_CHANGE'
+    | 'COUPON_CREATED'
+    | 'COUPON_UPDATED'
+    | 'COUPON_DELETED'
+    | 'PRODUCT_SALE_CHANGE';
+
+export interface AuditEntry {
+    id: string;
+    action: AuditAction | string;
+    entityType: string;
+    entityId: string;
+    oldValue: string | null;
+    newValue: string | null;
+    metadata?: Record<string, unknown> | null;
+    createdAt: string;
+    actor: {
+        id: string;
+        name: string | null;
+        email: string;
+    };
+}
+
+export interface AuditLogsResult {
+    items: AuditEntry[];
+    total: number;
+}
+
 export interface CartState {
     items: CartItem[];
     isOpen: boolean;
     total: number;
+}
+
+export interface TopProduct {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    imageUrl: string | null;
+    totalQuantitySold: number;
+    category: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface DashboardCartFunnel {
+    abandonedRate: number;
+    abandonedCarts: number;
+    eligibleCarts: number;
+    potentialRevenue: number;
+    hoursInactiveThreshold: number;
+}
+
+export type DashboardRetentionRange = '1D' | '7D' | '1M';
+
+export interface DashboardCustomerRetention {
+    range: DashboardRetentionRange;
+    from: string;
+    to: string;
+    retentionRate: number;
+    previousRetentionRate: number;
+    retentionGrowth: number;
+    activeCustomers: number;
+    newCustomers: number;
+    repeatCustomers: number;
+    revenueSplit: {
+        newRevenue: number;
+        repeatRevenue: number;
+        totalRevenue: number;
+    };
 }

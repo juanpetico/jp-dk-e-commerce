@@ -1,18 +1,8 @@
-import { Order, OrderStatus } from '../types';
+import { DashboardCartFunnel, DashboardCustomerRetention, DashboardRetentionRange, Order, OrderStatus, TopProduct } from '../types';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
-// Helper para obtener el token de autenticación
-const getAuthHeaders = (): HeadersInit => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
+const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
 /**
  * Obtener todas las órdenes (solo para admin)
@@ -44,7 +34,8 @@ export const fetchAllOrders = async (filters?: {
         const url = `${API_URL}/orders/all/admin${queryString ? `?${queryString}` : ''}`;
 
         const res = await fetch(url, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -65,7 +56,8 @@ export const fetchAllOrders = async (filters?: {
 export const fetchUserOrders = async (): Promise<Order[]> => {
     try {
         const res = await fetch(`${API_URL}/orders`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -86,7 +78,8 @@ export const fetchUserOrders = async (): Promise<Order[]> => {
 export const fetchOrderById = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -108,7 +101,8 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
             method: 'PUT',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ status }),
         });
 
@@ -132,7 +126,8 @@ export const markOrderAsPaid = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/pay`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -155,7 +150,8 @@ export const cancelOrder = async (orderId: string): Promise<Order> => {
     try {
         const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -177,7 +173,6 @@ export const cancelOrder = async (orderId: string): Promise<Order> => {
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
     PENDING: 'Pendiente',
     CONFIRMED: 'Confirmado',
-    SHIPPED: 'Enviado',
     DELIVERED: 'Entregado',
     CANCELLED: 'Cancelado',
 };
@@ -187,11 +182,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
  */
 export const getOrderStatusColor = (status: OrderStatus): string => {
     const colors: Record<OrderStatus, string> = {
-        PENDING: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800',
-        CONFIRMED: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800',
-        SHIPPED: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800',
-        DELIVERED: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
-        CANCELLED: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
+        PENDING: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50',
+        CONFIRMED: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50',
+        DELIVERED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50',
+        CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50',
     };
     return colors[status] || colors.PENDING;
 };
@@ -203,7 +197,8 @@ export const validateCoupon = async (code: string, total: number): Promise<any> 
     try {
         const res = await fetch(`${API_URL}/coupons/validate`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ code, total }),
         });
 
@@ -232,7 +227,8 @@ export const createOrder = async (
     try {
         const res = await fetch(`${API_URL}/orders`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify({ items, shippingAddressId, billingAddressId, couponCode }),
         });
 
@@ -245,6 +241,74 @@ export const createOrder = async (
         return json.data;
     } catch (error) {
         console.error('Error creating order:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener los productos más vendidos (Top Performers)
+ */
+export const fetchTopProducts = async (limit: number = 5): Promise<TopProduct[]> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/top-products?limit=${limit}`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch top products');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener KPI de embudo de carritos (admin)
+ */
+export const fetchDashboardCartFunnel = async (): Promise<DashboardCartFunnel> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/cart-funnel`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch cart funnel data');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching cart funnel data:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener KPI de retención de clientes (admin)
+ */
+export const fetchDashboardCustomerRetention = async (
+    range: DashboardRetentionRange = '1M'
+): Promise<DashboardCustomerRetention> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/customer-retention?range=${range}`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch customer retention data');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching customer retention data:', error);
         throw error;
     }
 };

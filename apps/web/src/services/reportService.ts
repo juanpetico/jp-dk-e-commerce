@@ -5,9 +5,14 @@ import { Order } from '../types';
 interface ReportData {
     analytics: {
         totalSales: number;
-        activeOrders: number;
-        aov: number;
+        pendingOrders: number;
+        couponAttributedRevenue: number;
+        couponAttributedRevenueRate: number;
+        couponOrdersCount: number;
+        couponOrdersRate: number;
+        validOrdersCount: number;
         lowStockCount: number;
+        lowStockThreshold: number;
     };
     categoryData: { name: string; value: number }[];
     dateRange: { from?: Date; to?: Date };
@@ -64,9 +69,19 @@ export const generateDashboardReport = async (data: ReportData): Promise<Blob> =
     yPos += 10;
     const kpiData = [
         ['Ventas Totales', formatPrice(data.analytics.totalSales)],
-        ['Órdenes Activas', data.analytics.activeOrders.toString()],
-        ['Ticket Promedio', formatPrice(data.analytics.aov)],
-        ['Alerta Stock', data.analytics.lowStockCount.toString() + ' productos']
+        ['Órdenes Pendientes', data.analytics.pendingOrders.toString()],
+        [
+            'Impacto Marketing (Revenue)',
+            `${data.analytics.couponAttributedRevenueRate.toFixed(1)}% (${formatPrice(data.analytics.couponAttributedRevenue)} de ${formatPrice(data.analytics.totalSales)})`,
+        ],
+        [
+            'Órdenes con Cupón',
+            `${data.analytics.couponOrdersRate.toFixed(1)}% (${data.analytics.couponOrdersCount}/${data.analytics.validOrdersCount})`,
+        ],
+        [
+            'Alerta Stock',
+            `${data.analytics.lowStockCount} productos (variantes <= ${data.analytics.lowStockThreshold})`,
+        ]
     ];
 
     autoTable(doc, {

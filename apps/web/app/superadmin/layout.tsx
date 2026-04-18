@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import AdminSidebar from '../../src/components/admin/AdminSidebar';
+import AdminSidebar from '../../src/components/admin/shared/AdminSidebar';
 import { useUser } from '../../src/store/UserContext';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function SuperAdminLayout({
     return (
         <div className="flex bg-background text-foreground min-h-screen select-none">
             <AdminSidebar />
-            <main className="flex-1 p-8 overflow-y-auto max-h-screen">
+            <main className="flex-1 p-8">
                 {children}
             </main>
         </div>

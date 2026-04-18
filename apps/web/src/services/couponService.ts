@@ -1,18 +1,20 @@
 import { Coupon } from '../types';
 
-const API_URL = 'http://localhost:5001/api';
+export interface UserCouponRecord {
+    id: string;
+    isUsed: boolean;
+    assignedAt: string;
+    coupon: Coupon;
+}
 
-// Helper para obtener el token de autenticación
-const getAuthHeaders = (): HeadersInit => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-};
+export interface MyCoupon {
+    id: string;
+    coupon: Coupon;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+
+const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
 /**
  * Obtener todos los cupones
@@ -20,7 +22,8 @@ const getAuthHeaders = (): HeadersInit => {
 export const fetchAllCoupons = async (): Promise<Coupon[]> => {
     try {
         const res = await fetch(`${API_URL}/coupons`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -42,7 +45,8 @@ export const createCoupon = async (couponData: Partial<Coupon>): Promise<Coupon>
     try {
         const res = await fetch(`${API_URL}/coupons`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify(couponData),
         });
 
@@ -66,7 +70,8 @@ export const updateCoupon = async (id: string, couponData: Partial<Coupon>): Pro
     try {
         const res = await fetch(`${API_URL}/coupons/${id}`, {
             method: 'PATCH',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
             body: JSON.stringify(couponData),
         });
 
@@ -90,7 +95,8 @@ export const deleteCoupon = async (id: string): Promise<void> => {
     try {
         const res = await fetch(`${API_URL}/coupons/${id}`, {
             method: 'DELETE',
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -105,10 +111,11 @@ export const deleteCoupon = async (id: string): Promise<void> => {
 /**
  * Obtener los cupones activos del usuario (Billetera)
  */
-export const fetchMyCoupons = async (): Promise<any[]> => {
+export const fetchMyCoupons = async (): Promise<MyCoupon[]> => {
     try {
         const res = await fetch(`${API_URL}/coupons/my-coupons`, {
-            headers: getAuthHeaders(),
+            credentials: 'include',
+            headers: JSON_HEADERS,
         });
 
         if (!res.ok) {
@@ -116,9 +123,19 @@ export const fetchMyCoupons = async (): Promise<any[]> => {
         }
 
         const json = await res.json();
-        return json.data;
+        return json.data as MyCoupon[];
     } catch (error) {
         console.error('Error fetching user coupons:', error);
         throw error;
     }
+};
+
+export const fetchAdminUserCoupons = async (userId: string): Promise<UserCouponRecord[]> => {
+    const res = await fetch(`${API_URL}/admin/users/${userId}/coupons`, {
+        credentials: 'include',
+        headers: JSON_HEADERS,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.success) throw new Error(json.message || 'No se pudieron obtener los cupones del usuario');
+    return json.data as UserCouponRecord[];
 };
