@@ -242,7 +242,7 @@ export interface DashboardCartFunnel {
     hoursInactiveThreshold: number;
 }
 
-export type DashboardRetentionRange = '1D' | '7D' | '1M';
+export type DashboardRetentionRange = '1D' | '7D' | '1M' | '3M' | '6M' | '1Y';
 
 export interface DashboardCustomerRetention {
     range: DashboardRetentionRange;

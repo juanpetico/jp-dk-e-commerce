@@ -139,14 +139,14 @@ export const getDashboardCartFunnel = async (_req: Request, res: Response, next:
     }
 };
 
-const VALID_RETENTION_RANGES = new Set(["1D", "7D", "1M"] as const);
+const VALID_RETENTION_RANGES = new Set(["1D", "7D", "1M", "3M", "6M", "1Y"] as const);
 
 export const getDashboardCustomerRetention = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const rangeParam = req.query.range;
         const range =
-            typeof rangeParam === "string" && VALID_RETENTION_RANGES.has(rangeParam as "1D" | "7D" | "1M")
-                ? (rangeParam as "1D" | "7D" | "1M")
+            typeof rangeParam === "string" && VALID_RETENTION_RANGES.has(rangeParam as "1D" | "7D" | "1M" | "3M" | "6M" | "1Y")
+                ? (rangeParam as "1D" | "7D" | "1M" | "3M" | "6M" | "1Y")
                 : "1M";
 
         const metrics = await orderService.getDashboardCustomerRetention(range);
