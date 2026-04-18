@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
+import { isProductNew } from '@/lib/utils';
 import { useCart } from '@/store/CartContext';
 import { LookbookCardProps } from './LookbookCarousel.types';
 import { getFallbackImageDataUrl } from './LookbookCarousel.utils';
@@ -42,7 +43,7 @@ export default function LookbookCard({ product }: LookbookCardProps) {
                 </Link>
 
                 <div className="absolute top-0 left-0 flex flex-col items-start z-10">
-                    {product.isNew && (
+                    {isProductNew(product.createdAt) && (
                         <span className="bg-black text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
                             New
                         </span>

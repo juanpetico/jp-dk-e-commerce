@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchProductBySlug } from '@/services/productService';
+import { fetchProductBySlug, fetchProducts } from '@/services/productService';
 import { useCart } from '@/store/CartContext';
 import { Product } from '@/types';
+import ProductPageAccordion from './ProductPage.accordion';
 import ProductPageGallery from './ProductPage.gallery';
 import ProductPagePurchasePanel from './ProductPage.purchase-panel';
 import ProductPageRedirecting from './ProductPage.redirecting';
+import ProductPageRelated from './ProductPage.related';
+import ProductPageReviews from './ProductPage.reviews';
 import ProductPageSkeleton from './ProductPage.skeleton';
 import { getDefaultSelectedSize } from './ProductPage.utils';
 
@@ -23,6 +26,7 @@ export default function ProductPageClient() {
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [isError, setIsError] = useState(false);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
     const selectedVariant = product?.variants?.find((variant) => variant.size === selectedSize);
     const maxStock = selectedVariant?.stock || 0;
@@ -41,6 +45,11 @@ export default function ProductPageClient() {
             setSelectedImage(data.images?.[0]?.url || '');
             setSelectedSize(getDefaultSelectedSize(data));
             setLoading(false);
+
+            if (data.category?.id) {
+                const related = await fetchProducts({ categoryId: data.category.id });
+                setRelatedProducts(related.filter((p) => p.id !== data.id).slice(0, 4));
+            }
         };
 
         void loadProduct();
@@ -127,20 +136,26 @@ export default function ProductPageClient() {
                     onSelectImage={setSelectedImage}
                 />
 
-                <ProductPagePurchasePanel
-                    product={product}
-                    selectedSize={selectedSize}
-                    quantity={quantity}
-                    maxStock={maxStock}
-                    selectedVariant={selectedVariant}
-                    isAdding={isAdding}
-                    isError={isError}
-                    onSelectSize={setSelectedSize}
-                    onChangeQuantity={handleQuantityChange}
-                    onAddToCart={handleAddToCart}
-                    onBuyNow={handleBuyNow}
-                />
+                <div className="lg:col-span-5 mt-8 lg:mt-0 flex flex-col">
+                    <ProductPagePurchasePanel
+                        product={product}
+                        selectedSize={selectedSize}
+                        quantity={quantity}
+                        maxStock={maxStock}
+                        selectedVariant={selectedVariant}
+                        isAdding={isAdding}
+                        isError={isError}
+                        onSelectSize={setSelectedSize}
+                        onChangeQuantity={handleQuantityChange}
+                        onAddToCart={handleAddToCart}
+                        onBuyNow={handleBuyNow}
+                    />
+                    <ProductPageAccordion />
+                </div>
             </div>
+
+            <ProductPageRelated products={relatedProducts} />
+            <ProductPageReviews />
         </div>
     );
 }

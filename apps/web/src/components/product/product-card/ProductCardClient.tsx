@@ -2,6 +2,7 @@
 
 import { MouseEvent, useState } from 'react';
 import Link from 'next/link';
+import { isProductNew } from '@/lib/utils';
 import { useCart } from '@/store/CartContext';
 import ProductCardImage from './ProductCard.image';
 import ProductCardQuickAdd from './ProductCard.quick-add';
@@ -59,7 +60,7 @@ export default function ProductCardClient({ product }: ProductCardProps) {
                 </Link>
 
                 <div className="absolute top-0 left-0 flex flex-col items-start z-10">
-                    {product.isNew && (
+                    {isProductNew(product.createdAt) && (
                         <span className="bg-black text-white dark:bg-zinc-900 text-[10px] font-bold px-3 py-1 uppercase tracking-widest border border-transparent dark:border-white/20">
                             New
                         </span>

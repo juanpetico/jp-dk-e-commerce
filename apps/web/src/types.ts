@@ -46,6 +46,7 @@ export interface Product {
     variants: ProductVariant[];
     slug: string;
     isPublished: boolean;
+    createdAt?: string;
 }
 
 export interface ProductVariant {
@@ -218,4 +219,17 @@ export interface CartState {
     items: CartItem[];
     isOpen: boolean;
     total: number;
+}
+
+export interface TopProduct {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    imageUrl: string | null;
+    totalQuantitySold: number;
+    category: {
+        id: string;
+        name: string;
+    };
 }

@@ -19,7 +19,7 @@ export default function ProductPagePurchasePanel({
     onBuyNow,
 }: ProductPagePurchasePanelProps) {
     return (
-        <div className="lg:col-span-5 mt-8 lg:mt-0">
+        <div>
             <div className="mb-6">
                 <h1 className="font-display text-4xl font-bold uppercase tracking-tight mb-2 leading-tight">{product.name}</h1>
                 <div className="flex items-baseline space-x-4">
@@ -157,20 +157,18 @@ export default function ProductPagePurchasePanel({
 
             <div className="space-y-6 text-sm text-gray-600 dark:text-gray-400">
                 <div>
-                    <h4 className="font-bold text-black dark:text-white text-base mb-2">Descripcion</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                        <li>Acabado brillante de alta calidad.</li>
-                        <li>100% Algodon Premium Heavyweight.</li>
-                        <li>Disenado y confeccionado en Chile.</li>
-                    </ul>
+                    <h4 className="font-bold text-black dark:text-white text-base mb-2">Descripción</h4>
+                    <p className="leading-relaxed whitespace-pre-line">
+                        {product.description ?? 'Acabado brillante de alta calidad. 100% Algodón Premium Heavyweight. Diseñado y confeccionado en Chile.'}
+                    </p>
                 </div>
 
                 <div>
                     <h4 className="font-bold text-black dark:text-white text-base mb-2">Instrucciones de cuidado</h4>
                     <ul className="list-disc list-inside space-y-1">
-                        <li>Lavar a maquina en ciclo bajo-normal con agua temperatura ambiente.</li>
+                        <li>Lavar a máquina en ciclo bajo-normal con agua temperatura ambiente.</li>
                         <li>No usar cloro.</li>
-                        <li>Secar a maquina a temperatura baja.</li>
+                        <li>Secar a máquina a temperatura baja.</li>
                         <li>No exprimir.</li>
                         <li>No planchar sobre el estampado.</li>
                         <li>No lavar en seco.</li>

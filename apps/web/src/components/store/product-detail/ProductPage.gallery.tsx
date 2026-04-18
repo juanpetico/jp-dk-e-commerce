@@ -1,4 +1,5 @@
 import ImageMagnifier from '@/components/ui/ImageMagnifier';
+import { isProductNew } from '@/lib/utils';
 import { ProductPageGalleryProps } from './ProductPage.types';
 import { getImageFallbackDataUrl } from './ProductPage.utils';
 
@@ -13,7 +14,7 @@ export default function ProductPageGallery({ product, selectedImage, onSelectIma
                 />
 
                 <div className="absolute top-0 left-0 flex flex-col items-start z-10">
-                    {product.isNew && (
+                    {isProductNew(product.createdAt) && (
                         <span className="bg-black text-white text-xs font-bold px-3 py-1 uppercase tracking-widest pointer-events-none">
                             New
                         </span>
