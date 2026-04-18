@@ -12,6 +12,8 @@ const router: Router = Router();
 // User routes
 router.post("/orders", authenticate, createOrderValidation, orderController.createOrder);
 router.get("/orders", authenticate, orderController.getUserOrders);
+router.get("/orders/top-products", authenticate, requireRole("ADMIN", "SUPERADMIN"), orderController.getTopProducts);
+router.get("/orders/cart-funnel", authenticate, requireRole("ADMIN", "SUPERADMIN"), orderController.getDashboardCartFunnel);
 router.get("/orders/:id", authenticate, orderController.getOrderById);
 router.post("/orders/:id/cancel", authenticate, orderController.cancelOrder);
 

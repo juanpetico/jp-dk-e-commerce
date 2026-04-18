@@ -118,3 +118,23 @@ export const cancelOrder = async (req: AuthRequest, res: Response, next: NextFun
         next(error);
     }
 };
+
+export const getTopProducts = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
+        const topProducts = await orderService.getTopProducts(limit);
+
+        res.json({ success: true, data: topProducts });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getDashboardCartFunnel = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const metrics = await orderService.getDashboardCartFunnel();
+        res.json({ success: true, data: metrics });
+    } catch (error) {
+        next(error);
+    }
+};

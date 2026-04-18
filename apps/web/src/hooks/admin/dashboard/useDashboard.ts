@@ -9,15 +9,19 @@ import { useDashboardDateRange } from './useDashboardDateRange';
 import { useDashboardOrderActions } from './useDashboardOrderActions';
 import { useDashboardPagination } from './useDashboardPagination';
 import { useDashboardReport } from './useDashboardReport';
+import { useTopProducts } from './useTopProducts';
 import { DashboardFacade } from './types';
+import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 
 export function useDashboard(): DashboardFacade {
     const data = useAdminDashboardData();
     const dateRange = useDashboardDateRange();
+    const topProducts = useTopProducts();
+    const shopConfig = useShopConfigPublic();
 
     const analytics = useMemo(() => {
-        return calculateDashboardAnalytics(data.orders, data.products);
-    }, [data.orders, data.products]);
+        return calculateDashboardAnalytics(data.orders, data.products, data.cartFunnel, shopConfig.lowStockThreshold);
+    }, [data.orders, data.products, data.cartFunnel, shopConfig.lowStockThreshold]);
 
     const salesTrendData = useMemo(() => {
         return buildDashboardSalesTrendData(data.orders, dateRange.dateRange);
@@ -46,6 +50,8 @@ export function useDashboard(): DashboardFacade {
         analytics,
         salesTrendData,
         categoryData,
+        topProducts: topProducts.topProducts,
+        topProductsLoading: topProducts.loading,
 
         dateRange: dateRange.dateRange,
         defaultDateRange: dateRange.defaultDateRange,

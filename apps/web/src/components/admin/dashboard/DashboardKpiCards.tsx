@@ -1,4 +1,4 @@
-import { AlertTriangle, DollarSign, ShoppingBag, TrendingUp, Truck } from 'lucide-react';
+import { AlertTriangle, DollarSign, ShoppingBag, TrendingUp, Truck, ShoppingCart } from 'lucide-react';
 import { DashboardAnalytics } from '@/lib/dashboard/types';
 import { formatPrice } from '@/lib/utils';
 
@@ -7,8 +7,10 @@ interface DashboardKpiCardsProps {
 }
 
 export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
+    const abandonedRateLabel = `${analytics.abandonedCartRate.toFixed(1)}%`;
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative overflow-hidden">
                 <div className="flex justify-between items-start z-10 w-full">
                     <div>
@@ -50,6 +52,21 @@ export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
                 <div className="text-xs text-muted-foreground">Por orden válida</div>
             </div>
 
+            <div className="bg-card dark:bg-card border border-rose-300 dark:border-rose-900/40 p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative">
+                <div className="flex justify-between items-start w-full">
+                    <div>
+                        <p className="text-rose-800 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">Carritos Abandonados</p>
+                        <h3 className="font-display text-2xl font-bold mt-1 text-rose-900 dark:text-rose-300">{abandonedRateLabel}</h3>
+                    </div>
+                    <span className="bg-rose-700 p-2 rounded-lg text-white shadow-md shadow-rose-700/20">
+                        <ShoppingCart className="w-5 h-5" />
+                    </span>
+                </div>
+                <div className="text-xs text-rose-700 dark:text-rose-400 font-medium">
+                    Potencial en carritos: {formatPrice(analytics.abandonedCartPotentialRevenue)}
+                </div>
+            </div>
+
             <div className="bg-card dark:bg-card border border-amber-900 dark:border-amber-900/30 p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative">
                 <div className="flex justify-between items-start w-full">
                     <div>
@@ -60,7 +77,9 @@ export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
                         <AlertTriangle className="w-5 h-5" />
                     </span>
                 </div>
-                <div className="text-xs text-amber-700 dark:text-amber-600 font-medium">Productos con stock crítico (&lt; 5)</div>
+                <div className="text-xs text-amber-700 dark:text-amber-600 font-medium">
+                    Productos críticos &lt; {analytics.lowStockThreshold} unidades
+                </div>
             </div>
         </div>
     );

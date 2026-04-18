@@ -6,6 +6,8 @@ import {
     getUserOrders,
     markOrderAsPaid,
     updateOrderStatus,
+    getTopProducts,
+    getDashboardCartFunnel,
 } from "./order/order.handlers.js";
 import { createOrderValidation } from "./order/order.validators.js";
 
@@ -19,4 +21,6 @@ export const orderController = {
     updateOrderStatus,
     markOrderAsPaid,
     cancelOrder,
+    getTopProducts,
+    getDashboardCartFunnel,
 };

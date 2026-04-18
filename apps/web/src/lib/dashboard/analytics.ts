@@ -1,5 +1,6 @@
 import { isSameDay, eachDayOfInterval, startOfDay, endOfDay } from 'date-fns';
 import { Order, Product } from '@/types';
+import { isProductLowStock, normalizeLowStockThreshold } from '@/lib/stock/stock-status';
 import {
     CategorySalesPoint,
     DashboardAnalytics,
@@ -29,7 +30,18 @@ function readCategoryIdFromRuntime(value: unknown): string | null {
     return typeof maybeId === 'string' ? maybeId : null;
 }
 
-export function calculateDashboardAnalytics(orders: Order[], products: Product[]): DashboardAnalytics {
+export function calculateDashboardAnalytics(
+    orders: Order[],
+    products: Product[],
+    abandonedCartFunnel: {
+        abandonedRate: number;
+        abandonedCarts: number;
+        eligibleCarts: number;
+        potentialRevenue: number;
+        hoursInactiveThreshold: number;
+    } | null,
+    lowStockThreshold?: number
+): DashboardAnalytics {
     const totalSales = orders
         .filter((order) => order.status !== 'CANCELLED')
         .reduce((acc, order) => acc + order.total, 0);
@@ -41,12 +53,21 @@ export function calculateDashboardAnalytics(orders: Order[], products: Product[]
     const validOrdersCount = orders.filter((order) => order.status !== 'CANCELLED').length;
     const aov = validOrdersCount > 0 ? totalSales / validOrdersCount : 0;
 
-    const lowStockCount = products.filter((product) => {
-        const totalStock = product.variants?.reduce((sum, variant) => sum + variant.stock, 0) || 0;
-        return totalStock < 5;
-    }).length;
+    const normalizedLowStockThreshold = normalizeLowStockThreshold(lowStockThreshold);
+    const lowStockCount = products.filter((product) => isProductLowStock(product, normalizedLowStockThreshold)).length;
 
-    return { totalSales, activeOrders, aov, lowStockCount };
+    return {
+        totalSales,
+        activeOrders,
+        aov,
+        abandonedCartRate: abandonedCartFunnel?.abandonedRate ?? 0,
+        abandonedCartCount: abandonedCartFunnel?.abandonedCarts ?? 0,
+        abandonedCartEligibleCount: abandonedCartFunnel?.eligibleCarts ?? 0,
+        abandonedCartPotentialRevenue: abandonedCartFunnel?.potentialRevenue ?? 0,
+        abandonedCartInactiveHours: abandonedCartFunnel?.hoursInactiveThreshold ?? 24,
+        lowStockCount,
+        lowStockThreshold: normalizedLowStockThreshold,
+    };
 }
 
 export function buildDashboardSalesTrendData(

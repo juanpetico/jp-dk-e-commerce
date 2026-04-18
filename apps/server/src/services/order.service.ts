@@ -10,6 +10,8 @@ import { updateOrderStatusUseCase } from "./order/use-cases/update-order-status.
 import { markOrderAsPaidUseCase } from "./order/use-cases/mark-order-as-paid.js";
 import { cancelOrderUseCase } from "./order/use-cases/cancel-order.js";
 import { createOrderUseCase } from "./order/use-cases/create-order.js";
+import { getTopProductsUseCase } from "./order/use-cases/get-top-products.js";
+import { getDashboardCartFunnelUseCase } from "./order/use-cases/get-dashboard-cart-funnel.js";
 import type { OrderFilters, OrderItemInput, OrderStatus } from "./order/order.types.js";
 
 export const orderService = {
@@ -39,5 +41,13 @@ export const orderService = {
 
     async cancelOrder(orderId: string, userId?: string) {
         return cancelOrderUseCase(orderId, userId);
+    },
+
+    async getTopProducts(limit?: number) {
+        return getTopProductsUseCase(limit);
+    },
+
+    async getDashboardCartFunnel() {
+        return getDashboardCartFunnelUseCase();
     },
 };

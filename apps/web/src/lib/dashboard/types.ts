@@ -6,7 +6,13 @@ export interface DashboardAnalytics {
     totalSales: number;
     activeOrders: number;
     aov: number;
+    abandonedCartRate: number;
+    abandonedCartCount: number;
+    abandonedCartEligibleCount: number;
+    abandonedCartPotentialRevenue: number;
+    abandonedCartInactiveHours: number;
     lowStockCount: number;
+    lowStockThreshold: number;
 }
 
 export interface SalesTrendPoint {

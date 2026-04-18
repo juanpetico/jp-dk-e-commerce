@@ -1,4 +1,4 @@
-import { Order, OrderStatus } from '../types';
+import { DashboardCartFunnel, Order, OrderStatus, TopProduct } from '../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -243,6 +243,50 @@ export const createOrder = async (
         return json.data;
     } catch (error) {
         console.error('Error creating order:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener los productos más vendidos (Top Performers)
+ */
+export const fetchTopProducts = async (limit: number = 5): Promise<TopProduct[]> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/top-products?limit=${limit}`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch top products');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        throw error;
+    }
+};
+
+/**
+ * Obtener KPI de embudo de carritos (admin)
+ */
+export const fetchDashboardCartFunnel = async (): Promise<DashboardCartFunnel> => {
+    try {
+        const res = await fetch(`${API_URL}/orders/cart-funnel`, {
+            credentials: 'include',
+            headers: JSON_HEADERS,
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch cart funnel data');
+        }
+
+        const json = await res.json();
+        return json.data;
+    } catch (error) {
+        console.error('Error fetching cart funnel data:', error);
         throw error;
     }
 };

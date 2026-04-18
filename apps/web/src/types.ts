@@ -233,3 +233,11 @@ export interface TopProduct {
         name: string;
     };
 }
+
+export interface DashboardCartFunnel {
+    abandonedRate: number;
+    abandonedCarts: number;
+    eligibleCarts: number;
+    potentialRevenue: number;
+    hoursInactiveThreshold: number;
+}
