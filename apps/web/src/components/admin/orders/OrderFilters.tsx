@@ -2,15 +2,12 @@
 
 import React, { useState } from 'react';
 import { DateRange } from 'react-day-picker';
-import { OrderStatus } from '@/types';
 import { Button } from '@/components/ui/Button';
 import AdminSearchInput from '@/components/admin/shared/AdminSearchInput';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithRange } from '@/components/ui/DateRangePicker';
 import { format } from 'date-fns';
 
 interface FilterValues {
-    status?: OrderStatus;
     startDate?: string;
     endDate?: string;
     search?: string;
@@ -22,7 +19,6 @@ interface OrderFiltersProps {
 }
 
 export default function OrderFilters({ onFilterChange, activeFiltersCount }: OrderFiltersProps) {
-    const [status, setStatus] = useState<OrderStatus | ''>('');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [search, setSearch] = useState('');
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -42,12 +38,6 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
         setSearchTimeout(timeout);
     };
 
-    const handleStatusChange = (value: string) => {
-        const newStatus = value === 'ALL' ? '' : (value as OrderStatus);
-        setStatus(newStatus || '');
-        applyFilters({ status: newStatus || undefined });
-    };
-
     const handleDateRangeChange = (newRange: DateRange | undefined) => {
         setDateRange(newRange);
         applyFilters({
@@ -57,8 +47,6 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
     };
 
     const applyFilters = (partialFilters: Partial<FilterValues> = {}) => {
-        // Combinar valores actuales con los cambios parciales
-        const finalStatus = 'status' in partialFilters ? partialFilters.status : (status || undefined);
         const finalSearch = 'search' in partialFilters ? partialFilters.search : (search.trim() || undefined);
 
         // Handle dates - if passed in partial, use it, otherwise use date range state
@@ -73,7 +61,6 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
         }
 
         const filters: FilterValues = {
-            status: finalStatus,
             startDate: finalStartDate,
             endDate: finalEndDate,
             search: finalSearch,
@@ -90,7 +77,6 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
     };
 
     const clearFilters = () => {
-        setStatus('');
         setDateRange(undefined);
         setSearch('');
         if (searchTimeout) {
@@ -100,34 +86,22 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
     };
 
     return (
-        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-4 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={search}
                 onChange={handleSearchChange}
                 placeholder="Buscar por nombre, correo o ID..."
+                containerClassName="border-0"
+                inputClassName="border-gray-300 dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-                <div className="relative">
-                    <Select value={status === '' ? 'ALL' : status} onValueChange={handleStatusChange}>
-                        <SelectTrigger className="w-full md:w-[180px]">
-                            <SelectValue placeholder="Estado del pedido" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Todos los estados</SelectItem>
-                            <SelectItem value="PENDING">Pendiente</SelectItem>
-                            <SelectItem value="CONFIRMED">Confirmado</SelectItem>
-                            <SelectItem value="DELIVERED">Entregado</SelectItem>
-                            <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
                 <div>
                     <DatePickerWithRange
                         date={dateRange}
                         setDate={handleDateRangeChange}
                         className="w-full md:w-auto"
+                        triggerClassName="border-gray-300 dark:border-border"
                     />
                 </div>
 

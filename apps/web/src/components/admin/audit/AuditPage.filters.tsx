@@ -34,18 +34,22 @@ export default function AuditPageFilters({
     onClearFilters,
 }: AuditPageFiltersProps) {
     return (
-        <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={actorQueryInput}
                 onChange={onActorQueryInputChange}
                 placeholder="Buscar por nombre o correo..."
-                containerClassName="md:w-[340px]"
-                inputClassName="font-mono text-sm"
+                containerClassName="border-0 md:w-[340px]"
+                inputClassName="border-gray-300 font-mono text-sm dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <Select value={entityTypeFilter} onValueChange={onEntityTypeFilterChange}>
-                    <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            entityTypeFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Tipo de entidad" />
                     </SelectTrigger>
                     <SelectContent>
@@ -58,7 +62,11 @@ export default function AuditPageFilters({
                 </Select>
 
                 <div className="w-full md:w-auto">
-                    <DatePickerWithRange date={selectedDateRange} setDate={onDateRangeChange} />
+                    <DatePickerWithRange
+                        date={selectedDateRange}
+                        setDate={onDateRangeChange}
+                        triggerClassName="border-gray-300 dark:border-border"
+                    />
                 </div>
 
                 {hasFilters && (

@@ -32,16 +32,22 @@ export default function UsersPageFilters({
     onClearFilters,
 }: UsersPageFiltersProps) {
     return (
-        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={searchInput}
                 onChange={onSearchInputChange}
                 placeholder="Buscar por email o nombre..."
+                containerClassName="border-0"
+                inputClassName="border-gray-300 dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
                 <Select value={roleFilter} onValueChange={(value) => onRoleFilterChange(value as UsersRoleFilter)}>
-                    <SelectTrigger className="w-full md:w-[170px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            roleFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Rol" />
                     </SelectTrigger>
                     <SelectContent>
@@ -52,7 +58,11 @@ export default function UsersPageFilters({
                 </Select>
 
                 <Select value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as UsersStatusFilter)}>
-                    <SelectTrigger className="w-full md:w-[170px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            statusFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Estado" />
                     </SelectTrigger>
                     <SelectContent>

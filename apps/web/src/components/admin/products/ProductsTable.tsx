@@ -204,16 +204,22 @@ export default function ProductsTable({ products }: ProductsTableProps) {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                 <AdminSearchInput
                     value={search}
                     onChange={setSearch}
                     placeholder="Buscar por nombre, slug o categoria..."
+                    containerClassName="border-0"
+                    inputClassName="border-gray-300 dark:border-border"
                 />
 
                 <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger
+                            className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                                categoryFilter === 'ALL' ? 'text-muted-foreground' : ''
+                            }`}
+                        >
                             <SelectValue placeholder="Categoría" />
                         </SelectTrigger>
                         <SelectContent>
@@ -225,7 +231,11 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                     </Select>
 
                     <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'ALL' | 'PUBLISHED' | 'DRAFT')}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger
+                            className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                                statusFilter === 'ALL' ? 'text-muted-foreground' : ''
+                            }`}
+                        >
                             <SelectValue placeholder="Estado" />
                         </SelectTrigger>
                         <SelectContent>

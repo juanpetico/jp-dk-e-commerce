@@ -16,6 +16,7 @@ import { es } from "date-fns/locale"
 
 interface DatePickerWithRangeProps {
     className?: string
+    triggerClassName?: string
     date: DateRange | undefined
     setDate: (date: DateRange | undefined) => void
     showClear?: boolean
@@ -24,6 +25,7 @@ interface DatePickerWithRangeProps {
 
 export function DatePickerWithRange({
     className,
+    triggerClassName,
     date,
     setDate,
     showClear = true,
@@ -53,8 +55,9 @@ export function DatePickerWithRange({
                         id="date"
                         variant={"outline"}
                         className={cn(
-                            "w-[300px] justify-start text-left font-normal relative pr-10",
-                            !date && "text-muted-foreground"
+                            "w-full justify-start text-left font-normal relative pr-10 md:w-auto",
+                            !date && "text-muted-foreground",
+                            triggerClassName
                         )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />

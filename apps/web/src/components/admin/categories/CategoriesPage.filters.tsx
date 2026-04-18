@@ -40,18 +40,22 @@ export default function CategoriesPageFilters({
     onClearFilters,
 }: CategoriesPageFiltersProps) {
     return (
-        <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={searchInput}
                 onChange={onSearchInputChange}
                 placeholder="Buscar por nombre..."
-                containerClassName="md:w-[340px]"
-                inputClassName="font-mono text-sm"
+                containerClassName="border-0 md:w-[340px]"
+                inputClassName="border-gray-300 font-mono text-sm dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <Select value={statusFilter} onValueChange={(value) => onStatusFilterChange(value as CategoryStatusFilter)}>
-                    <SelectTrigger className="w-full md:w-[160px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            statusFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -62,7 +66,11 @@ export default function CategoriesPageFilters({
                 </Select>
 
                 <Select value={productsFilter} onValueChange={(value) => onProductsFilterChange(value as CategoryProductsFilter)}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            productsFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Productos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -73,8 +81,10 @@ export default function CategoriesPageFilters({
                 </Select>
 
                 <Select value={sortBy} onValueChange={(value) => onSortByChange(value as CategorySortBy)}>
-                    <SelectTrigger className="w-full md:w-[200px]">
-                        <SelectValue placeholder="Ordenar por" />
+                    <SelectTrigger className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            sortBy === 'NAME_ASC' ? 'text-muted-foreground' : ''
+                        }`}>
+                        <SelectValue placeholder="Ordenar por"/>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="NAME_ASC">Nombre A→Z</SelectItem>

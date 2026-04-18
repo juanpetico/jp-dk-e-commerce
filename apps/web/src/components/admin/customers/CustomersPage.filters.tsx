@@ -28,16 +28,22 @@ export default function CustomersPageFilters({
     onClearFilters,
 }: CustomersPageFiltersProps) {
     return (
-        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={searchTerm}
                 onChange={onSearchTermChange}
                 placeholder="Buscar por nombre o email..."
+                containerClassName="border-0"
+                inputClassName="border-gray-300 dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <Select value={roleFilter} onValueChange={(value: CustomerRoleFilter) => onRoleFilterChange(value)}>
-                    <SelectTrigger className="w-full md:w-[170px]">
+                    <SelectTrigger
+                        className={`w-full border-gray-300 dark:border-border md:w-auto ${
+                            roleFilter === 'ALL' ? 'text-muted-foreground' : ''
+                        }`}
+                    >
                         <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>

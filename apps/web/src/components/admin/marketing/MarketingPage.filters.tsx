@@ -38,18 +38,22 @@ export default function MarketingPageFilters({
     if (couponsCount === 0) return null;
 
     return (
-        <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 rounded border border-gray-300 dark:border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <AdminSearchInput
                 value={searchRaw}
                 onChange={onSearchRawChange}
                 placeholder="Buscar por código..."
+                containerClassName="border-0"
+                inputClassName="border-gray-300 dark:border-border"
             />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <select
                     value={filterStatus}
                     onChange={(event) => onFilterStatusChange(event.target.value as MarketingStatusFilter)}
-                    className="cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none"
+                    className={`cursor-pointer rounded-lg border border-gray-300 dark:border-border bg-card px-3 py-2 text-sm focus:outline-none ${
+                        filterStatus === 'ALL' ? 'text-muted-foreground' : 'text-foreground'
+                    }`}
                 >
                     <option value="ALL">Todos los estados</option>
                     <option value="ACTIVO">Activo</option>
@@ -60,7 +64,9 @@ export default function MarketingPageFilters({
                 <select
                     value={filterType}
                     onChange={(event) => onFilterTypeChange(event.target.value as MarketingTypeFilter)}
-                    className="cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none"
+                    className={`cursor-pointer rounded-lg border border-gray-300 dark:border-border bg-card px-3 py-2 text-sm focus:outline-none ${
+                        filterType === 'ALL' ? 'text-muted-foreground' : 'text-foreground'
+                    }`}
                 >
                     <option value="ALL">Todos los tipos</option>
                     <option value="PERCENTAGE">Porcentaje</option>
@@ -70,7 +76,7 @@ export default function MarketingPageFilters({
                 <select
                     value={sortKey}
                     onChange={(event) => onSortKeyChange(event.target.value as MarketingSortKey)}
-                    className="min-w-[140px] cursor-pointer rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none"
+                    className="cursor-pointer rounded-lg border border-gray-300 dark:border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none"
                 >
                     <option value="createdAt">Más reciente</option>
                     <option value="code">Código A→Z</option>
@@ -81,7 +87,7 @@ export default function MarketingPageFilters({
 
                 <button
                     onClick={onToggleSortDir}
-                    className="rounded-lg border border-border bg-card p-2 transition-colors hover:bg-muted"
+                    className="rounded-lg border border-gray-300 dark:border-border bg-card p-2 transition-colors hover:bg-muted"
                     title={sortDir === 'asc' ? 'Ascendente' : 'Descendente'}
                 >
                     {sortDir === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}

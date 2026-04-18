@@ -20,7 +20,7 @@ export default function AdminSearchInput({
     inputClassName,
 }: AdminSearchInputProps) {
     return (
-        <div className={cn('relative w-full md:w-[340px]', containerClassName)}>
+        <div className={cn('relative w-full md:w-[340px] border border-gray-300 dark:border-border', containerClassName)}>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
                 value={value}
