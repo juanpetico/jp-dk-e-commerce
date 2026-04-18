@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/Button';
 interface UsersPageHeaderProps {
     loading: boolean;
     usersCount: number;
+    onExport: () => void;
 }
 
-export default function UsersPageHeader({ loading, usersCount }: UsersPageHeaderProps) {
+export default function UsersPageHeader({ loading, usersCount, onExport }: UsersPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -26,7 +27,7 @@ export default function UsersPageHeader({ loading, usersCount }: UsersPageHeader
                 </p>
             </div>
 
-            <Button variant="outline" className="flex items-center gap-2" disabled>
+            <Button variant="outline" className="flex items-center gap-2" onClick={onExport} disabled={loading || usersCount === 0}>
                 <Download className="h-4 w-4" />
                 Exportar
             </Button>

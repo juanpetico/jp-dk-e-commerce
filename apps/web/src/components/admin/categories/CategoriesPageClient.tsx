@@ -14,6 +14,7 @@ import {
     fetchCategories,
     patchCategory,
 } from '@/services/categoryService';
+import { exportRowsToExcel } from '@/services/exportExcelService';
 import CategoriesBlockedDialog from './CategoriesPage.blocked-dialog';
 import CategoriesCreateDialog from './CategoriesPage.create-dialog';
 import CategoriesPageEmpty from './CategoriesPage.empty';
@@ -240,6 +241,27 @@ export default function CategoriesPageClient() {
         }
     };
 
+    const handleExport = () => {
+        if (filteredCategories.length === 0) {
+            toast.error('No hay categorias para exportar');
+            return;
+        }
+
+        const rows = filteredCategories.map((category) => ({
+            ID: category.id,
+            Nombre: category.name,
+            Slug: category.slug,
+            Estado: (category.isPublished ?? true) ? 'Visible' : 'Oculta',
+            Productos: category._count?.products ?? 0,
+        }));
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'categorias',
+            sheetName: 'Categorias',
+        });
+        toast.success('Archivo Excel generado con exito');
+    };
+
     return (
         <div className="animate-fade-in space-y-6 text-foreground">
             <CategoriesPageHeader
@@ -250,6 +272,7 @@ export default function CategoriesPageClient() {
                     setCreateError('');
                     setCreateOpen(true);
                 }}
+                onExport={handleExport}
             />
 
             <CategoriesPageFilters

@@ -6,12 +6,14 @@ interface CategoriesPageHeaderProps {
     loading: boolean;
     totalItems: number;
     onCreate: () => void;
+    onExport: () => void;
 }
 
 export default function CategoriesPageHeader({
     loading,
     totalItems,
     onCreate,
+    onExport,
 }: CategoriesPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
@@ -30,7 +32,12 @@ export default function CategoriesPageHeader({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button variant="outline" className="flex items-center gap-2" disabled>
+                <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={onExport}
+                    disabled={loading || totalItems === 0}
+                >
                     <Download className="h-4 w-4" />
                     Exportar
                 </Button>

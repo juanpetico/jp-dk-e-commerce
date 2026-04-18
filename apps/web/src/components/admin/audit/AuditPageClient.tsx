@@ -2,11 +2,14 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { endOfDay, startOfDay } from 'date-fns';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { DateRange } from 'react-day-picker';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { fetchAuditLogs } from '@/services/auditService';
 import { AuditEntry } from '@/types';
+import { toast } from 'sonner';
 import {
     ITEMS_PER_PAGE_DEFAULT,
 } from './AuditPage.constants';
@@ -89,9 +92,85 @@ export default function AuditPageClient() {
         setSelectedDateRange(undefined);
     };
 
+    const handleExport = async () => {
+        if (total === 0) {
+            return;
+        }
+
+        try {
+            const result = await fetchAuditLogs({
+                take: total,
+                skip: 0,
+                ...(entityTypeFilter !== 'ALL' ? { entityType: entityTypeFilter } : {}),
+                ...(debouncedActorQuery ? { actorQuery: debouncedActorQuery } : {}),
+                ...(fromTimestamp && toTimestamp
+                    ? {
+                          createdFrom: new Date(fromTimestamp),
+                          createdTo: new Date(toTimestamp),
+                      }
+                    : {}),
+            });
+
+            if (result.items.length === 0) {
+                toast.error('No hay registros para exportar');
+                return;
+            }
+
+            const doc = new jsPDF({ orientation: 'landscape' });
+            const margin = 14;
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('REPORTE DE AUDITORIA', margin, 16);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Generado: ${new Date().toLocaleString('es-CL')}`, margin, 22);
+            doc.text(`Registros: ${result.total}`, pageWidth - margin, 22, { align: 'right' });
+
+            autoTable(doc, {
+                startY: 28,
+                head: [['Fecha', 'Actor', 'Email', 'Accion', 'Entidad', 'Detalle']],
+                body: result.items.map((entry) => [
+                    new Date(entry.createdAt).toLocaleString('es-CL'),
+                    entry.actor.name || 'Sin nombre',
+                    entry.actor.email,
+                    entry.action,
+                    entry.entityType,
+                    entry.newValue || entry.oldValue || '-',
+                ]),
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak',
+                },
+                headStyles: {
+                    fillColor: [20, 20, 20],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                },
+                columnStyles: {
+                    0: { cellWidth: 34 },
+                    1: { cellWidth: 36 },
+                    2: { cellWidth: 55 },
+                    3: { cellWidth: 38 },
+                    4: { cellWidth: 30 },
+                    5: { cellWidth: 'auto' },
+                },
+                margin: { left: margin, right: margin },
+            });
+
+            doc.save(`auditoria_${new Date().toISOString().split('T')[0]}.pdf`);
+            toast.success('Reporte PDF generado con exito');
+        } catch {
+            toast.error('No se pudo exportar el reporte de auditoria');
+        }
+    };
+
     return (
         <div className="animate-fade-in space-y-6 pb-10 text-foreground">
-            <AuditPageHeader total={total} />
+            <AuditPageHeader total={total} loading={loading} onExport={() => void handleExport()} />
 
             <AuditPageFilters
                 actorQueryInput={actorQueryInput}

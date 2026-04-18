@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/Button';
 interface CustomersPageHeaderProps {
     loading: boolean;
     visibleCount: number;
+    onExport: () => void;
 }
 
-export default function CustomersPageHeader({ loading, visibleCount }: CustomersPageHeaderProps) {
+export default function CustomersPageHeader({ loading, visibleCount, onExport }: CustomersPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -24,7 +25,12 @@ export default function CustomersPageHeader({ loading, visibleCount }: Customers
                 <p className="text-sm text-muted-foreground">Gestiona usuarios y roles</p>
             </div>
 
-            <Button variant="outline" className="flex items-center gap-2" disabled>
+            <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={onExport}
+                disabled={loading || visibleCount === 0}
+            >
                 <Download className="h-4 w-4" />
                 Exportar
             </Button>

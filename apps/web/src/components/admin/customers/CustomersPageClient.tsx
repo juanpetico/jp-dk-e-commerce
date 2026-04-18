@@ -3,10 +3,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import CustomerDrawer from '@/components/admin/users/CustomerDrawer';
 import { Button } from '@/components/ui/Button';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { fetchUsers } from '@/services/userService';
+import { exportRowsToExcel } from '@/services/exportExcelService';
 import { User as Customer } from '@/types';
 import { useUser } from '@/store/UserContext';
 import CustomersPageFilters from './CustomersPage.filters';
@@ -96,10 +98,35 @@ export default function CustomersPageClient() {
         setRoleFilter('ALL');
     };
 
+    const handleExport = () => {
+        if (filteredCustomers.length === 0) {
+            toast.error('No hay clientes para exportar');
+            return;
+        }
+
+        const rows = filteredCustomers.map((customer) => ({
+            ID: customer.id,
+            Nombre: customer.name || 'Sin nombre',
+            Email: customer.email,
+            Rol: customer.role,
+            Estado: customer.status === 'Active' ? 'Activo' : 'Inactivo',
+            Pedidos: customer.ordersCount || 0,
+            'Total Gastado': customer.totalSpent || 0,
+            'Ultimo Pedido': customer.lastOrder ? new Date(customer.lastOrder).toLocaleString('es-CL') : '-',
+            Registro: customer.createdAt ? new Date(customer.createdAt).toLocaleString('es-CL') : '-',
+        }));
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'clientes',
+            sheetName: 'Clientes',
+        });
+        toast.success('Archivo Excel generado con exito');
+    };
+
     return (
         <>
             <div className="animate-fade-in space-y-6 text-foreground">
-                <CustomersPageHeader loading={loading} visibleCount={filteredCustomers.length} />
+                <CustomersPageHeader loading={loading} visibleCount={filteredCustomers.length} onExport={handleExport} />
 
                 <CustomersPageStats
                     totalClientes={totalClientes}

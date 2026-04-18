@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/Button';
 
 interface AuditPageHeaderProps {
     total: number;
+    loading: boolean;
+    onExport: () => void;
 }
 
-export default function AuditPageHeader({ total }: AuditPageHeaderProps) {
+export default function AuditPageHeader({ total, loading, onExport }: AuditPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -25,7 +27,7 @@ export default function AuditPageHeader({ total }: AuditPageHeaderProps) {
                 </p>
             </div>
 
-            <Button variant="outline" className="flex items-center gap-2" disabled>
+            <Button variant="outline" className="flex items-center gap-2" onClick={onExport} disabled={loading || total === 0}>
                 <Download className="h-4 w-4" />
                 Exportar
             </Button>

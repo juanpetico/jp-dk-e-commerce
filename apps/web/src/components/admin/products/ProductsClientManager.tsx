@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 interface AdminProductsContextType {
     openEditModal: (product: Product) => void;
     setFilteredCount: (n: number) => void;
+    setExportHandler: (handler: (() => void) | null) => void;
 }
 
 const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
@@ -32,6 +33,7 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
     const [filteredCount, setFilteredCount] = useState(0);
+    const [exportHandler, setExportHandler] = useState<(() => void) | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -78,8 +80,17 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
         }
     };
 
+    const handleExport = () => {
+        if (exportHandler) {
+            exportHandler();
+            return;
+        }
+
+        toast.error('No hay productos para exportar');
+    };
+
     return (
-        <AdminProductsContext.Provider value={{ openEditModal, setFilteredCount }}>
+        <AdminProductsContext.Provider value={{ openEditModal, setFilteredCount, setExportHandler }}>
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <div className="flex items-baseline gap-3">
@@ -89,7 +100,12 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
                     <p className="text-muted-foreground text-sm">Gestiona el catálogo de tu tienda</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={handleExport}
+                        disabled={filteredCount === 0}
+                    >
                         <Download className="w-4 h-4" />
                         Exportar
                     </Button>

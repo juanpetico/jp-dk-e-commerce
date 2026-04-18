@@ -6,12 +6,14 @@ interface MarketingPageHeaderProps {
     loading: boolean;
     visibleCouponsCount: number;
     onCreateCoupon: () => void;
+    onExport: () => void;
 }
 
 export default function MarketingPageHeader({
     loading,
     visibleCouponsCount,
     onCreateCoupon,
+    onExport,
 }: MarketingPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
@@ -30,7 +32,12 @@ export default function MarketingPageHeader({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button variant="outline" className="flex items-center gap-2" disabled>
+                <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={onExport}
+                    disabled={loading || visibleCouponsCount === 0}
+                >
                     <Download className="h-4 w-4" />
                     Exportar
                 </Button>

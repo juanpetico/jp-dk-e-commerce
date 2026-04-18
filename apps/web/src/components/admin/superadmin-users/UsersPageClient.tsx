@@ -9,6 +9,7 @@ import UserEditModal from '@/components/admin/users/UserEditModal';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { AdminUser } from '@/types';
 import { getAdminUsers, getUserById } from '@/services/userService';
+import { exportRowsToExcel } from '@/services/exportExcelService';
 import UsersPageFilters from './UsersPage.filters';
 import UsersPageHeader from './UsersPage.header';
 import UsersPageTable from './UsersPage.table';
@@ -141,6 +142,29 @@ export default function UsersPageClient() {
         setUsers((prev) => prev.map((user) => (user.id === updated.id ? updated : user)));
     };
 
+    const handleExport = () => {
+        if (users.length === 0) {
+            toast.error('No hay usuarios para exportar');
+            return;
+        }
+
+        const rows = users.map((user) => ({
+            ID: user.id,
+            Email: user.email,
+            Nombre: user.name || 'Sin nombre',
+            Rol: user.role,
+            Estado: user.isActive ? 'Activo' : 'Inactivo',
+            'Ultimo Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString('es-CL') : '-',
+            Creado: new Date(user.createdAt).toLocaleString('es-CL'),
+        }));
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'usuarios-admin',
+            sheetName: 'Usuarios',
+        });
+        toast.success('Archivo Excel generado con exito');
+    };
+
     const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
     const paginatedUsers = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -155,7 +179,7 @@ export default function UsersPageClient() {
 
     return (
         <div className="animate-fade-in space-y-6 text-foreground">
-            <UsersPageHeader loading={loading} usersCount={users.length} />
+            <UsersPageHeader loading={loading} usersCount={users.length} onExport={handleExport} />
 
             <UsersPageFilters
                 searchInput={searchInput}

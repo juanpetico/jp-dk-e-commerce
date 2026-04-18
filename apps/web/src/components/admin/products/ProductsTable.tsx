@@ -27,6 +27,8 @@ import { ProductStatusToggle, ProductRowButtons } from '@/components/admin/produ
 import TablePagination from '@/components/admin/shared/TablePagination';
 import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { useAdminProducts } from '@/components/admin/products/ProductsClientManager';
+import { exportRowsToExcel } from '@/services/exportExcelService';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface ProductsTableProps {
@@ -81,10 +83,41 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
-    const { setFilteredCount } = useAdminProducts();
+    const { setFilteredCount, setExportHandler } = useAdminProducts();
     React.useEffect(() => {
         setFilteredCount(totalItems);
-    }, [totalItems]);
+    }, [totalItems, setFilteredCount]);
+
+    React.useEffect(() => {
+        setExportHandler(() => () => {
+            if (filteredProducts.length === 0) {
+                toast.error('No hay productos para exportar');
+                return;
+            }
+
+            const rows = filteredProducts.map((product) => ({
+                ID: product.id,
+                Nombre: product.name,
+                SKU: product.slug,
+                Categoria: product.category?.name || '-',
+                Estado: product.isPublished ? 'Publicado' : 'Borrador',
+                Oferta: product.isSale ? 'Si' : 'No',
+                Precio: product.price,
+                'Precio Original': product.originalPrice ?? '-',
+                Stock: (product.variants || []).reduce((acc, variant) => acc + (variant.stock || 0), 0),
+            }));
+
+            exportRowsToExcel(rows, {
+                fileNameBase: 'productos',
+                sheetName: 'Productos',
+            });
+            toast.success('Archivo Excel generado con exito');
+        });
+
+        return () => {
+            setExportHandler(null);
+        };
+    }, [filteredProducts, setExportHandler]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', {

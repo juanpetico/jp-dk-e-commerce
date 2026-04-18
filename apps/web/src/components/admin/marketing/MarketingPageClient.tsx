@@ -16,6 +16,7 @@ import { EnrichedCoupon, MarketingSortDir, MarketingSortKey, MarketingStatusFilt
 import { Coupon, Order } from '@/types';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
+import { exportRowsToExcel } from '@/services/exportExcelService';
 import { getCouponStatus, getCouponStats } from '@/lib/coupon-utils';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
 import { toast } from 'sonner';
@@ -241,6 +242,34 @@ export default function MarketingPageClient() {
 
     const hasActiveFilters = searchRaw !== '' || filterStatus !== 'ALL' || filterType !== 'ALL';
 
+    const handleExport = () => {
+        if (filteredSorted.length === 0) {
+            toast.error('No hay cupones para exportar');
+            return;
+        }
+
+        const rows = filteredSorted.map((coupon) => ({
+            ID: coupon.id,
+            Codigo: coupon.code,
+            Descripcion: coupon.description || '-',
+            Estado: coupon._status,
+            Tipo: coupon.type,
+            Valor: coupon.value,
+            Usos: coupon.usedCount,
+            'Limite de Usos': coupon.maxUses ?? 'Sin limite',
+            Ingresos: coupon._stats.revenue,
+            ROI: coupon._stats.roi === null ? '-' : coupon._stats.roi,
+            Inicio: coupon.startDate ? new Date(coupon.startDate).toLocaleString('es-CL') : '-',
+            Fin: coupon.endDate ? new Date(coupon.endDate).toLocaleString('es-CL') : 'Nunca',
+        }));
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'marketing-cupones',
+            sheetName: 'Marketing',
+        });
+        toast.success('Archivo Excel generado con exito');
+    };
+
     if (loading && coupons.length === 0) {
         return (
             <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
@@ -272,6 +301,7 @@ export default function MarketingPageClient() {
             <MarketingPageHeader
                 loading={loading}
                 visibleCouponsCount={filteredSorted.length}
+                onExport={handleExport}
                 onCreateCoupon={() => {
                     setEditingCoupon(null);
                     setIsModalOpen(true);

@@ -14,7 +14,7 @@ import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import OrderDetailModal from './OrderDetailModal';
 import OrderFilters from './OrderFilters';
-import { exportOrdersCsv } from './OrdersPage.csv';
+import { exportOrdersExcel } from './OrdersPage.csv';
 import OrdersPageHeader from './OrdersPage.header';
 import OrdersPageSkeleton from './OrdersPage.skeleton';
 import OrdersPageTable from './OrdersPage.table';
@@ -110,14 +110,14 @@ export default function OrdersPageClient() {
         }
     };
 
-    const handleExportCSV = () => {
+    const handleExportExcel = () => {
         if (!orders || orders.length === 0) {
             toast.error('No hay pedidos para exportar');
             return;
         }
 
-        exportOrdersCsv(orders);
-        toast.success('Archivo CSV generado con exito');
+        exportOrdersExcel(orders);
+        toast.success('Archivo Excel generado con exito');
     };
 
     const activeFiltersCount = useMemo(() => {
@@ -130,7 +130,7 @@ export default function OrdersPageClient() {
 
     return (
         <div className="animate-fade-in space-y-6 pb-10">
-            <OrdersPageHeader ordersCount={orders?.length || 0} onExport={handleExportCSV} />
+            <OrdersPageHeader ordersCount={orders?.length || 0} onExport={handleExportExcel} />
 
             <OrderFilters onFilterChange={handleFilterChange} activeFiltersCount={activeFiltersCount} />
 
