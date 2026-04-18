@@ -1,7 +1,7 @@
 import prisma from "../../../config/prisma.js";
 import type { ReviewRequestDto } from "../automation.types.js";
 
-interface Params {
+export interface Params {
     daysSinceDelivery: number;
     limit: number;
 }

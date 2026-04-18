@@ -2,7 +2,7 @@ import prisma from "../../../config/prisma.js";
 import { shopConfigService } from "../../shop-config.service.js";
 import type { VipCandidateDto } from "../automation.types.js";
 
-interface Params {
+export interface Params {
     limit: number;
 }
 

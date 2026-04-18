@@ -22,7 +22,7 @@ export const automationController = {
 
     async notifyAbandonedCart(req: Request, res: Response, next: NextFunction) {
         try {
-            const { cartId } = req.params;
+            const { cartId } = req.params as Record<string, string>;
             if (!cartId) throw new AppError("cartId required", 400);
             const cart = await automationService.notifyAbandonedCart(cartId);
             res.json({ success: true, data: { cartId: cart.id, reminderSentAt: cart.reminderSentAt } });
@@ -43,7 +43,7 @@ export const automationController = {
 
     async grantVipAccess(req: Request, res: Response, next: NextFunction) {
         try {
-            const { userId } = req.params;
+            const { userId } = req.params as Record<string, string>;
             if (!userId) throw new AppError("userId required", 400);
             const result = await automationService.grantVipAccess(userId);
             res.json({ success: true, data: result });
@@ -65,7 +65,7 @@ export const automationController = {
 
     async notifyReviewRequest(req: Request, res: Response, next: NextFunction) {
         try {
-            const { orderId } = req.params;
+            const { orderId } = req.params as Record<string, string>;
             if (!orderId) throw new AppError("orderId required", 400);
             const order = await automationService.notifyReviewRequest(orderId);
             res.json({ success: true, data: { orderId: order.id, reviewRequestedAt: order.reviewRequestedAt } });

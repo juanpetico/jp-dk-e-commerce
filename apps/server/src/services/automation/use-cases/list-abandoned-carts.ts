@@ -1,7 +1,7 @@
 import prisma from "../../../config/prisma.js";
 import type { AbandonedCartDto } from "../automation.types.js";
 
-interface Params {
+export interface Params {
     hoursInactive: number;
     limit: number;
 }
