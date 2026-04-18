@@ -71,8 +71,6 @@ export const getStatusColor = (status: OrderStatus) => {
     switch (status) {
         case 'DELIVERED':
             return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50';
-        case 'SHIPPED':
-            return 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50';
         case 'CANCELLED':
             return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50';
         case 'CONFIRMED':

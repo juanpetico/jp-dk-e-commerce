@@ -77,8 +77,8 @@ export interface Address {
     isDefault: boolean;
 }
 
-// OrderStatus del backend: PENDING | CONFIRMED | SHIPPED | DELIVERED | CANCELLED
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+// OrderStatus del backend: PENDING | CONFIRMED | DELIVERED | CANCELLED
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED';
 
 export interface OrderItem {
     id: string;

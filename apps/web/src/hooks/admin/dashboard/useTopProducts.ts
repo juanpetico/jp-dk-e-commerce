@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { TopProduct } from '@/types';
 import { fetchTopProducts } from '@/services/orderService';
 
+const TOP_PRODUCTS_LIMIT = 50;
+
 export function useTopProducts() {
     const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ export function useTopProducts() {
     const loadTopProducts = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await fetchTopProducts(5);
+            const data = await fetchTopProducts(TOP_PRODUCTS_LIMIT);
             setTopProducts(data);
         } catch (error) {
             console.error('Error loading top products:', error);

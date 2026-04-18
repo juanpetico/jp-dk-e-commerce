@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { OrdersPageFiltersDrawerProps } from './OrdersPage.types';
 import { translateOrderStatus } from './OrdersPage.utils';
 
-const ORDER_STATUS_OPTIONS = ['all', 'PENDING', 'CONFIRMED', 'PROCESSING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+const ORDER_STATUS_OPTIONS = ['all', 'PENDING', 'CONFIRMED', 'PROCESSING', 'PAID', 'DELIVERED', 'CANCELLED'];
 
 export default function OrdersPageFiltersDrawer({
     showFilter,

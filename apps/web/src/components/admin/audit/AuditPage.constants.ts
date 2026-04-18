@@ -34,7 +34,6 @@ export const ACTION_CONFIG: Record<string, { label: string; className: string }>
 export const ORDER_STATUS_LABELS: Record<string, string> = {
     PENDING: 'Pendiente',
     CONFIRMED: 'Confirmado',
-    SHIPPED: 'Enviado',
     DELIVERED: 'Entregado',
     CANCELLED: 'Cancelado',
 };

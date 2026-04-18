@@ -29,7 +29,7 @@ export default function OrderStatusSelect({
         setLocalStatus(currentStatus);
     }, [currentStatus]);
 
-    const statuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    const statuses: OrderStatus[] = ['PENDING', 'CONFIRMED', 'DELIVERED', 'CANCELLED'];
 
     const handleStatusUpdate = async (value: string) => {
         const newStatus = value as OrderStatus;

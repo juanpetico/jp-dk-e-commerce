@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import { AppError } from "../../middleware/error-handler.js";
 import type { OrderFilters, OrderStatus } from "../../services/order/order.types.js";
 
-const VALID_STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
+const VALID_STATUSES: OrderStatus[] = ["PENDING", "CONFIRMED", "DELIVERED", "CANCELLED"];
 
 export const assertValidationOk = (req: Request) => {
     const errors = validationResult(req);

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, ExternalLink } from 'lucide-react';
 import { TopProduct } from '@/types';
 import { formatPrice } from '@/lib/utils';
 
@@ -13,19 +14,43 @@ interface DashboardTopProductsTableProps {
 }
 
 export function DashboardTopProductsTable({ topProducts, loading, basePath }: DashboardTopProductsTableProps) {
+    const BATCH_SIZE = 5;
+    const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+
+    useEffect(() => {
+        setVisibleCount(BATCH_SIZE);
+    }, [topProducts]);
+
+    const visibleProducts = topProducts.slice(0, visibleCount);
+    const canShowMore = visibleCount < topProducts.length;
+
     return (
         <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm">
-            <h3 className="font-bold text-sm uppercase tracking-wide mb-4 text-foreground">
-                Top Performers (Productos Estrella)
-            </h3>
+            <div className="mb-4 flex items-center justify-between gap-2">
+                <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">
+                    Top Performers (Productos Estrella)
+                </h3>
+                {!loading && canShowMore && (
+                    <button
+                        type="button"
+                        onClick={() => setVisibleCount((current) => Math.min(current + BATCH_SIZE, topProducts.length))}
+                        className="inline-flex items-center gap-1 rounded-md border border-gray-300 dark:border-border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                        title="Mostrar 5 más"
+                        aria-label="Mostrar 5 más"
+                    >
+                        Mostrar mas <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
 
             {loading ? (
                 <div className="flex items-center justify-center h-48 text-muted-foreground text-sm animate-pulse">
                     Cargando productos más vendidos...
                 </div>
             ) : topProducts.length > 0 ? (
-                <div className="space-y-3">
-                    {topProducts.map((product, index) => (
+                <div className="max-h-[28rem] overflow-y-auto pr-1">
+                    <div className="space-y-3">
+                        {visibleProducts.map((product, index) => (
                         // Keep row non-clickable: only image and icon link to product page.
                         <div
                             key={product.id}
@@ -80,7 +105,8 @@ export function DashboardTopProductsTable({ topProducts, loading, basePath }: Da
                                 <p className="text-[10px] text-muted-foreground">{formatPrice(product.price)}</p>
                             </div>
                         </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">

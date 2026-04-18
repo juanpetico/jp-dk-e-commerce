@@ -3,7 +3,7 @@ export const mapUserToResponse = (user: any) => {
 
     if (userWithoutPassword.orders) {
         const validOrders = userWithoutPassword.orders.filter(
-            (o: any) => o.status === "CONFIRMED" || o.status === "DELIVERED" || o.status === "SHIPPED" || o.isPaid
+            (o: any) => o.status === "CONFIRMED" || o.status === "DELIVERED" || o.isPaid
         );
 
         userWithoutPassword.totalSpent = validOrders.reduce((sum: number, o: any) => sum + o.total, 0);

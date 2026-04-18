@@ -40,7 +40,6 @@ export function OrderDetailHeader({ order, onClose, onStatusChange, statusEditab
                         <SelectContent>
                             <SelectItem value="PENDING">Pendiente</SelectItem>
                             <SelectItem value="CONFIRMED">Confirmado</SelectItem>
-                            <SelectItem value="SHIPPED">Enviado</SelectItem>
                             <SelectItem value="DELIVERED">Entregado</SelectItem>
                             <SelectItem value="CANCELLED">Cancelar</SelectItem>
                         </SelectContent>

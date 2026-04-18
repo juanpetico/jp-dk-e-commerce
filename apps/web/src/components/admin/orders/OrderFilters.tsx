@@ -117,7 +117,6 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
                             <SelectItem value="ALL">Todos los estados</SelectItem>
                             <SelectItem value="PENDING">Pendiente</SelectItem>
                             <SelectItem value="CONFIRMED">Confirmado</SelectItem>
-                            <SelectItem value="SHIPPED">Enviado</SelectItem>
                             <SelectItem value="DELIVERED">Entregado</SelectItem>
                             <SelectItem value="CANCELLED">Cancelado</SelectItem>
                         </SelectContent>

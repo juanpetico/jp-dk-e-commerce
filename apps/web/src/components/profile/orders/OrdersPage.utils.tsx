@@ -6,7 +6,6 @@ import { OrdersDateFilter, OrdersDateRange, OrdersSortBy } from './OrdersPage.ty
 const STATUS_TRANSLATIONS: Record<string, string> = {
     PENDING: 'Pendiente',
     CONFIRMED: 'Confirmado',
-    SHIPPED: 'Enviado',
     DELIVERED: 'Entregado',
     CANCELLED: 'Cancelado',
     PROCESSING: 'Procesando',
@@ -33,8 +32,6 @@ export const getOrderStatusIcon = (status: string) => {
             return <Package className="w-3.5 h-3.5" />;
         case 'PAID':
             return <CreditCard className="w-3.5 h-3.5 text-green-500" />;
-        case 'SHIPPED':
-            return <Truck className="w-3.5 h-3.5" />;
         case 'DELIVERED':
             return <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />;
         case 'CANCELLED':

@@ -1,6 +1,6 @@
 export type Size = "S" | "M" | "L" | "XL" | "XXL" | "STD";
 
-export type OrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+export type OrderStatus = "PENDING" | "CONFIRMED" | "DELIVERED" | "CANCELLED";
 
 export interface OrderItemInput {
     productId: string;
