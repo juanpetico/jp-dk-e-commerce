@@ -20,15 +20,15 @@ export default function OrderDetailsPageHeader({ order, onBackToHome, onExportPd
                 <Button
                     variant="outline"
                     onClick={onExportPdf}
-                    className="gap-2 border-gray-300 hover:border-gray-400"
+                    className="gap-2 hover:border-gray-400"
                 >
                     <FileText className="w-4 h-4" />
-                    Exportar PDF
+                    Boleta
                 </Button>
                 <Button
                     variant="outline"
                     onClick={onBackToHome}
-                    className="border-gray-300 hover:border-gray-400"
+                    className="hover:border-gray-400"
                 >
                     Volver a comprar
                 </Button>

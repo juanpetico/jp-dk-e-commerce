@@ -1,4 +1,4 @@
-import { Order } from '@/types';
+import { Order, TopProduct } from '@/types';
 import {
     CategorySalesPoint,
     DashboardAnalytics,
@@ -15,6 +15,8 @@ export interface DashboardFacade {
     analytics: DashboardAnalytics;
     salesTrendData: SalesTrendPoint[];
     categoryData: CategorySalesPoint[];
+    topProducts: TopProduct[];
+    topProductsLoading: boolean;
 
     dateRange: DashboardDateRange | undefined;
     defaultDateRange: DashboardDateRange;

@@ -52,17 +52,17 @@ export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
                 <div className="text-xs text-muted-foreground">Por orden válida</div>
             </div>
 
-            <div className="bg-card dark:bg-card border border-rose-300 dark:border-rose-900/40 p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative">
+            <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative">
                 <div className="flex justify-between items-start w-full">
                     <div>
-                        <p className="text-rose-800 dark:text-rose-400 text-xs font-bold uppercase tracking-wider">Carritos Abandonados</p>
-                        <h3 className="font-display text-2xl font-bold mt-1 text-rose-900 dark:text-rose-300">{abandonedRateLabel}</h3>
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Carritos Abandonados</p>
+                        <h3 className="font-display text-2xl font-bold mt-1 ">{abandonedRateLabel}</h3>
                     </div>
                     <span className="bg-rose-700 p-2 rounded-lg text-white shadow-md shadow-rose-700/20">
                         <ShoppingCart className="w-5 h-5" />
                     </span>
                 </div>
-                <div className="text-xs text-rose-700 dark:text-rose-400 font-medium">
+                <div className="text-xs font-medium text-muted-foreground tracking-wider">
                     Potencial en carritos: {formatPrice(analytics.abandonedCartPotentialRevenue)}
                 </div>
             </div>

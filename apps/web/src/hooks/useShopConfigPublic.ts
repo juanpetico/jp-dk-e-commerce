@@ -6,9 +6,14 @@ import { shopConfigService } from '@/services/shopConfigService';
 type PublicShopConfig = {
     baseShippingCost: number;
     freeShippingThreshold: number;
+    lowStockThreshold: number;
 };
 
-const FALLBACK: PublicShopConfig = { baseShippingCost: 3990, freeShippingThreshold: 50000 };
+const FALLBACK: PublicShopConfig = {
+    baseShippingCost: 3990,
+    freeShippingThreshold: 50000,
+    lowStockThreshold: 5,
+};
 
 let cache: PublicShopConfig | null = null;
 let inflight: Promise<PublicShopConfig> | null = null;
@@ -21,6 +26,7 @@ function load(): Promise<PublicShopConfig> {
             cache = {
                 baseShippingCost: cfg.baseShippingCost ?? FALLBACK.baseShippingCost,
                 freeShippingThreshold: cfg.freeShippingThreshold ?? FALLBACK.freeShippingThreshold,
+                lowStockThreshold: cfg.lowStockThreshold ?? FALLBACK.lowStockThreshold,
             };
             return cache;
         })
