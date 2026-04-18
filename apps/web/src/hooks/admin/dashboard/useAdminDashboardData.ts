@@ -1,9 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { DashboardCartFunnel, DashboardCustomerRetention, DashboardRetentionRange, Order, Product } from '@/types';
 import { fetchProducts } from '@/services/productService';
 import { fetchAllOrders, fetchDashboardCartFunnel, fetchDashboardCustomerRetention } from '@/services/orderService';
 
-export function useAdminDashboardData() {
+interface UseAdminDashboardDataResult {
+    products: Product[];
+    orders: Order[];
+    cartFunnel: DashboardCartFunnel | null;
+    customerRetention: DashboardCustomerRetention | null;
+    setOrders: Dispatch<SetStateAction<Order[]>>;
+    loading: boolean;
+    error: string | null;
+    reloadData: (retentionRange?: DashboardRetentionRange) => Promise<void>;
+}
+
+export function useAdminDashboardData(): UseAdminDashboardDataResult {
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [cartFunnel, setCartFunnel] = useState<DashboardCartFunnel | null>(null);
