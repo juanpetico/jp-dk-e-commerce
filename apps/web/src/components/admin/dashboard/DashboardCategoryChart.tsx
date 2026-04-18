@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { CategorySalesPoint } from '@/lib/dashboard/types';
 
@@ -15,8 +16,52 @@ const DEFAULT_COLORS = [
     '#ec4899',
 ];
 
+const MAX_VISIBLE_SLICES = 6;
+
 export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }: DashboardCategoryChartProps) {
-    const totalUnits = categoryData.reduce((acc, curr) => acc + curr.value, 0);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+    const totalUnits = useMemo(
+        () => categoryData.reduce((acc, curr) => acc + curr.value, 0),
+        [categoryData]
+    );
+
+    const chartData = useMemo(() => {
+        const sorted = [...categoryData].sort((a, b) => b.value - a.value);
+
+        if (sorted.length <= MAX_VISIBLE_SLICES) {
+            return sorted;
+        }
+
+        const visible = sorted.slice(0, MAX_VISIBLE_SLICES - 1);
+        const hiddenTotal = sorted.slice(MAX_VISIBLE_SLICES - 1).reduce((acc, item) => acc + item.value, 0);
+
+        return [...visible, { name: 'Otros', value: hiddenTotal }];
+    }, [categoryData]);
+
+    const renderLegend = () => (
+        <div className="mt-4 max-h-20 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-2">
+                {chartData.map((entry, index) => {
+                    const percent = totalUnits > 0 ? (entry.value / totalUnits) * 100 : 0;
+
+                    return (
+                        <div key={`legend-${entry.name}-${index}`} className="flex items-center gap-2 text-muted-foreground">
+                            <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: colors[index % colors.length] }}
+                                aria-hidden="true"
+                            />
+                            <span className="truncate">{entry.name}</span>
+                            <span className="ml-auto whitespace-nowrap text-foreground">
+                                {entry.value} ({percent.toFixed(1)}%)
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
 
     return (
         <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px]">
@@ -25,23 +70,29 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
             </h3>
 
             <div className="w-full h-[380px] min-w-0 relative [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
-                {categoryData.length > 0 ? (
+                {chartData.length > 0 ? (
                     <ResponsiveContainer width="99%" height={300} minWidth={1} debounce={50}>
-                        <PieChart style={{ outline: 'none' }} tabIndex={-1}>
+                        <PieChart style={{ outline: 'none' }} tabIndex={-1} role="img" aria-label="Ventas por categoría">
                             <Pie
-                                data={categoryData}
+                                data={chartData}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
                                 outerRadius={80}
                                 paddingAngle={5}
                                 dataKey="value"
+                                nameKey="name"
+                                onMouseEnter={(_, index) => setActiveIndex(index)}
+                                onMouseLeave={() => setActiveIndex(null)}
                             >
-                                {categoryData.map((entry, index) => (
+                                {chartData.map((entry, index) => (
                                     <Cell
                                         key={`cell-${entry.name}-${index}`}
                                         fill={colors[index % colors.length]}
                                         stroke="hsl(var(--card))"
+                                        strokeWidth={activeIndex === index ? 3 : 1}
+                                        opacity={activeIndex === null || activeIndex === index ? 1 : 0.55}
+                                        aria-label={`${entry.name}: ${entry.value} unidades`}
                                     />
                                 ))}
                             </Pie>
@@ -64,9 +115,9 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
                                 verticalAlign="bottom"
                                 align="center"
                                 layout="horizontal"
-                                height={36}
+                                height={92}
                                 iconType="circle"
-                                wrapperStyle={{ paddingTop: '20px' }}
+                                content={renderLegend}
                             />
                         </PieChart>
                     </ResponsiveContainer>
@@ -76,8 +127,8 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
                     </div>
                 )}
 
-                {categoryData.length > 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-8 h-full">
+                {chartData.length > 0 && (
+                    <div className="absolute top-0 left-0 right-0 h-[270px] flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <p className="text-[10px] uppercase font-bold text-muted-foreground">Total</p>
                             <p className="text-xl font-display font-black text-foreground">{totalUnits}</p>
