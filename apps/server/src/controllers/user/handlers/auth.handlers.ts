@@ -6,8 +6,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     try {
         assertValidationOk(req);
 
-        const { email, password, name } = req.body;
-        const result = await authService.register({ email, password, name });
+        const { email, password, name, phone } = req.body;
+        const result = await authService.register({ email, password, name, phone });
 
         setSessionCookie(res, result.token);
 
@@ -18,6 +18,22 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
                 user: result.user,
                 welcomeCoupon: result.welcomeCoupon,
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const checkEmailAvailability = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        assertValidationOk(req);
+
+        const { email } = req.body;
+        const available = await authService.isEmailAvailable(email);
+
+        res.json({
+            success: true,
+            data: { available },
         });
     } catch (error) {
         next(error);

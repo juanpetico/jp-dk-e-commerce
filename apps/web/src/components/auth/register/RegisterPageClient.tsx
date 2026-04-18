@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/store/UserContext';
+import { fetchCheckEmailAvailability } from '@/store/user-context/UserContext.api';
 import { LoyaltyModal } from '@/components/ui/LoyaltyModal';
 import AuthCard from '@/components/auth/shared/AuthCard';
 import AuthStepIndicator from '@/components/auth/shared/AuthStepIndicator';
@@ -26,6 +27,7 @@ export default function RegisterPageClient() {
     const [errors, setErrors] = useState<RegisterErrors>({});
     const [showLoyalty, setShowLoyalty] = useState(false);
     const [couponInfo, setCouponInfo] = useState<{ code: string; message: string } | null>(null);
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
     const { register } = useUser();
     const router = useRouter();
@@ -37,13 +39,34 @@ export default function RegisterPageClient() {
         setErrors((prev) => ({ ...prev, [field]: '' }));
     };
 
-    const handleEmailSubmit = (event: FormEvent) => {
+    const handleEmailSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
         const nextErrors = validateEmailStep(email);
         if (Object.keys(nextErrors).length > 0) {
             setErrors(nextErrors);
             return;
+        }
+
+        try {
+            setIsCheckingEmail(true);
+            const response = await fetchCheckEmailAvailability(email);
+            const data = await response.json();
+
+            if (!response.ok) {
+                setErrors({ email: data.message || 'No se pudo verificar el correo' });
+                return;
+            }
+
+            if (!data?.data?.available) {
+                setErrors({ email: 'Este correo ya esta registrado' });
+                return;
+            }
+        } catch {
+            setErrors({ email: 'No se pudo verificar el correo' });
+            return;
+        } finally {
+            setIsCheckingEmail(false);
         }
 
         setErrors({});
@@ -67,7 +90,7 @@ export default function RegisterPageClient() {
     const handleCompleteSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        const nextErrors = validateProfileStep(name);
+        const nextErrors = validateProfileStep(name, phone);
         if (Object.keys(nextErrors).length > 0) {
             setErrors(nextErrors);
             return;
@@ -124,6 +147,7 @@ export default function RegisterPageClient() {
                                 setEmail(value);
                                 clearFieldError('email');
                             }}
+                            isSubmitting={isCheckingEmail}
                             onSubmit={handleEmailSubmit}
                         />
                     )}
@@ -162,7 +186,10 @@ export default function RegisterPageClient() {
                                 setName(value);
                                 clearFieldError('name');
                             }}
-                            onPhoneChange={setPhone}
+                            onPhoneChange={(value) => {
+                                setPhone(value);
+                                clearFieldError('phone');
+                            }}
                             onSubmit={handleCompleteSubmit}
                         />
                     )}

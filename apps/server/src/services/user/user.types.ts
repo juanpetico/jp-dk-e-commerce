@@ -14,6 +14,7 @@ export interface CreateUserData {
     email: string;
     password: string;
     name?: string;
+    phone?: string;
     role?: "CLIENT" | "ADMIN";
 }
 

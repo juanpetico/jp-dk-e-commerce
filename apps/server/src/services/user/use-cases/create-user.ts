@@ -12,6 +12,7 @@ export const createUserUseCase = async (data: CreateUserData) => {
             email: data.email,
             password: hashedPassword,
             name: data.name ?? null,
+            phone: data.phone?.trim() ? data.phone.trim() : null,
             role: data.role || "CLIENT",
         },
         include: userInclude,

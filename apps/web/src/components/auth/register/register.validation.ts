@@ -26,9 +26,23 @@ export function validatePasswordStep(password: string, confirmPassword: string):
     return errors;
 }
 
-export function validateProfileStep(name: string): RegisterErrors {
+const PHONE_PATTERN = /^\+?[0-9\s()-]+$/;
+
+export function validateProfileStep(name: string, phone: string): RegisterErrors {
+    const trimmedPhone = phone.trim();
+
     if (!name.trim()) {
         return { name: 'El nombre es obligatorio' };
+    }
+
+    if (trimmedPhone) {
+        if (trimmedPhone.length < 8 || trimmedPhone.length > 30) {
+            return { phone: 'Telefono invalido' };
+        }
+
+        if (!PHONE_PATTERN.test(trimmedPhone)) {
+            return { phone: 'Formato de telefono invalido' };
+        }
     }
 
     return {};

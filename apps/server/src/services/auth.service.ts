@@ -11,7 +11,7 @@ import { validateResetTokenUseCase } from "./auth/use-cases/validate-reset-token
 import type { TokenValidationResult } from "./auth/use-cases/validate-reset-token.js";
 
 export const authService = {
-    async register(data: { email: string; password: string; name?: string }) {
+    async register(data: { email: string; password: string; name?: string; phone?: string }) {
         const existingUser = await userService.getUserByEmail(data.email);
         if (existingUser) {
             throw new AppError("User already exists", 400);
@@ -49,6 +49,11 @@ export const authService = {
         });
 
         return { user, token, welcomeCoupon };
+    },
+
+    async isEmailAvailable(email: string) {
+        const existingUser = await userService.getUserByEmail(email.trim());
+        return !existingUser;
     },
 
     async login(email: string, password: string) {

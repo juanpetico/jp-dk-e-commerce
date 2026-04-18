@@ -87,10 +87,20 @@ export default function RegisterProfileStep({
                             value={phone}
                             onChange={(e) => onPhoneChange(e.target.value)}
                             placeholder="+56 9 1234 5678"
-                            className="h-12 pl-10 focus-visible:ring-2 focus-visible:ring-[#78350f]"
+                            className={cn(
+                                'h-12 pl-10 focus-visible:ring-2 focus-visible:ring-[#78350f]',
+                                errors.phone &&
+                                    'border-destructive bg-destructive/10 ring-2 ring-destructive focus-visible:ring-destructive'
+                            )}
                             autoComplete="tel"
                         />
                     </div>
+
+                    {errors.phone && (
+                        <p className="pl-1 text-sm font-medium text-destructive" role="alert">
+                            {errors.phone}
+                        </p>
+                    )}
                 </div>
 
                 <Button

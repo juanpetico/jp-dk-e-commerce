@@ -22,7 +22,16 @@ export const fetchRegister = (email: string, password: string, name: string, pho
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password, name, phone }),
+        body: JSON.stringify({ email: email.trim(), password, name, phone: phone?.trim() || undefined }),
+    });
+};
+
+export const fetchCheckEmailAvailability = (email: string) => {
+    return fetch(`${API_URL}/auth/check-email`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
     });
 };
 

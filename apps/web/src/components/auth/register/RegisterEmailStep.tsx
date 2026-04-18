@@ -12,11 +12,12 @@ import { RegisterErrors } from './register.types';
 interface RegisterEmailStepProps {
     email: string;
     errors: RegisterErrors;
+    isSubmitting?: boolean;
     onEmailChange: (value: string) => void;
     onSubmit: (e: FormEvent) => void;
 }
 
-export default function RegisterEmailStep({ email, errors, onEmailChange, onSubmit }: RegisterEmailStepProps) {
+export default function RegisterEmailStep({ email, errors, isSubmitting, onEmailChange, onSubmit }: RegisterEmailStepProps) {
     return (
         <form onSubmit={onSubmit} className="animate-fade-in space-y-5">
             <div className="space-y-2">
@@ -34,6 +35,7 @@ export default function RegisterEmailStep({ email, errors, onEmailChange, onSubm
                         type="email"
                         value={email}
                         onChange={(e) => onEmailChange(e.target.value)}
+                        disabled={isSubmitting}
                         placeholder="ejemplo@correo.com"
                         className={cn(
                             'h-12 pl-10 focus-visible:ring-2 focus-visible:ring-[#78350f]',
@@ -53,9 +55,10 @@ export default function RegisterEmailStep({ email, errors, onEmailChange, onSubm
 
             <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full cursor-pointer rounded bg-[#78350f] py-6 text-lg font-bold normal-case text-white shadow-lg transition-all hover:bg-[#451a03] active:scale-[0.98]"
             >
-                Continuar
+                {isSubmitting ? 'Verificando...' : 'Continuar'}
             </Button>
 
             <div className="pt-2 text-center text-sm text-muted-foreground">

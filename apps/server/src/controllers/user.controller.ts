@@ -10,6 +10,7 @@ import {
     listUsers,
     login,
     logout,
+    checkEmailAvailability,
     register,
     resetPassword,
     validateResetToken,
@@ -22,6 +23,7 @@ import {
     addressValidation,
     forgotPasswordValidation,
     loginValidation,
+    checkEmailValidation,
     registerValidation,
     resetPasswordValidation,
     updateProfileValidation,
@@ -30,6 +32,7 @@ import {
 export {
     registerValidation,
     loginValidation,
+    checkEmailValidation,
     updateProfileValidation,
     addressValidation,
     forgotPasswordValidation,
@@ -39,6 +42,7 @@ export {
 export const userController = {
     getSession,
     register,
+    checkEmailAvailability,
     login,
     logout,
     forgotPassword,

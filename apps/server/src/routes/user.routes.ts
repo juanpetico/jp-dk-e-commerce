@@ -8,6 +8,7 @@ import {
     addressValidation,
     forgotPasswordValidation,
     resetPasswordValidation,
+    checkEmailValidation,
 } from "../controllers/user.controller.js";
 import { couponController } from "../controllers/coupon.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -17,6 +18,7 @@ const router: Router = Router();
 
 // Public routes
 router.post("/auth/register", registerValidation, userController.register);
+router.post("/auth/check-email", checkEmailValidation, userController.checkEmailAvailability);
 router.post("/auth/login", loginValidation, userController.login);
 router.post("/auth/logout", userController.logout);
 router.get("/auth/session", userController.getSession);
