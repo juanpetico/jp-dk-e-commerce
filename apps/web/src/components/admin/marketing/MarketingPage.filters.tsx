@@ -1,6 +1,7 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import AdminSearchInput from '@/components/admin/shared/AdminSearchInput';
 import { MarketingSortDir, MarketingSortKey, MarketingStatusFilter, MarketingTypeFilter } from './MarketingPage.types';
 
 interface MarketingPageFiltersProps {
@@ -38,16 +39,11 @@ export default function MarketingPageFilters({
 
     return (
         <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full md:max-w-xs">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                    type="text"
-                    placeholder="Buscar por código..."
-                    value={searchRaw}
-                    onChange={(event) => onSearchRawChange(event.target.value)}
-                    className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-            </div>
+            <AdminSearchInput
+                value={searchRaw}
+                onChange={onSearchRawChange}
+                placeholder="Buscar por código..."
+            />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <select

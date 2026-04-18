@@ -3,9 +3,8 @@
 import React, { useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { OrderStatus } from '@/types';
-import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/input';
+import AdminSearchInput from '@/components/admin/shared/AdminSearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePickerWithRange } from '@/components/ui/DateRangePicker';
 import { format } from 'date-fns';
@@ -102,16 +101,11 @@ export default function OrderFilters({ onFilterChange, activeFiltersCount }: Ord
 
     return (
         <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between mb-6">
-            <div className="relative w-full md:max-w-xs">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    type="text"
-                    placeholder="Buscar por nombre, correo o ID..."
-                    value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="pl-10"
-                />
-            </div>
+            <AdminSearchInput
+                value={search}
+                onChange={handleSearchChange}
+                placeholder="Buscar por nombre, correo o ID..."
+            />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
                 <div className="relative">

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
 import { Product } from '@/types';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Table,
     TableBody,
@@ -12,7 +11,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -28,16 +26,20 @@ import TablePagination from '@/components/admin/shared/TablePagination';
 import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { useAdminProducts } from '@/components/admin/products/ProductsClientManager';
 import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import AdminSearchInput from '@/components/admin/shared/AdminSearchInput';
 
 interface ProductsTableProps {
     products: Product[];
 }
 
 export default function ProductsTable({ products }: ProductsTableProps) {
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(searchParams.get('search') ?? '');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PUBLISHED' | 'DRAFT'>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get('category') ?? 'ALL');
     const [currentPage, setCurrentPage] = useState(1);
@@ -83,19 +85,29 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
-    const { setFilteredCount, setExportHandler } = useAdminProducts();
+    const hasFilters = search.trim() !== '' || statusFilter !== 'ALL' || categoryFilter !== 'ALL';
+
+    const { openEditModal, setFilteredCount, setCurrentExportCount, setExportHandlers } = useAdminProducts();
     React.useEffect(() => {
         setFilteredCount(totalItems);
-    }, [totalItems, setFilteredCount]);
+        setCurrentExportCount(hasFilters ? filteredProducts.length : paginatedProducts.length);
+    }, [
+        totalItems,
+        hasFilters,
+        filteredProducts.length,
+        paginatedProducts.length,
+        setFilteredCount,
+        setCurrentExportCount,
+    ]);
 
     React.useEffect(() => {
-        setExportHandler(() => () => {
-            if (filteredProducts.length === 0) {
+        const getRows = (source: Product[]) => {
+            if (source.length === 0) {
                 toast.error('No hay productos para exportar');
-                return;
+                return null;
             }
 
-            const rows = filteredProducts.map((product) => ({
+            return source.map((product) => ({
                 ID: product.id,
                 Nombre: product.name,
                 SKU: product.slug,
@@ -106,18 +118,51 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 'Precio Original': product.originalPrice ?? '-',
                 Stock: (product.variants || []).reduce((acc, variant) => acc + (variant.stock || 0), 0),
             }));
+        };
 
-            exportRowsToExcel(rows, {
-                fileNameBase: 'productos',
-                sheetName: 'Productos',
-            });
-            toast.success('Archivo Excel generado con exito');
+        setExportHandlers({
+            pdfCurrent: () => {
+                const rows = getRows(hasFilters ? filteredProducts : paginatedProducts);
+                if (!rows) return;
+                exportRowsToPdf(rows, {
+                    fileNameBase: 'productos',
+                    title: 'REPORTE DE PRODUCTOS',
+                });
+                toast.success(`Reporte PDF generado (${rows.length} registros, ${hasFilters ? 'filtros actuales' : 'pagina actual'})`);
+            },
+            excelCurrent: () => {
+                const rows = getRows(hasFilters ? filteredProducts : paginatedProducts);
+                if (!rows) return;
+                exportRowsToExcel(rows, {
+                    fileNameBase: 'productos',
+                    sheetName: 'Productos',
+                });
+                toast.success(`Archivo Excel generado (${rows.length} registros, ${hasFilters ? 'filtros actuales' : 'pagina actual'})`);
+            },
+            pdfAll: () => {
+                const rows = getRows(filteredProducts);
+                if (!rows) return;
+                exportRowsToPdf(rows, {
+                    fileNameBase: 'productos',
+                    title: 'REPORTE DE PRODUCTOS',
+                });
+                toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
+            },
+            excelAll: () => {
+                const rows = getRows(filteredProducts);
+                if (!rows) return;
+                exportRowsToExcel(rows, {
+                    fileNameBase: 'productos',
+                    sheetName: 'Productos',
+                });
+                toast.success(`Archivo Excel generado (${rows.length} registros, todos)`);
+            },
         });
 
         return () => {
-            setExportHandler(null);
+            setExportHandlers(null);
         };
-    }, [filteredProducts, setExportHandler]);
+    }, [filteredProducts, paginatedProducts, hasFilters, setExportHandlers]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('es-CL', {
@@ -136,7 +181,20 @@ export default function ProductsTable({ products }: ProductsTableProps) {
         }
     }, [currentPage, totalPages]);
 
-    const hasFilters = search.trim() !== '' || statusFilter !== 'ALL' || categoryFilter !== 'ALL';
+    React.useEffect(() => {
+        const openProductId = searchParams.get('openProduct');
+        if (!openProductId) return;
+
+        const target = products.find((product) => product.id === openProductId);
+        if (!target) return;
+
+        openEditModal(target);
+
+        const nextParams = new URLSearchParams(searchParams.toString());
+        nextParams.delete('openProduct');
+        const nextQuery = nextParams.toString();
+        router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    }, [openEditModal, pathname, products, router, searchParams]);
 
     const clearFilters = () => {
         setSearch('');
@@ -147,15 +205,11 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-                <div className="relative w-full md:max-w-md">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Buscar por nombre, slug o categoria..."
-                        className="pl-10"
-                    />
-                </div>
+                <AdminSearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Buscar por nombre, slug o categoria..."
+                />
 
                 <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>

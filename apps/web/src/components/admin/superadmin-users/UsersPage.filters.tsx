@@ -1,6 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import AdminSearchInput from '@/components/admin/shared/AdminSearchInput';
 import { Button } from '@/components/ui/Button';
 import {
     Select,
@@ -34,15 +33,11 @@ export default function UsersPageFilters({
 }: UsersPageFiltersProps) {
     return (
         <div className="flex flex-col gap-4 rounded border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full md:max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    value={searchInput}
-                    onChange={(event) => onSearchInputChange(event.target.value)}
-                    placeholder="Buscar por email o nombre..."
-                    className="pl-10"
-                />
-            </div>
+            <AdminSearchInput
+                value={searchInput}
+                onChange={onSearchInputChange}
+                placeholder="Buscar por email o nombre..."
+            />
 
             <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
                 <Select value={roleFilter} onValueChange={(value) => onRoleFilterChange(value as UsersRoleFilter)}>

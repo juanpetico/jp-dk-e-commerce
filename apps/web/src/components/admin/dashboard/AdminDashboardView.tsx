@@ -8,6 +8,7 @@ import { DashboardKpiCards } from './DashboardKpiCards';
 import { DashboardSalesTrendChart } from './DashboardSalesTrendChart';
 import { DashboardCategoryChart } from './DashboardCategoryChart';
 import { DashboardRecentOrdersTable } from './DashboardRecentOrdersTable';
+import { DashboardTopProductsTable } from './DashboardTopProductsTable';
 import { DashboardFacade } from '@/hooks/admin/dashboard/types';
 
 interface AdminDashboardViewProps {
@@ -48,18 +49,23 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
 
             <DashboardKpiCards analytics={dashboard.analytics} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <DashboardSalesTrendChart
-                    salesTrendData={dashboard.salesTrendData}
-                    quickRanges={dashboard.quickRanges}
-                    selectedQuickRange={dashboard.selectedQuickRange}
-                    onQuickRangeSelect={dashboard.setQuickRange}
-                    dateRange={dashboard.dateRange}
-                    onDateRangeChange={dashboard.setDateRange}
-                    defaultDateRange={dashboard.defaultDateRange}
-                />
+            <DashboardSalesTrendChart
+                salesTrendData={dashboard.salesTrendData}
+                quickRanges={dashboard.quickRanges}
+                selectedQuickRange={dashboard.selectedQuickRange}
+                onQuickRangeSelect={dashboard.setQuickRange}
+                dateRange={dashboard.dateRange}
+                onDateRangeChange={dashboard.setDateRange}
+                defaultDateRange={dashboard.defaultDateRange}
+            />
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DashboardCategoryChart categoryData={dashboard.categoryData} />
+                <DashboardTopProductsTable
+                    topProducts={dashboard.topProducts}
+                    loading={dashboard.topProductsLoading}
+                    basePath={basePath}
+                />
             </div>
 
             <DashboardRecentOrdersTable
