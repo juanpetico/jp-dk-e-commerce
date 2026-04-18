@@ -1,13 +1,25 @@
 import React from 'react';
-import { Download } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import ExportMenu from '@/components/admin/shared/ExportMenu';
 
 interface OrdersPageHeaderProps {
     ordersCount: number;
-    onExport: () => void;
+    currentExportCount: number;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    onExportPdfAll?: () => void;
+    onExportExcelAll?: () => void;
+    showAllExportOptions?: boolean;
 }
 
-export default function OrdersPageHeader({ ordersCount, onExport }: OrdersPageHeaderProps) {
+export default function OrdersPageHeader({
+    ordersCount,
+    currentExportCount,
+    onExportPdf,
+    onExportExcel,
+    onExportPdfAll,
+    onExportExcelAll,
+    showAllExportOptions,
+}: OrdersPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -22,10 +34,16 @@ export default function OrdersPageHeader({ ordersCount, onExport }: OrdersPageHe
                 <p className="text-sm text-muted-foreground">Gestiona y procesa las ordenes de compra</p>
             </div>
 
-            <Button variant="outline" onClick={onExport} className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Exportar
-            </Button>
+            <ExportMenu
+                disabled={ordersCount === 0}
+                currentCount={currentExportCount}
+                totalCount={ordersCount}
+                onExportPdf={onExportPdf}
+                onExportExcel={onExportExcel}
+                onExportPdfAll={onExportPdfAll}
+                onExportExcelAll={onExportExcelAll}
+                showAllOptions={showAllExportOptions}
+            />
         </div>
     );
 }

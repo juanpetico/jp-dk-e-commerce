@@ -17,6 +17,7 @@ import { Coupon, Order } from '@/types';
 import { fetchAllCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/services/couponService';
 import { fetchAllOrders } from '@/services/orderService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import { getCouponStatus, getCouponStats } from '@/lib/coupon-utils';
 import { shopConfigService, StoreConfig } from '@/services/shopConfigService';
 import { toast } from 'sonner';
@@ -242,13 +243,13 @@ export default function MarketingPageClient() {
 
     const hasActiveFilters = searchRaw !== '' || filterStatus !== 'ALL' || filterType !== 'ALL';
 
-    const handleExport = () => {
-        if (filteredSorted.length === 0) {
+    const getExportRows = (source: EnrichedCoupon[]) => {
+        if (source.length === 0) {
             toast.error('No hay cupones para exportar');
-            return;
+            return null;
         }
 
-        const rows = filteredSorted.map((coupon) => ({
+        return source.map((coupon) => ({
             ID: coupon.id,
             Codigo: coupon.code,
             Descripcion: coupon.description || '-',
@@ -262,12 +263,57 @@ export default function MarketingPageClient() {
             Inicio: coupon.startDate ? new Date(coupon.startDate).toLocaleString('es-CL') : '-',
             Fin: coupon.endDate ? new Date(coupon.endDate).toLocaleString('es-CL') : 'Nunca',
         }));
+    };
+
+    const getCurrentScopeCoupons = () => {
+        if (hasActiveFilters) return filteredSorted;
+        return paginatedCoupons;
+    };
+
+    const getCurrentScopeLabel = () => (hasActiveFilters ? 'filtros actuales' : 'pagina actual');
+
+    const handleExportExcel = () => {
+        const rows = getExportRows(getCurrentScopeCoupons());
+        if (!rows) return;
 
         exportRowsToExcel(rows, {
             fileNameBase: 'marketing-cupones',
             sheetName: 'Marketing',
         });
-        toast.success('Archivo Excel generado con exito');
+        toast.success(`Archivo Excel generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdf = () => {
+        const rows = getExportRows(getCurrentScopeCoupons());
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'marketing-cupones',
+            title: 'REPORTE DE MARKETING',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportExcelAll = () => {
+        const rows = getExportRows(filteredSorted);
+        if (!rows) return;
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'marketing-cupones',
+            sheetName: 'Marketing',
+        });
+        toast.success(`Archivo Excel generado (${rows.length} registros, todos)`);
+    };
+
+    const handleExportPdfAll = () => {
+        const rows = getExportRows(filteredSorted);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'marketing-cupones',
+            title: 'REPORTE DE MARKETING',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
     };
 
     if (loading && coupons.length === 0) {
@@ -301,7 +347,12 @@ export default function MarketingPageClient() {
             <MarketingPageHeader
                 loading={loading}
                 visibleCouponsCount={filteredSorted.length}
-                onExport={handleExport}
+                currentExportCount={hasActiveFilters ? filteredSorted.length : paginatedCoupons.length}
+                onExportPdf={handleExportPdf}
+                onExportExcel={handleExportExcel}
+                onExportPdfAll={handleExportPdfAll}
+                onExportExcelAll={handleExportExcelAll}
+                showAllExportOptions={!hasActiveFilters && filteredSorted.length > paginatedCoupons.length}
                 onCreateCoupon={() => {
                     setEditingCoupon(null);
                     setIsModalOpen(true);

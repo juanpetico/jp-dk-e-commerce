@@ -1,19 +1,30 @@
 import React from 'react';
-import { Download, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import ExportMenu from '@/components/admin/shared/ExportMenu';
 
 interface MarketingPageHeaderProps {
     loading: boolean;
     visibleCouponsCount: number;
+    currentExportCount: number;
     onCreateCoupon: () => void;
-    onExport: () => void;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    onExportPdfAll?: () => void;
+    onExportExcelAll?: () => void;
+    showAllExportOptions?: boolean;
 }
 
 export default function MarketingPageHeader({
     loading,
     visibleCouponsCount,
+    currentExportCount,
     onCreateCoupon,
-    onExport,
+    onExportPdf,
+    onExportExcel,
+    onExportPdfAll,
+    onExportExcelAll,
+    showAllExportOptions,
 }: MarketingPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
@@ -32,15 +43,16 @@ export default function MarketingPageHeader({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={onExport}
+                <ExportMenu
                     disabled={loading || visibleCouponsCount === 0}
-                >
-                    <Download className="h-4 w-4" />
-                    Exportar
-                </Button>
+                    currentCount={currentExportCount}
+                    totalCount={visibleCouponsCount}
+                    onExportPdf={onExportPdf}
+                    onExportExcel={onExportExcel}
+                    onExportPdfAll={onExportPdfAll}
+                    onExportExcelAll={onExportExcelAll}
+                    showAllOptions={showAllExportOptions}
+                />
                 <Button
                     onClick={onCreateCoupon}
                     className="shrink-0 bg-primary text-xs font-bold uppercase tracking-widest text-primary-foreground"

@@ -1,14 +1,27 @@
 import React from 'react';
-import { Download } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import ExportMenu from '@/components/admin/shared/ExportMenu';
 
 interface AuditPageHeaderProps {
     total: number;
     loading: boolean;
-    onExport: () => void;
+    currentExportCount: number;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    onExportPdfAll?: () => void;
+    onExportExcelAll?: () => void;
+    showAllExportOptions?: boolean;
 }
 
-export default function AuditPageHeader({ total, loading, onExport }: AuditPageHeaderProps) {
+export default function AuditPageHeader({
+    total,
+    loading,
+    currentExportCount,
+    onExportPdf,
+    onExportExcel,
+    onExportPdfAll,
+    onExportExcelAll,
+    showAllExportOptions,
+}: AuditPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -27,10 +40,16 @@ export default function AuditPageHeader({ total, loading, onExport }: AuditPageH
                 </p>
             </div>
 
-            <Button variant="outline" className="flex items-center gap-2" onClick={onExport} disabled={loading || total === 0}>
-                <Download className="h-4 w-4" />
-                Exportar
-            </Button>
+            <ExportMenu
+                disabled={loading || total === 0}
+                currentCount={currentExportCount}
+                totalCount={total}
+                onExportPdf={onExportPdf}
+                onExportExcel={onExportExcel}
+                onExportPdfAll={onExportPdfAll}
+                onExportExcelAll={onExportExcelAll}
+                showAllOptions={showAllExportOptions}
+            />
         </div>
     );
 }

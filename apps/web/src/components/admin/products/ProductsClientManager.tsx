@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useRef, useCallback } from 'react';
 import { Plus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Product } from '@/types';
 import AdminProductForm from '@/components/admin/products/AdminProductForm';
 import { createProduct, updateProduct } from '@/services/productService';
@@ -12,7 +13,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 interface AdminProductsContextType {
     openEditModal: (product: Product) => void;
     setFilteredCount: (n: number) => void;
-    setExportHandler: (handler: (() => void) | null) => void;
+    setCurrentExportCount: (n: number) => void;
+    setExportHandlers: (
+        handlers: {
+            pdfCurrent: () => void;
+            excelCurrent: () => void;
+            pdfAll: () => void;
+            excelAll: () => void;
+        } | null
+    ) => void;
 }
 
 const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
@@ -33,7 +42,13 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
     const [filteredCount, setFilteredCount] = useState(0);
-    const [exportHandler, setExportHandler] = useState<(() => void) | null>(null);
+    const [currentExportCount, setCurrentExportCount] = useState(0);
+    const exportHandlersRef = useRef<{
+        pdfCurrent: () => void;
+        excelCurrent: () => void;
+        pdfAll: () => void;
+        excelAll: () => void;
+    } | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -80,9 +95,50 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
         }
     };
 
-    const handleExport = () => {
-        if (exportHandler) {
-            exportHandler();
+    const setExportHandlers = useCallback(
+        (
+            handlers: {
+                pdfCurrent: () => void;
+                excelCurrent: () => void;
+                pdfAll: () => void;
+                excelAll: () => void;
+            } | null
+        ) => {
+            exportHandlersRef.current = handlers;
+        },
+        []
+    );
+
+    const handleExportPdf = () => {
+        if (exportHandlersRef.current) {
+            exportHandlersRef.current.pdfCurrent();
+            return;
+        }
+
+        toast.error('No hay productos para exportar');
+    };
+
+    const handleExportExcel = () => {
+        if (exportHandlersRef.current) {
+            exportHandlersRef.current.excelCurrent();
+            return;
+        }
+
+        toast.error('No hay productos para exportar');
+    };
+
+    const handleExportPdfAll = () => {
+        if (exportHandlersRef.current) {
+            exportHandlersRef.current.pdfAll();
+            return;
+        }
+
+        toast.error('No hay productos para exportar');
+    };
+
+    const handleExportExcelAll = () => {
+        if (exportHandlersRef.current) {
+            exportHandlersRef.current.excelAll();
             return;
         }
 
@@ -90,7 +146,7 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
     };
 
     return (
-        <AdminProductsContext.Provider value={{ openEditModal, setFilteredCount, setExportHandler }}>
+        <AdminProductsContext.Provider value={{ openEditModal, setFilteredCount, setCurrentExportCount, setExportHandlers }}>
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <div className="flex items-baseline gap-3">
@@ -100,15 +156,45 @@ export const ProductsClientManager: React.FC<ProductsClientManagerProps> = ({ ch
                     <p className="text-muted-foreground text-sm">Gestiona el catálogo de tu tienda</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        className="flex items-center gap-2"
-                        onClick={handleExport}
-                        disabled={filteredCount === 0}
-                    >
-                        <Download className="w-4 h-4" />
-                        Exportar
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2" disabled={filteredCount === 0}>
+                                <Download className="w-4 h-4" />
+                                Exportar
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-56 p-1">
+                            <button
+                                className="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                                onClick={handleExportPdf}
+                            >
+                                Exportar PDF ({currentExportCount})
+                            </button>
+                            <button
+                                className="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                                onClick={handleExportExcel}
+                            >
+                                Exportar Excel ({currentExportCount})
+                            </button>
+                            {filteredCount > currentExportCount && (
+                                <>
+                                    <div className="my-1 border-t border-border" />
+                                    <button
+                                        className="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                                        onClick={handleExportPdfAll}
+                                    >
+                                        PDF todos ({filteredCount})
+                                    </button>
+                                    <button
+                                        className="w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                                        onClick={handleExportExcelAll}
+                                    >
+                                        Excel todos ({filteredCount})
+                                    </button>
+                                </>
+                            )}
+                        </PopoverContent>
+                    </Popover>
                     <Button onClick={openCreateModal} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 flex items-center gap-2">
                         <Plus className="w-4 h-4" />
                         Nuevo Producto

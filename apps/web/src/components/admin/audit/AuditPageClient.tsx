@@ -2,12 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { endOfDay, startOfDay } from 'date-fns';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { DateRange } from 'react-day-picker';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import TableEmptyState from '@/components/admin/shared/TableEmptyState';
 import { fetchAuditLogs } from '@/services/auditService';
+import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import { AuditEntry } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -92,85 +92,165 @@ export default function AuditPageClient() {
         setSelectedDateRange(undefined);
     };
 
-    const handleExport = async () => {
+    const getCurrentScopeLabel = () => (hasFilters ? 'filtros actuales' : 'pagina actual');
+
+    const getExportItems = async (scope: 'current' | 'all') => {
         if (total === 0) {
-            return;
+            return null;
         }
 
+        const baseFilters = {
+            ...(entityTypeFilter !== 'ALL' ? { entityType: entityTypeFilter } : {}),
+            ...(debouncedActorQuery ? { actorQuery: debouncedActorQuery } : {}),
+            ...(fromTimestamp && toTimestamp
+                ? {
+                      createdFrom: new Date(fromTimestamp),
+                      createdTo: new Date(toTimestamp),
+                  }
+                : {}),
+        };
+
+        const scopeTotal = scope === 'current' ? (hasFilters ? total : logs.length) : total;
+        const scopeSkip = scope === 'current' && !hasFilters ? skip : 0;
+
+        const pageSize = 100;
+        const requests = [];
+        for (let currentSkip = scopeSkip; currentSkip < scopeSkip + scopeTotal; currentSkip += pageSize) {
+            requests.push(
+                fetchAuditLogs({
+                    ...baseFilters,
+                    take: Math.min(pageSize, scopeSkip + scopeTotal - currentSkip),
+                    skip: currentSkip,
+                })
+            );
+        }
+
+        const pages = await Promise.all(requests);
+        const items = pages.flatMap((page) => page.items);
+
+        if (items.length === 0) {
+            toast.error('No hay registros para exportar');
+            return null;
+        }
+
+        return items;
+    };
+
+    const handleExportPdf = async () => {
         try {
-            const result = await fetchAuditLogs({
-                take: total,
-                skip: 0,
-                ...(entityTypeFilter !== 'ALL' ? { entityType: entityTypeFilter } : {}),
-                ...(debouncedActorQuery ? { actorQuery: debouncedActorQuery } : {}),
-                ...(fromTimestamp && toTimestamp
-                    ? {
-                          createdFrom: new Date(fromTimestamp),
-                          createdTo: new Date(toTimestamp),
-                      }
-                    : {}),
+            const items = await getExportItems('current');
+            if (!items) return;
+
+            const rows = items.map((entry) => ({
+                Fecha: new Date(entry.createdAt).toLocaleString('es-CL'),
+                Actor: entry.actor.name || 'Sin nombre',
+                Email: entry.actor.email,
+                Accion: entry.action,
+                Entidad: entry.entityType,
+                Detalle: entry.newValue || entry.oldValue || '-',
+            }));
+
+            exportRowsToPdf(rows, {
+                fileNameBase: 'auditoria',
+                title: 'REPORTE DE AUDITORIA',
             });
-
-            if (result.items.length === 0) {
-                toast.error('No hay registros para exportar');
-                return;
-            }
-
-            const doc = new jsPDF({ orientation: 'landscape' });
-            const margin = 14;
-            const pageWidth = doc.internal.pageSize.getWidth();
-
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.text('REPORTE DE AUDITORIA', margin, 16);
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Generado: ${new Date().toLocaleString('es-CL')}`, margin, 22);
-            doc.text(`Registros: ${result.total}`, pageWidth - margin, 22, { align: 'right' });
-
-            autoTable(doc, {
-                startY: 28,
-                head: [['Fecha', 'Actor', 'Email', 'Accion', 'Entidad', 'Detalle']],
-                body: result.items.map((entry) => [
-                    new Date(entry.createdAt).toLocaleString('es-CL'),
-                    entry.actor.name || 'Sin nombre',
-                    entry.actor.email,
-                    entry.action,
-                    entry.entityType,
-                    entry.newValue || entry.oldValue || '-',
-                ]),
-                styles: {
-                    fontSize: 8,
-                    cellPadding: 2,
-                    overflow: 'linebreak',
-                },
-                headStyles: {
-                    fillColor: [20, 20, 20],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                },
-                columnStyles: {
-                    0: { cellWidth: 34 },
-                    1: { cellWidth: 36 },
-                    2: { cellWidth: 55 },
-                    3: { cellWidth: 38 },
-                    4: { cellWidth: 30 },
-                    5: { cellWidth: 'auto' },
-                },
-                margin: { left: margin, right: margin },
-            });
-
-            doc.save(`auditoria_${new Date().toISOString().split('T')[0]}.pdf`);
-            toast.success('Reporte PDF generado con exito');
+            toast.success(`Reporte PDF generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
         } catch {
             toast.error('No se pudo exportar el reporte de auditoria');
         }
     };
 
+    const handleExportExcel = async () => {
+        try {
+            const items = await getExportItems('current');
+            if (!items) return;
+
+            exportRowsToExcel(
+                items.map((entry) => ({
+                    Fecha: new Date(entry.createdAt).toLocaleString('es-CL'),
+                    Actor: entry.actor.name || 'Sin nombre',
+                    Email: entry.actor.email,
+                    Accion: entry.action,
+                    Entidad: entry.entityType,
+                    'ID Entidad': entry.entityId,
+                    Detalle: entry.newValue || entry.oldValue || '-',
+                })),
+                {
+                    fileNameBase: 'auditoria',
+                    sheetName: 'Auditoria',
+                }
+            );
+
+            toast.success(`Archivo Excel generado (${items.length} registros, ${getCurrentScopeLabel()})`);
+        } catch {
+            toast.error('No se pudo exportar el reporte de auditoria en Excel');
+        }
+    };
+
+    const handleExportPdfAll = async () => {
+        try {
+            const items = await getExportItems('all');
+            if (!items) return;
+
+            exportRowsToPdf(
+                items.map((entry) => ({
+                    Fecha: new Date(entry.createdAt).toLocaleString('es-CL'),
+                    Actor: entry.actor.name || 'Sin nombre',
+                    Email: entry.actor.email,
+                    Accion: entry.action,
+                    Entidad: entry.entityType,
+                    Detalle: entry.newValue || entry.oldValue || '-',
+                })),
+                {
+                    fileNameBase: 'auditoria',
+                    title: 'REPORTE DE AUDITORIA',
+                }
+            );
+            toast.success(`Reporte PDF generado (${items.length} registros, todos)`);
+        } catch {
+            toast.error('No se pudo exportar el reporte de auditoria');
+        }
+    };
+
+    const handleExportExcelAll = async () => {
+        try {
+            const items = await getExportItems('all');
+            if (!items) return;
+
+            exportRowsToExcel(
+                items.map((entry) => ({
+                    Fecha: new Date(entry.createdAt).toLocaleString('es-CL'),
+                    Actor: entry.actor.name || 'Sin nombre',
+                    Email: entry.actor.email,
+                    Accion: entry.action,
+                    Entidad: entry.entityType,
+                    'ID Entidad': entry.entityId,
+                    Detalle: entry.newValue || entry.oldValue || '-',
+                })),
+                {
+                    fileNameBase: 'auditoria',
+                    sheetName: 'Auditoria',
+                }
+            );
+
+            toast.success(`Archivo Excel generado (${items.length} registros, todos)`);
+        } catch {
+            toast.error('No se pudo exportar el reporte de auditoria en Excel');
+        }
+    };
+
     return (
         <div className="animate-fade-in space-y-6 pb-10 text-foreground">
-            <AuditPageHeader total={total} loading={loading} onExport={() => void handleExport()} />
+            <AuditPageHeader
+                total={total}
+                loading={loading}
+                currentExportCount={hasFilters ? total : logs.length}
+                onExportPdf={() => void handleExportPdf()}
+                onExportExcel={() => void handleExportExcel()}
+                onExportPdfAll={() => void handleExportPdfAll()}
+                onExportExcelAll={() => void handleExportExcelAll()}
+                showAllExportOptions={!hasFilters && total > logs.length}
+            />
 
             <AuditPageFilters
                 actorQueryInput={actorQueryInput}

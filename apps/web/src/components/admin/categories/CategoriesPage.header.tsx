@@ -1,19 +1,30 @@
 import React from 'react';
-import { Download, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import ExportMenu from '@/components/admin/shared/ExportMenu';
 
 interface CategoriesPageHeaderProps {
     loading: boolean;
     totalItems: number;
+    currentExportCount: number;
     onCreate: () => void;
-    onExport: () => void;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    onExportPdfAll?: () => void;
+    onExportExcelAll?: () => void;
+    showAllExportOptions?: boolean;
 }
 
 export default function CategoriesPageHeader({
     loading,
     totalItems,
+    currentExportCount,
     onCreate,
-    onExport,
+    onExportPdf,
+    onExportExcel,
+    onExportPdfAll,
+    onExportExcelAll,
+    showAllExportOptions,
 }: CategoriesPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
@@ -32,15 +43,16 @@ export default function CategoriesPageHeader({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    onClick={onExport}
+                <ExportMenu
                     disabled={loading || totalItems === 0}
-                >
-                    <Download className="h-4 w-4" />
-                    Exportar
-                </Button>
+                    currentCount={currentExportCount}
+                    totalCount={totalItems}
+                    onExportPdf={onExportPdf}
+                    onExportExcel={onExportExcel}
+                    onExportPdfAll={onExportPdfAll}
+                    onExportExcelAll={onExportExcelAll}
+                    showAllOptions={showAllExportOptions}
+                />
 
                 <Button
                     onClick={onCreate}

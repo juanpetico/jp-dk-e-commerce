@@ -15,6 +15,7 @@ import {
     patchCategory,
 } from '@/services/categoryService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import CategoriesBlockedDialog from './CategoriesPage.blocked-dialog';
 import CategoriesCreateDialog from './CategoriesPage.create-dialog';
 import CategoriesPageEmpty from './CategoriesPage.empty';
@@ -241,25 +242,70 @@ export default function CategoriesPageClient() {
         }
     };
 
-    const handleExport = () => {
-        if (filteredCategories.length === 0) {
+    const getExportRows = (source: Category[]) => {
+        if (source.length === 0) {
             toast.error('No hay categorias para exportar');
-            return;
+            return null;
         }
 
-        const rows = filteredCategories.map((category) => ({
+        return source.map((category) => ({
             ID: category.id,
             Nombre: category.name,
             Slug: category.slug,
             Estado: (category.isPublished ?? true) ? 'Visible' : 'Oculta',
             Productos: category._count?.products ?? 0,
         }));
+    };
+
+    const getCurrentScopeCategories = () => {
+        if (hasFilters) return filteredCategories;
+        return paginatedCategories;
+    };
+
+    const getCurrentScopeLabel = () => (hasFilters ? 'filtros actuales' : 'pagina actual');
+
+    const handleExportExcel = () => {
+        const rows = getExportRows(getCurrentScopeCategories());
+        if (!rows) return;
 
         exportRowsToExcel(rows, {
             fileNameBase: 'categorias',
             sheetName: 'Categorias',
         });
-        toast.success('Archivo Excel generado con exito');
+        toast.success(`Archivo Excel generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdf = () => {
+        const rows = getExportRows(getCurrentScopeCategories());
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'categorias',
+            title: 'REPORTE DE CATEGORIAS',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportExcelAll = () => {
+        const rows = getExportRows(filteredCategories);
+        if (!rows) return;
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'categorias',
+            sheetName: 'Categorias',
+        });
+        toast.success(`Archivo Excel generado (${rows.length} registros, todos)`);
+    };
+
+    const handleExportPdfAll = () => {
+        const rows = getExportRows(filteredCategories);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'categorias',
+            title: 'REPORTE DE CATEGORIAS',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
     };
 
     return (
@@ -267,12 +313,17 @@ export default function CategoriesPageClient() {
             <CategoriesPageHeader
                 loading={loading}
                 totalItems={totalItems}
+                currentExportCount={hasFilters ? filteredCategories.length : paginatedCategories.length}
                 onCreate={() => {
                     setCreateName('');
                     setCreateError('');
                     setCreateOpen(true);
                 }}
-                onExport={handleExport}
+                onExportPdf={handleExportPdf}
+                onExportExcel={handleExportExcel}
+                onExportPdfAll={handleExportPdfAll}
+                onExportExcelAll={handleExportExcelAll}
+                showAllExportOptions={!hasFilters && filteredCategories.length > paginatedCategories.length}
             />
 
             <CategoriesPageFilters

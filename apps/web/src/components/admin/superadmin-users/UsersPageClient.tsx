@@ -10,6 +10,7 @@ import TablePagination from '@/components/admin/shared/TablePagination';
 import { AdminUser } from '@/types';
 import { getAdminUsers, getUserById } from '@/services/userService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import UsersPageFilters from './UsersPage.filters';
 import UsersPageHeader from './UsersPage.header';
 import UsersPageTable from './UsersPage.table';
@@ -142,13 +143,13 @@ export default function UsersPageClient() {
         setUsers((prev) => prev.map((user) => (user.id === updated.id ? updated : user)));
     };
 
-    const handleExport = () => {
-        if (users.length === 0) {
+    const getExportRows = (source: AdminUser[]) => {
+        if (source.length === 0) {
             toast.error('No hay usuarios para exportar');
-            return;
+            return null;
         }
 
-        const rows = users.map((user) => ({
+        return source.map((user) => ({
             ID: user.id,
             Email: user.email,
             Nombre: user.name || 'Sin nombre',
@@ -157,12 +158,72 @@ export default function UsersPageClient() {
             'Ultimo Login': user.lastLogin ? new Date(user.lastLogin).toLocaleString('es-CL') : '-',
             Creado: new Date(user.createdAt).toLocaleString('es-CL'),
         }));
+    };
+
+    const getCurrentScopeUsers = () => {
+        if (hasFilters) {
+            return users;
+        }
+
+        return paginatedUsers;
+    };
+
+    const getCurrentScopeLabel = () => (hasFilters ? 'filtros actuales' : 'pagina actual');
+
+    const handleExportExcel = () => {
+        const exportUsers = getCurrentScopeUsers();
+        const rows = getExportRows(exportUsers);
+        if (!rows) return;
 
         exportRowsToExcel(rows, {
             fileNameBase: 'usuarios-admin',
             sheetName: 'Usuarios',
         });
-        toast.success('Archivo Excel generado con exito');
+        toast.success(`Archivo Excel generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdf = () => {
+        const exportUsers = getCurrentScopeUsers();
+        const rows = getExportRows(exportUsers);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'usuarios-admin',
+            title: 'REPORTE DE USUARIOS ADMIN',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdfAll = () => {
+        if (users.length === 0) {
+            toast.error('No hay usuarios para exportar');
+            return;
+        }
+
+        const rows = getExportRows(users);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'usuarios-admin',
+            title: 'REPORTE DE USUARIOS ADMIN',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
+    };
+
+    const handleExportExcelAll = () => {
+        if (users.length === 0) {
+            toast.error('No hay usuarios para exportar');
+            return;
+        }
+
+        const rows = getExportRows(users);
+        if (!rows) return;
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'usuarios-admin',
+            sheetName: 'Usuarios',
+        });
+        toast.success(`Archivo Excel generado (${rows.length} registros, todos)`);
     };
 
     const totalPages = Math.max(1, Math.ceil(users.length / itemsPerPage));
@@ -179,7 +240,16 @@ export default function UsersPageClient() {
 
     return (
         <div className="animate-fade-in space-y-6 text-foreground">
-            <UsersPageHeader loading={loading} usersCount={users.length} onExport={handleExport} />
+            <UsersPageHeader
+                loading={loading}
+                usersCount={users.length}
+                currentExportCount={hasFilters ? users.length : paginatedUsers.length}
+                onExportPdf={handleExportPdf}
+                onExportExcel={handleExportExcel}
+                onExportPdfAll={handleExportPdfAll}
+                onExportExcelAll={handleExportExcelAll}
+                showAllExportOptions={!hasFilters && users.length > paginatedUsers.length}
+            />
 
             <UsersPageFilters
                 searchInput={searchInput}

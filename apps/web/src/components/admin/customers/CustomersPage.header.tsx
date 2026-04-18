@@ -1,14 +1,27 @@
 import React from 'react';
-import { Download } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import ExportMenu from '@/components/admin/shared/ExportMenu';
 
 interface CustomersPageHeaderProps {
     loading: boolean;
     visibleCount: number;
-    onExport: () => void;
+    currentExportCount: number;
+    onExportPdf: () => void;
+    onExportExcel: () => void;
+    onExportPdfAll?: () => void;
+    onExportExcelAll?: () => void;
+    showAllExportOptions?: boolean;
 }
 
-export default function CustomersPageHeader({ loading, visibleCount, onExport }: CustomersPageHeaderProps) {
+export default function CustomersPageHeader({
+    loading,
+    visibleCount,
+    currentExportCount,
+    onExportPdf,
+    onExportExcel,
+    onExportPdfAll,
+    onExportExcelAll,
+    showAllExportOptions,
+}: CustomersPageHeaderProps) {
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -25,15 +38,16 @@ export default function CustomersPageHeader({ loading, visibleCount, onExport }:
                 <p className="text-sm text-muted-foreground">Gestiona usuarios y roles</p>
             </div>
 
-            <Button
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={onExport}
+            <ExportMenu
                 disabled={loading || visibleCount === 0}
-            >
-                <Download className="h-4 w-4" />
-                Exportar
-            </Button>
+                currentCount={currentExportCount}
+                totalCount={visibleCount}
+                onExportPdf={onExportPdf}
+                onExportExcel={onExportExcel}
+                onExportPdfAll={onExportPdfAll}
+                onExportExcelAll={onExportExcelAll}
+                showAllOptions={showAllExportOptions}
+            />
         </div>
     );
 }

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { fetchUsers } from '@/services/userService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
+import { exportRowsToPdf } from '@/services/exportPdfService';
 import { User as Customer } from '@/types';
 import { useUser } from '@/store/UserContext';
 import CustomersPageFilters from './CustomersPage.filters';
@@ -98,13 +99,13 @@ export default function CustomersPageClient() {
         setRoleFilter('ALL');
     };
 
-    const handleExport = () => {
-        if (filteredCustomers.length === 0) {
+    const getExportRows = (source: Customer[]) => {
+        if (source.length === 0) {
             toast.error('No hay clientes para exportar');
-            return;
+            return null;
         }
 
-        const rows = filteredCustomers.map((customer) => ({
+        return source.map((customer) => ({
             ID: customer.id,
             Nombre: customer.name || 'Sin nombre',
             Email: customer.email,
@@ -115,18 +116,74 @@ export default function CustomersPageClient() {
             'Ultimo Pedido': customer.lastOrder ? new Date(customer.lastOrder).toLocaleString('es-CL') : '-',
             Registro: customer.createdAt ? new Date(customer.createdAt).toLocaleString('es-CL') : '-',
         }));
+    };
+
+    const getCurrentScopeCustomers = () => {
+        if (hasFilters) return filteredCustomers;
+        return paginatedCustomers;
+    };
+
+    const getCurrentScopeLabel = () => (hasFilters ? 'filtros actuales' : 'pagina actual');
+
+    const handleExportExcel = () => {
+        const scopedCustomers = getCurrentScopeCustomers();
+        const rows = getExportRows(scopedCustomers);
+        if (!rows) return;
 
         exportRowsToExcel(rows, {
             fileNameBase: 'clientes',
             sheetName: 'Clientes',
         });
-        toast.success('Archivo Excel generado con exito');
+        toast.success(`Archivo Excel generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdf = () => {
+        const scopedCustomers = getCurrentScopeCustomers();
+        const rows = getExportRows(scopedCustomers);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'clientes',
+            title: 'REPORTE DE CLIENTES',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportExcelAll = () => {
+        const rows = getExportRows(filteredCustomers);
+        if (!rows) return;
+
+        exportRowsToExcel(rows, {
+            fileNameBase: 'clientes',
+            sheetName: 'Clientes',
+        });
+        toast.success(`Archivo Excel generado (${rows.length} registros, todos)`);
+    };
+
+    const handleExportPdfAll = () => {
+        const rows = getExportRows(filteredCustomers);
+        if (!rows) return;
+
+        exportRowsToPdf(rows, {
+            fileNameBase: 'clientes',
+            title: 'REPORTE DE CLIENTES',
+        });
+        toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
     };
 
     return (
         <>
             <div className="animate-fade-in space-y-6 text-foreground">
-                <CustomersPageHeader loading={loading} visibleCount={filteredCustomers.length} onExport={handleExport} />
+                <CustomersPageHeader
+                    loading={loading}
+                    visibleCount={filteredCustomers.length}
+                    currentExportCount={hasFilters ? filteredCustomers.length : paginatedCustomers.length}
+                    onExportPdf={handleExportPdf}
+                    onExportExcel={handleExportExcel}
+                    onExportPdfAll={handleExportPdfAll}
+                    onExportExcelAll={handleExportExcelAll}
+                    showAllExportOptions={!hasFilters && filteredCustomers.length > paginatedCustomers.length}
+                />
 
                 <CustomersPageStats
                     totalClientes={totalClientes}

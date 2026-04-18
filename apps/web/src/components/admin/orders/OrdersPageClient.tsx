@@ -15,6 +15,7 @@ import TablePagination from '@/components/admin/shared/TablePagination';
 import OrderDetailModal from './OrderDetailModal';
 import OrderFilters from './OrderFilters';
 import { exportOrdersExcel } from './OrdersPage.csv';
+import { exportOrdersPdf } from './OrdersPage.pdf';
 import OrdersPageHeader from './OrdersPage.header';
 import OrdersPageSkeleton from './OrdersPage.skeleton';
 import OrdersPageTable from './OrdersPage.table';
@@ -31,6 +32,7 @@ export default function OrdersPageClient() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filters, setFilters] = useState<OrderFiltersState>({});
+    const [searchInput, setSearchInput] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -45,7 +47,7 @@ export default function OrdersPageClient() {
                 const { search, ...serverFilters } = currentFilters;
                 const data = await fetchAllOrders(serverFilters);
 
-                const normalizedSearch = search?.trim().toLowerCase();
+                const normalizedSearch = searchInput.trim().toLowerCase();
                 const filteredData = normalizedSearch
                     ? data.filter((order) => {
                           const customerName = (order.customerName || order.user?.name || '').toLowerCase();
@@ -67,7 +69,7 @@ export default function OrdersPageClient() {
                 setLoading(false);
             }
         },
-        [filters]
+        [filters, searchInput]
     );
 
     useEffect(() => {
@@ -89,6 +91,7 @@ export default function OrdersPageClient() {
     }, [itemsPerPage]);
 
     const handleFilterChange = (newFilters: OrderFiltersState) => {
+        setSearchInput(newFilters.search?.trim() || '');
         setFilters(newFilters);
         setCurrentPage(1);
     };
@@ -110,14 +113,64 @@ export default function OrdersPageClient() {
         }
     };
 
-    const handleExportExcel = () => {
+    const getCurrentScopeOrders = () => {
         if (!orders || orders.length === 0) {
             toast.error('No hay pedidos para exportar');
-            return;
+            return null;
         }
 
-        exportOrdersExcel(orders);
-        toast.success('Archivo Excel generado con exito');
+        const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== '');
+        if (hasFilters) {
+            return orders;
+        }
+
+        return paginatedOrders;
+    };
+
+    const getCurrentScopeLabel = () => {
+        const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== '');
+        return hasFilters ? 'filtros actuales' : 'pagina actual';
+    };
+
+    const getAllOrders = () => {
+        if (!orders || orders.length === 0) {
+            toast.error('No hay pedidos para exportar');
+            return null;
+        }
+
+        return orders;
+    };
+
+    const handleExportExcel = () => {
+        const exportOrders = getCurrentScopeOrders();
+        if (!exportOrders) return;
+
+        exportOrdersExcel(exportOrders);
+        toast.success(`Archivo Excel generado (${exportOrders.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportPdf = () => {
+        const exportOrders = getCurrentScopeOrders();
+        if (!exportOrders) return;
+
+        exportOrdersPdf(exportOrders);
+        toast.success(`Reporte PDF generado (${exportOrders.length} registros, ${getCurrentScopeLabel()})`);
+    };
+
+    const handleExportExcelAll = () => {
+        const exportOrders = getAllOrders();
+        if (!exportOrders) return;
+
+        exportOrdersExcel(exportOrders);
+        toast.success(`Archivo Excel generado (${exportOrders.length} registros, todos)`);
+    };
+
+    const handleExportPdfAll = () => {
+        const exportOrders = getAllOrders();
+        if (!exportOrders) return;
+
+        exportOrdersPdf(exportOrders);
+        toast.success(`Reporte PDF generado (${exportOrders.length} registros, todos)`);
     };
 
     const activeFiltersCount = useMemo(() => {
@@ -127,10 +180,19 @@ export default function OrdersPageClient() {
     const totalItems = orders?.length || 0;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedOrders = orders?.slice(startIndex, startIndex + itemsPerPage) || [];
+    const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== '');
 
     return (
         <div className="animate-fade-in space-y-6 pb-10">
-            <OrdersPageHeader ordersCount={orders?.length || 0} onExport={handleExportExcel} />
+            <OrdersPageHeader
+                ordersCount={orders?.length || 0}
+                currentExportCount={hasFilters ? orders?.length || 0 : paginatedOrders.length}
+                onExportPdf={handleExportPdf}
+                onExportExcel={handleExportExcel}
+                onExportPdfAll={handleExportPdfAll}
+                onExportExcelAll={handleExportExcelAll}
+                showAllExportOptions={!hasFilters && (orders?.length || 0) > paginatedOrders.length}
+            />
 
             <OrderFilters onFilterChange={handleFilterChange} activeFiltersCount={activeFiltersCount} />
 
