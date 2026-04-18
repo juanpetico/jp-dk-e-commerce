@@ -51,3 +51,8 @@ yarn-error.log*
 *.log
 build_error.log
 build_output.log
+
+# MCPS y Skills
+.mcp
+.skills
+skills-lock.json

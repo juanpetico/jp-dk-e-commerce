@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import { shopConfigService } from '@/services/shopConfigService';
 import SettingsPageGeneralCard from './SettingsPage.general-card';
 import SettingsPageHeader from './SettingsPage.header';
@@ -12,6 +13,7 @@ import { formatThousandsCL, parseThousandsCL, validateSettingsForm } from './Set
 
 export default function SettingsPageClient() {
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [form, setForm] = useState<SettingsForm>({
         storeName: '',
@@ -21,25 +23,27 @@ export default function SettingsPageClient() {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const config = await shopConfigService.getConfig();
-                setForm({
-                    storeName: config.storeName || '',
-                    supportEmail: config.supportEmail || '',
-                    baseShippingCost: formatThousandsCL(config.baseShippingCost ?? 0),
-                    freeShippingThreshold: formatThousandsCL(config.freeShippingThreshold ?? 0),
-                });
-            } catch {
-                toast.error('Error al cargar la configuración');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadSettings();
+    const loadSettings = useCallback(async () => {
+        try {
+            setError(null);
+            setLoading(true);
+            const config = await shopConfigService.getConfig();
+            setForm({
+                storeName: config.storeName || '',
+                supportEmail: config.supportEmail || '',
+                baseShippingCost: formatThousandsCL(config.baseShippingCost ?? 0),
+                freeShippingThreshold: formatThousandsCL(config.freeShippingThreshold ?? 0),
+            });
+        } catch {
+            setError('Error al cargar la configuración');
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        void loadSettings();
+    }, [loadSettings]);
 
     const handleSave = async () => {
         const validationErrors = validateSettingsForm(form);
@@ -74,6 +78,10 @@ export default function SettingsPageClient() {
                 <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Cargando configuración...
             </div>
         );
+    }
+
+    if (error) {
+        return <AdminDataLoadErrorState message={error} onRetry={loadSettings} />;
     }
 
     return (

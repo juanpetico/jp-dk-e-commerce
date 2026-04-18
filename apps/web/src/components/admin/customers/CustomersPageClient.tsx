@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomerDrawer from '@/components/admin/users/CustomerDrawer';
-import { Button } from '@/components/ui/Button';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { fetchUsers } from '@/services/userService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
@@ -35,6 +35,20 @@ export default function CustomersPageClient() {
     const [drawerUserId, setDrawerUserId] = useState<string | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
+    const loadCustomers = useCallback(async () => {
+        try {
+            setLoading(true);
+            const data = await fetchUsers({ role: roleFilter });
+            setCustomers(data);
+            setError(null);
+        } catch (requestError) {
+            console.error('Error loading users:', requestError);
+            setError('Error al cargar la lista de clientes. Por favor intenta de nuevo.');
+        } finally {
+            setLoading(false);
+        }
+    }, [roleFilter]);
+
     const openDrawer = (id: string) => {
         setDrawerUserId(id);
         setDrawerOpen(true);
@@ -43,22 +57,8 @@ export default function CustomersPageClient() {
     const closeDrawer = () => setDrawerOpen(false);
 
     useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                setLoading(true);
-                const data = await fetchUsers({ role: roleFilter });
-                setCustomers(data);
-                setError(null);
-            } catch (requestError) {
-                console.error('Error loading users:', requestError);
-                setError('Error al cargar la lista de clientes. Por favor intenta de nuevo.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadUsers();
-    }, [roleFilter]);
+        void loadCustomers();
+    }, [loadCustomers]);
 
     const filteredCustomers = useMemo(() => {
         return customers.filter((customer) => {
@@ -208,12 +208,11 @@ export default function CustomersPageClient() {
                                 <p className="animate-pulse text-muted-foreground">Cargando clientes...</p>
                             </div>
                         ) : error ? (
-                            <div className="flex flex-col items-center justify-center gap-3 py-20 text-destructive">
-                                <p>{error}</p>
-                                <Button variant="outline" onClick={() => window.location.reload()}>
-                                    Reintentar
-                                </Button>
-                            </div>
+                            <AdminDataLoadErrorState
+                                message={error}
+                                onRetry={loadCustomers}
+                                minHeightClassName="min-h-[320px]"
+                            />
                         ) : (
                             <CustomersPageTable
                                 customers={paginatedCustomers}

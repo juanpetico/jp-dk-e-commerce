@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/Button';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import UserEditModal from '@/components/admin/users/UserEditModal';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { AdminUser } from '@/types';
@@ -270,10 +270,7 @@ export default function UsersPageClient() {
                             <span>Cargando usuarios...</span>
                         </div>
                     ) : error ? (
-                        <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 p-6 text-center text-destructive">
-                            <p>{error}</p>
-                            <Button variant="outline" onClick={loadUsers}>Reintentar</Button>
-                        </div>
+                        <AdminDataLoadErrorState message={error} onRetry={loadUsers} minHeightClassName="min-h-[280px]" />
                     ) : (
                         <UsersPageTable
                             users={paginatedUsers}

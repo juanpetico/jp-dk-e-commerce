@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import { DashboardCartFunnel, DashboardCustomerRetention, DashboardRetentionRange, Order, Product } from '@/types';
 import { fetchProducts } from '@/services/productService';
 import { fetchAllOrders, fetchDashboardCartFunnel, fetchDashboardCustomerRetention } from '@/services/orderService';
@@ -10,9 +9,11 @@ export function useAdminDashboardData() {
     const [cartFunnel, setCartFunnel] = useState<DashboardCartFunnel | null>(null);
     const [customerRetention, setCustomerRetention] = useState<DashboardCustomerRetention | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const loadData = useCallback(async (retentionRange: DashboardRetentionRange = '1M') => {
         try {
+            setError(null);
             setLoading(true);
             const [productsData, ordersData, cartFunnelData, customerRetentionData] = await Promise.all([
                 fetchProducts(),
@@ -26,7 +27,7 @@ export function useAdminDashboardData() {
             setCustomerRetention(customerRetentionData);
         } catch (error) {
             console.error('Error loading dashboard data:', error);
-            toast.error('Error al cargar datos del dashboard');
+            setError('Error al cargar datos del dashboard');
         } finally {
             setLoading(false);
         }
@@ -43,6 +44,7 @@ export function useAdminDashboardData() {
         customerRetention,
         setOrders,
         loading,
+        error,
         reloadData: loadData,
     };
 }

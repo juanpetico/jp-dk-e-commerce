@@ -12,6 +12,8 @@ import {
 
 export interface DashboardFacade {
     loading: boolean;
+    error: string | null;
+    reloadData: (retentionRange?: DashboardRetentionRange) => Promise<void>;
 
     orders: Order[];
 

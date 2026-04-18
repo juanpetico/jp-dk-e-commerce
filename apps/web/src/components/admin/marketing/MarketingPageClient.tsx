@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Loader2, RefreshCw, Tag } from 'lucide-react';
+import { Loader2, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
 import CouponModal from '@/components/admin/coupon';
 import TriggersConfigCard from '@/components/admin/marketing/TriggersConfigCard';
@@ -326,16 +327,7 @@ export default function MarketingPageClient() {
     }
 
     if (error && !loading) {
-        return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
-                <AlertTriangle className="h-12 w-12 text-destructive" />
-                <p className="text-center text-muted-foreground">{error}</p>
-                <Button onClick={loadData} variant="outline" className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Reintentar
-                </Button>
-            </div>
-        );
+        return <AdminDataLoadErrorState message={error} onRetry={loadData} />;
     }
 
     const totalRevenue = enrichedCoupons.reduce((sum, coupon) => sum + coupon._stats.revenue, 0);

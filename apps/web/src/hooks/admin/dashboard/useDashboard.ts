@@ -74,6 +74,8 @@ export function useDashboard(): DashboardFacade {
 
     return {
         loading: data.loading,
+        error: data.error,
+        reloadData: data.reloadData,
         orders: data.orders,
 
         analytics,

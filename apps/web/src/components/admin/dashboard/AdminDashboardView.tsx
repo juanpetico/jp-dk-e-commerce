@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import OrderDetailModal from '@/components/admin/orders/OrderDetailModal';
 import ReportModal from '@/components/admin/shared/ReportModal';
 import { AdminDashboardHeader } from './AdminDashboardHeader';
@@ -18,6 +19,10 @@ interface AdminDashboardViewProps {
 }
 
 export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewProps) {
+    if (dashboard.error && !dashboard.loading) {
+        return <AdminDataLoadErrorState message={dashboard.error} onRetry={dashboard.reloadData} />;
+    }
+
     if (dashboard.loading) {
         return (
             <div className="flex h-[50vh] items-center justify-center">

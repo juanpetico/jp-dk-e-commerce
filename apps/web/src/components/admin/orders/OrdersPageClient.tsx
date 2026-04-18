@@ -11,6 +11,7 @@ import {
 } from '@/services/orderService';
 import { Order, OrderStatus } from '@/types';
 import TableEmptyState from '@/components/admin/shared/TableEmptyState';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import OrderDetailModal from './OrderDetailModal';
 import OrderFilters from './OrderFilters';
@@ -28,6 +29,7 @@ export default function OrdersPageClient() {
 
     const [orders, setOrders] = useState<Order[] | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,6 +46,7 @@ export default function OrdersPageClient() {
         async (currentFilters = filters) => {
             try {
                 setLoading(true);
+                setError(null);
                 const { search, ...serverFilters } = currentFilters;
                 const data = await fetchAllOrders(serverFilters);
 
@@ -62,9 +65,9 @@ export default function OrdersPageClient() {
                     : data;
 
                 setOrders(filteredData);
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                toast.error('Error al cargar las ordenes');
+            } catch (requestError) {
+                console.error('Error loading orders:', requestError);
+                setError('Error al cargar las ordenes');
             } finally {
                 setLoading(false);
             }
@@ -198,6 +201,10 @@ export default function OrdersPageClient() {
 
             {!isMounted || orders === null ? (
                 <OrdersPageSkeleton />
+            ) : error ? (
+                <div className="rounded border border-border bg-card shadow-sm">
+                    <AdminDataLoadErrorState message={error} onRetry={loadOrders} />
+                </div>
             ) : orders.length === 0 ? (
                 <div className="rounded border border-border bg-card p-24 text-center shadow-sm">
                     <TableEmptyState

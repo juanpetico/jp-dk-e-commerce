@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import { Category } from '@/types';
 import { toast } from 'sonner';
 import { confirm } from '@/utils/confirm';
@@ -352,10 +353,7 @@ export default function CategoriesPageClient() {
                         <p className="animate-pulse text-muted-foreground">Cargando categorías...</p>
                     </div>
                 ) : error ? (
-                    <div className="flex flex-col items-center justify-center gap-3 py-20 text-destructive">
-                        <p>{error}</p>
-                        <Button variant="outline" onClick={() => void load()}>Reintentar</Button>
-                    </div>
+                    <AdminDataLoadErrorState message={error} onRetry={load} minHeightClassName="min-h-[320px]" />
                 ) : filteredCategories.length === 0 ? (
                     <CategoriesPageEmpty
                         hasAnyCategories={categories.length > 0}
