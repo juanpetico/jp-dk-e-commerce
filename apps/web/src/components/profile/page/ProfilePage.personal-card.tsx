@@ -3,7 +3,7 @@ import { ProfilePersonalCardProps } from './ProfilePage.types';
 
 export default function ProfilePagePersonalCard({ name, email, phone, onEdit }: ProfilePersonalCardProps) {
     return (
-        <div className="bg-card text-card-foreground rounded-lg border border-gray-300 p-6 mb-8 shadow-sm relative">
+        <div className="bg-card text-card-foreground rounded-lg border border-gray-300 dark:border-border p-6 mb-8 shadow-sm relative">
             <button
                 onClick={onEdit}
                 className="absolute top-6 right-6 text-muted-foreground hover:text-foreground transition-colors p-1.5"

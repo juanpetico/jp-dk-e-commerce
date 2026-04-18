@@ -9,7 +9,7 @@ export default function OrderDetailsContactCard({
 }: OrderDetailsContactCardProps) {
     return (
         <div className="flex-1 space-y-6">
-            <div className="bg-card border border-gray-300 rounded-lg p-6 shadow-sm">
+            <div className="bg-card border border-gray-300 dark:border-border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="text-green-600 dark:text-green-400">
                         <Check className="w-5 h-5" />
@@ -21,7 +21,7 @@ export default function OrderDetailsContactCard({
                 </div>
             </div>
 
-            <div className="bg-card border border-gray-300 rounded-lg p-8 shadow-sm">
+            <div className="bg-card border border-gray-300 dark:border-border rounded-lg p-8 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                     <div>
                         <h3 className="font-bold text-sm mb-4 text-foreground">Informacion de contacto</h3>

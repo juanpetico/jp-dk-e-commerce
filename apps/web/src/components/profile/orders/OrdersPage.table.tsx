@@ -21,7 +21,7 @@ import {
 
 export default function OrdersPageTable({ orders }: OrdersPageTableProps) {
     return (
-        <div className="bg-card rounded-md border border-gray-300 overflow-hidden">
+        <div className="bg-card rounded-md border border-gray-300 dark:border-border overflow-hidden">
             <Table>
                 <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">

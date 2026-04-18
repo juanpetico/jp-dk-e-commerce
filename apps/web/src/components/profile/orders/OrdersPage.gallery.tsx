@@ -12,7 +12,7 @@ export default function OrdersPageGallery({ orders }: OrdersPageGalleryProps) {
 
                 return (
                     <Link key={order.id} href={`/orders/${order.id}`} className="block">
-                        <div className="bg-card text-card-foreground border border-gray-300 rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
+                        <div className="bg-card text-card-foreground border border-gray-300 dark:border-border rounded-lg p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
                             <div className="mb-6 inline-flex items-center gap-2">
                                 {getOrderStatusIcon(order.status)}
                                 <div>
@@ -44,7 +44,7 @@ export default function OrdersPageGallery({ orders }: OrdersPageGalleryProps) {
                                 </div>
                             )}
 
-                            <div className="border-t border-gray-200 pt-4">
+                            <div className="border-t border-gray-200 dark:border-border pt-4">
                                 <div className="flex justify-between items-center mb-1">
                                     <p className="text-sm font-bold text-foreground">Cantidad: {getOrderItemsCount(order)}</p>
                                     {savingsAmount > 0 && (

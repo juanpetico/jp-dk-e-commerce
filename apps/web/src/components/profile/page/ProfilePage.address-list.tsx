@@ -25,7 +25,7 @@ export default function ProfilePageAddressList({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {sortedAddresses.length === 0 ? (
-                    <div className="md:col-span-2 flex flex-col items-center justify-center py-12 bg-card text-card-foreground rounded-lg border border-gray-300">
+                    <div className="md:col-span-2 flex flex-col items-center justify-center py-12 bg-card text-card-foreground rounded-lg border border-gray-300 dark:border-border">
                         <div className="bg-muted p-4 rounded-full mb-4">
                             <span className="text-3xl">📍</span>
                         </div>
@@ -47,7 +47,7 @@ export default function ProfilePageAddressList({
                             className={`bg-card text-card-foreground rounded-lg border ${
                                 address.isDefault
                                     ? 'border-[var(--color-amber-900)] ring-1 ring-[var(--color-amber-900)]'
-                                    : 'border-gray-300'
+                                    : 'border-gray-300 dark:border-border'
                             } p-6 shadow-sm relative group`}
                         >
                             <div className="absolute top-6 right-6 flex items-center gap-1">

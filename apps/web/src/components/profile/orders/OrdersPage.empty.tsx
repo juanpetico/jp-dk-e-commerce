@@ -5,7 +5,7 @@ import { OrdersPageEmptyProps } from './OrdersPage.types';
 
 export default function OrdersPageEmpty({ isFilterActive, onResetFilters }: OrdersPageEmptyProps) {
     return (
-        <div className="flex flex-col items-center justify-center py-16 bg-card rounded-lg border border-gray-300">
+        <div className="flex flex-col items-center justify-center py-16 bg-card rounded-lg border border-gray-300 dark:border-border">
             <div className="bg-muted p-4 rounded-full mb-4">
                 <Grid3x3 className="w-8 h-8 text-muted-foreground" />
             </div>

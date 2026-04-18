@@ -5,8 +5,8 @@ import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 export default function OrderDetailsSummaryCard({ order }: OrderDetailsSummaryCardProps) {
     return (
         <div className="lg:w-[400px]">
-            <div className="bg-card border border-gray-300 rounded-lg p-6 shadow-sm">
-                <div className="space-y-6 mb-8 border-b border-gray-200 pb-8">
+            <div className="bg-card border border-gray-300 dark:border-border rounded-lg p-6 shadow-sm">
+                <div className="space-y-6 mb-8 border-b border-gray-200 dark:border-border pb-8">
                     {order.items.map((item) => {
                         const savingsAmount = getOrderSavingsForItem(item);
 
@@ -47,7 +47,7 @@ export default function OrderDetailsSummaryCard({ order }: OrderDetailsSummaryCa
                     })}
                 </div>
 
-                <div className="space-y-3 pb-6 border-b border-gray-200 mb-6">
+                <div className="space-y-3 pb-6 border-b border-gray-200 dark:border-border mb-6">
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal</span>
                         <span className="text-foreground">{formatOrderPrice(order.subtotal)}</span>
