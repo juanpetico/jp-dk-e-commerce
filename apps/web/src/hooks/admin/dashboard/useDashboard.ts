@@ -30,7 +30,7 @@ export function useDashboard(): DashboardFacade {
 
     const setRetentionQuickRange = (range: DashboardRetentionRange) => {
         setSelectedRetentionQuickRange(range);
-        void data.reloadData(range);
+        void data.reloadCustomerRetention(range);
     };
 
     const attributionDateRange = useMemo(
@@ -85,6 +85,7 @@ export function useDashboard(): DashboardFacade {
         topProducts: topProducts.topProducts,
         topProductsLoading: topProducts.loading,
         customerRetention: data.customerRetention,
+        customerRetentionLoading: data.loadingCustomerRetention,
 
         dateRange: dateRange.dateRange,
         defaultDateRange: dateRange.defaultDateRange,

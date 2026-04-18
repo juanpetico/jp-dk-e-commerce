@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { CategorySalesPoint } from '@/lib/dashboard/types';
 
@@ -64,14 +65,19 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
     );
 
     return (
-        <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px]">
-            <h3 className="font-bold text-sm uppercase tracking-wide mb-4 text-foreground">
-                Ventas por Categoría ({totalUnits} uds)
-            </h3>
+        <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[360px]">
+            <div className="flex items-start justify-between gap-3 mb-4">
+                <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">
+                    Ventas por Categoría - {totalUnits} unidades
+                </h3>
+                <span className="p-1 text-muted-foreground">
+                    <PieChartIcon className="h-5 w-5" />
+                </span>
+            </div>
 
-            <div className="w-full h-[380px] min-w-0 relative [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
+            <div className="w-full h-[320px] min-w-0 relative [&_.recharts-wrapper]:!outline-none [&_.recharts-surface]:!outline-none [&_*:focus]:!outline-none">
                 {chartData.length > 0 ? (
-                    <ResponsiveContainer width="99%" height={300} minWidth={1} debounce={50}>
+                    <ResponsiveContainer width="99%" height={280} minWidth={1} debounce={50}>
                         <PieChart style={{ outline: 'none' }} tabIndex={-1} role="img" aria-label="Ventas por categoría">
                             <Pie
                                 data={chartData}
@@ -128,7 +134,7 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
                 )}
 
                 {chartData.length > 0 && (
-                    <div className="absolute top-0 left-0 right-0 h-[215px] flex items-center justify-center pointer-events-none">
+                    <div className="absolute top-0 left-0 right-0 h-[190px] flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <p className="text-[10px] uppercase font-bold text-muted-foreground">Total</p>
                             <p className="text-xl font-display font-black text-foreground">{totalUnits}</p>

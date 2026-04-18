@@ -77,6 +77,7 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
                     metrics={dashboard.customerRetention}
                     quickRanges={dashboard.retentionQuickRanges}
                     selectedQuickRange={dashboard.selectedRetentionQuickRange}
+                    loading={dashboard.customerRetentionLoading}
                     onQuickRangeSelect={dashboard.setRetentionQuickRange}
                 />
             </div>

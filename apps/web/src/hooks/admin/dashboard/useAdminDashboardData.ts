@@ -8,10 +8,12 @@ interface UseAdminDashboardDataResult {
     orders: Order[];
     cartFunnel: DashboardCartFunnel | null;
     customerRetention: DashboardCustomerRetention | null;
+    loadingCustomerRetention: boolean;
     setOrders: Dispatch<SetStateAction<Order[]>>;
     loading: boolean;
     error: string | null;
     reloadData: (retentionRange?: DashboardRetentionRange) => Promise<void>;
+    reloadCustomerRetention: (range: DashboardRetentionRange) => Promise<void>;
 }
 
 export function useAdminDashboardData(): UseAdminDashboardDataResult {
@@ -19,6 +21,7 @@ export function useAdminDashboardData(): UseAdminDashboardDataResult {
     const [orders, setOrders] = useState<Order[]>([]);
     const [cartFunnel, setCartFunnel] = useState<DashboardCartFunnel | null>(null);
     const [customerRetention, setCustomerRetention] = useState<DashboardCustomerRetention | null>(null);
+    const [loadingCustomerRetention, setLoadingCustomerRetention] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +47,19 @@ export function useAdminDashboardData(): UseAdminDashboardDataResult {
         }
     }, []);
 
+    const loadCustomerRetention = useCallback(async (range: DashboardRetentionRange) => {
+        try {
+            setLoadingCustomerRetention(true);
+            const customerRetentionData = await fetchDashboardCustomerRetention(range);
+            setCustomerRetention(customerRetentionData);
+        } catch (error) {
+            console.error('Error loading customer retention data:', error);
+            setError('Error al cargar datos de retencion de clientes');
+        } finally {
+            setLoadingCustomerRetention(false);
+        }
+    }, []);
+
     useEffect(() => {
         void loadData();
     }, [loadData]);
@@ -53,9 +69,11 @@ export function useAdminDashboardData(): UseAdminDashboardDataResult {
         orders,
         cartFunnel,
         customerRetention,
+        loadingCustomerRetention,
         setOrders,
         loading,
         error,
         reloadData: loadData,
+        reloadCustomerRetention: loadCustomerRetention,
     };
 }

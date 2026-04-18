@@ -6,18 +6,26 @@ interface DashboardCustomerRetentionCardProps {
     metrics: DashboardCustomerRetention | null;
     quickRanges: DashboardRetentionRange[];
     selectedQuickRange: DashboardRetentionRange;
+    loading: boolean;
     onQuickRangeSelect: (range: DashboardRetentionRange) => void;
 }
+
+const RETENTION_COMPARISON_LABEL: Record<DashboardRetentionRange, string> = {
+    '1D': 'vs dia anterior',
+    '7D': 'vs 7 dias anteriores',
+    '1M': 'vs mes anterior',
+};
 
 export function DashboardCustomerRetentionCard({
     metrics,
     quickRanges,
     selectedQuickRange,
+    loading,
     onQuickRangeSelect,
 }: DashboardCustomerRetentionCardProps) {
-    if (!metrics) {
+    if (!metrics || loading) {
         return (
-            <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px]">
+            <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[430px]">
                 <p className="text-sm text-muted-foreground">Cargando retención de clientes...</p>
             </div>
         );
@@ -30,15 +38,16 @@ export function DashboardCustomerRetentionCard({
     const newShare = Math.max(0, 100 - repeatShare);
     const growthPositive = metrics.retentionGrowth >= 0;
     const growthLabel = `${growthPositive ? '+' : ''}${metrics.retentionGrowth.toFixed(1)}%`;
+    const comparisonLabel = RETENTION_COMPARISON_LABEL[selectedQuickRange];
 
     return (
-        <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[480px] flex flex-col">
+        <div className="min-w-0 bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm h-[360px] flex flex-col">
             <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                     <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">Retención de Clientes</h3>
                     <p className="text-xs text-muted-foreground mt-1">Clientes recurrentes vs nuevos</p>
                 </div>
-                <span className="bg-slate-700 p-2 rounded-lg text-white shadow-md shadow-slate-700/20">
+                <span className="p-1 text-muted-foreground">
                     <Users className="w-5 h-5" />
                 </span>
             </div>
@@ -54,7 +63,7 @@ export function DashboardCustomerRetentionCard({
                     )}
                 >
                     {growthPositive ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-                    {growthLabel} vs periodo anterior
+                    {growthLabel} {comparisonLabel}
                 </span>
             </div>
 

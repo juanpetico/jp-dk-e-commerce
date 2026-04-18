@@ -24,6 +24,7 @@ export interface DashboardFacade {
     topProducts: TopProduct[];
     topProductsLoading: boolean;
     customerRetention: DashboardCustomerRetention | null;
+    customerRetentionLoading: boolean;
 
     dateRange: DashboardDateRange | undefined;
     defaultDateRange: DashboardDateRange;
