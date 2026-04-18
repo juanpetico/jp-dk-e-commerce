@@ -29,14 +29,14 @@ export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32">
                 <div className="flex justify-between items-start w-full">
                     <div>
-                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Órdenes Activas</p>
-                        <h3 className="font-display text-2xl font-bold mt-1 text-foreground">{analytics.activeOrders}</h3>
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Órdenes Pendientes</p>
+                        <h3 className="font-display text-2xl font-bold mt-1 text-foreground">{analytics.pendingOrders}</h3>
                     </div>
                     <span className="bg-blue-600 p-2 rounded-lg text-white shadow-md shadow-blue-600/20">
                         <Truck className="w-5 h-5" />
                     </span>
                 </div>
-                <div className="text-xs text-muted-foreground">Confirmadas o Enviadas</div>
+                <div className="text-xs text-muted-foreground">Estado pendiente por gestionar</div>
             </div>
 
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32">

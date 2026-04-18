@@ -4,7 +4,7 @@ export type DashboardQuickRange = '1D' | '5D' | '1M' | '6M' | 'YTD' | '1Y' | 'AL
 
 export interface DashboardAnalytics {
     totalSales: number;
-    activeOrders: number;
+    pendingOrders: number;
     aov: number;
     abandonedCartRate: number;
     abandonedCartCount: number;

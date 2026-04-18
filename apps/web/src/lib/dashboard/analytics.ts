@@ -46,9 +46,7 @@ export function calculateDashboardAnalytics(
         .filter((order) => order.status !== 'CANCELLED')
         .reduce((acc, order) => acc + order.total, 0);
 
-    const activeOrders = orders.filter(
-        (order) => order.status === 'CONFIRMED' || order.status === 'SHIPPED'
-    ).length;
+    const pendingOrders = orders.filter((order) => order.status === 'PENDING').length;
 
     const validOrdersCount = orders.filter((order) => order.status !== 'CANCELLED').length;
     const aov = validOrdersCount > 0 ? totalSales / validOrdersCount : 0;
@@ -58,7 +56,7 @@ export function calculateDashboardAnalytics(
 
     return {
         totalSales,
-        activeOrders,
+        pendingOrders,
         aov,
         abandonedCartRate: abandonedCartFunnel?.abandonedRate ?? 0,
         abandonedCartCount: abandonedCartFunnel?.abandonedCarts ?? 0,

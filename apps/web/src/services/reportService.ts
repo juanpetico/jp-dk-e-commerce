@@ -5,9 +5,10 @@ import { Order } from '../types';
 interface ReportData {
     analytics: {
         totalSales: number;
-        activeOrders: number;
+        pendingOrders: number;
         aov: number;
         lowStockCount: number;
+        lowStockThreshold: number;
     };
     categoryData: { name: string; value: number }[];
     dateRange: { from?: Date; to?: Date };
@@ -64,9 +65,12 @@ export const generateDashboardReport = async (data: ReportData): Promise<Blob> =
     yPos += 10;
     const kpiData = [
         ['Ventas Totales', formatPrice(data.analytics.totalSales)],
-        ['Órdenes Activas', data.analytics.activeOrders.toString()],
+        ['Órdenes Pendientes', data.analytics.pendingOrders.toString()],
         ['Ticket Promedio', formatPrice(data.analytics.aov)],
-        ['Alerta Stock', data.analytics.lowStockCount.toString() + ' productos']
+        [
+            'Alerta Stock',
+            `${data.analytics.lowStockCount} productos (variantes <= ${data.analytics.lowStockThreshold})`,
+        ]
     ];
 
     autoTable(doc, {
