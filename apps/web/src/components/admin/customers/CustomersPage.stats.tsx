@@ -14,7 +14,7 @@ export default function CustomersPageStats({
 }: CustomersPageStatsProps) {
     return (
         <div className="grid grid-cols-3 gap-3">
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-300 dark:border-border bg-card p-4">
                 <div className="shrink-0 rounded-lg bg-primary/10 p-2">
                     <Users className="h-4 w-4 text-primary" />
                 </div>
@@ -24,7 +24,7 @@ export default function CustomersPageStats({
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-300 dark:border-border bg-card p-4">
                 <div className="shrink-0 rounded-lg bg-primary/10 p-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
@@ -36,7 +36,7 @@ export default function CustomersPageStats({
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-3 rounded-xl border border-gray-300 dark:border-border bg-card p-4">
                 <div className="shrink-0 rounded-lg bg-primary/10 p-2">
                     <UserPlus className="h-4 w-4 text-primary" />
                 </div>

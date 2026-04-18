@@ -36,7 +36,7 @@ export default function TriggersConfigCard() {
             <button
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
-                className="w-full p-5 border-b border-border bg-muted/20 hover:bg-muted/40 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                className="w-full p-5 border-b border-border hover:bg-muted/90 transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 aria-expanded={isExpanded}
             >
                 <div className="flex items-center justify-between">
