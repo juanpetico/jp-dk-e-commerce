@@ -1,7 +1,7 @@
 import { endOfDay, startOfDay, startOfYear, subDays, subMonths, subYears } from 'date-fns';
 import { DashboardDateRange, DashboardQuickRange } from './types';
 
-export const DASHBOARD_QUICK_RANGES: DashboardQuickRange[] = ['1D', '5D', '1M', '6M', 'YTD', '1Y', 'ALL'];
+export const DASHBOARD_QUICK_RANGES: DashboardQuickRange[] = ['1D', '7D', '1M', '6M', 'YTD', '1Y', 'ALL'];
 
 export function getDefaultDashboardDateRange(baseDate: Date = new Date()): DashboardDateRange {
     return {
@@ -22,8 +22,8 @@ export function resolveDashboardQuickRange(
         case '1D':
             from = startOfDay(subDays(today, 1));
             break;
-        case '5D':
-            from = startOfDay(subDays(today, 5));
+        case '7D':
+            from = startOfDay(subDays(today, 7));
             break;
         case '1M':
             from = startOfDay(subMonths(today, 1));

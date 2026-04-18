@@ -47,7 +47,13 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
                 }}
             />
 
-            <DashboardKpiCards analytics={dashboard.analytics} />
+            <DashboardKpiCards
+                analytics={dashboard.analytics}
+                marketingAttribution={dashboard.marketingAttribution}
+                attributionQuickRanges={dashboard.attributionQuickRanges}
+                selectedAttributionQuickRange={dashboard.selectedAttributionQuickRange}
+                onAttributionQuickRangeSelect={dashboard.setAttributionQuickRange}
+            />
 
             <DashboardSalesTrendChart
                 salesTrendData={dashboard.salesTrendData}

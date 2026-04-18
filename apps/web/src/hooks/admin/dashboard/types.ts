@@ -2,7 +2,9 @@ import { Order, TopProduct } from '@/types';
 import {
     CategorySalesPoint,
     DashboardAnalytics,
+    DashboardAttributionQuickRange,
     DashboardDateRange,
+    MarketingAttributionMetrics,
     DashboardQuickRange,
     SalesTrendPoint,
 } from '@/lib/dashboard/types';
@@ -13,6 +15,7 @@ export interface DashboardFacade {
     orders: Order[];
 
     analytics: DashboardAnalytics;
+    marketingAttribution: MarketingAttributionMetrics;
     salesTrendData: SalesTrendPoint[];
     categoryData: CategorySalesPoint[];
     topProducts: TopProduct[];
@@ -24,6 +27,10 @@ export interface DashboardFacade {
     quickRanges: DashboardQuickRange[];
     setQuickRange: (range: DashboardQuickRange) => void;
     setDateRange: (range: DashboardDateRange | undefined) => void;
+
+    attributionQuickRanges: DashboardAttributionQuickRange[];
+    selectedAttributionQuickRange: DashboardAttributionQuickRange;
+    setAttributionQuickRange: (range: DashboardAttributionQuickRange) => void;
 
     currentPage: number;
     itemsPerPage: number;

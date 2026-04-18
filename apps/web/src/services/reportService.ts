@@ -6,7 +6,11 @@ interface ReportData {
     analytics: {
         totalSales: number;
         pendingOrders: number;
-        aov: number;
+        couponAttributedRevenue: number;
+        couponAttributedRevenueRate: number;
+        couponOrdersCount: number;
+        couponOrdersRate: number;
+        validOrdersCount: number;
         lowStockCount: number;
         lowStockThreshold: number;
     };
@@ -66,7 +70,14 @@ export const generateDashboardReport = async (data: ReportData): Promise<Blob> =
     const kpiData = [
         ['Ventas Totales', formatPrice(data.analytics.totalSales)],
         ['Órdenes Pendientes', data.analytics.pendingOrders.toString()],
-        ['Ticket Promedio', formatPrice(data.analytics.aov)],
+        [
+            'Impacto Marketing (Revenue)',
+            `${data.analytics.couponAttributedRevenueRate.toFixed(1)}% (${formatPrice(data.analytics.couponAttributedRevenue)} de ${formatPrice(data.analytics.totalSales)})`,
+        ],
+        [
+            'Órdenes con Cupón',
+            `${data.analytics.couponOrdersRate.toFixed(1)}% (${data.analytics.couponOrdersCount}/${data.analytics.validOrdersCount})`,
+        ],
         [
             'Alerta Stock',
             `${data.analytics.lowStockCount} productos (variantes <= ${data.analytics.lowStockThreshold})`,

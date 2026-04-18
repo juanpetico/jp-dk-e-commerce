@@ -1,9 +1,10 @@
-import { isSameDay, eachDayOfInterval, startOfDay, endOfDay } from 'date-fns';
+import { isSameDay, eachDayOfInterval, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { Order, Product } from '@/types';
 import { isProductLowStock, normalizeLowStockThreshold } from '@/lib/stock/stock-status';
 import {
     CategorySalesPoint,
     DashboardAnalytics,
+    MarketingAttributionMetrics,
     DashboardDateRange,
     SalesTrendPoint,
 } from './types';
@@ -33,6 +34,7 @@ function readCategoryIdFromRuntime(value: unknown): string | null {
 export function calculateDashboardAnalytics(
     orders: Order[],
     products: Product[],
+    dateRange: DashboardDateRange | undefined,
     abandonedCartFunnel: {
         abandonedRate: number;
         abandonedCarts: number;
@@ -42,14 +44,26 @@ export function calculateDashboardAnalytics(
     } | null,
     lowStockThreshold?: number
 ): DashboardAnalytics {
-    const totalSales = orders
-        .filter((order) => order.status !== 'CANCELLED')
-        .reduce((acc, order) => acc + order.total, 0);
+    const from = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const to = dateRange?.to ? endOfDay(dateRange.to) : from ? endOfDay(from) : null;
 
-    const pendingOrders = orders.filter((order) => order.status === 'PENDING').length;
+    const ordersInRange = from && to
+        ? orders.filter((order) => isWithinInterval(new Date(order.createdAt), { start: from, end: to }))
+        : orders;
 
-    const validOrdersCount = orders.filter((order) => order.status !== 'CANCELLED').length;
+    const validOrders = ordersInRange.filter((order) => order.status !== 'CANCELLED');
+    const totalSales = validOrders.reduce((acc, order) => acc + order.total, 0);
+
+    const pendingOrders = ordersInRange.filter((order) => order.status === 'PENDING').length;
+
+    const validOrdersCount = validOrders.length;
     const aov = validOrdersCount > 0 ? totalSales / validOrdersCount : 0;
+
+    const couponOrders = validOrders.filter((order) => !!order.couponId);
+    const couponOrdersCount = couponOrders.length;
+    const couponAttributedRevenue = couponOrders.reduce((acc, order) => acc + order.total, 0);
+    const couponAttributedRevenueRate = totalSales > 0 ? (couponAttributedRevenue / totalSales) * 100 : 0;
+    const couponOrdersRate = validOrdersCount > 0 ? (couponOrdersCount / validOrdersCount) * 100 : 0;
 
     const normalizedLowStockThreshold = normalizeLowStockThreshold(lowStockThreshold);
     const lowStockCount = products.filter((product) => isProductLowStock(product, normalizedLowStockThreshold)).length;
@@ -58,6 +72,11 @@ export function calculateDashboardAnalytics(
         totalSales,
         pendingOrders,
         aov,
+        couponAttributedRevenue,
+        couponAttributedRevenueRate,
+        couponOrdersCount,
+        couponOrdersRate,
+        validOrdersCount,
         abandonedCartRate: abandonedCartFunnel?.abandonedRate ?? 0,
         abandonedCartCount: abandonedCartFunnel?.abandonedCarts ?? 0,
         abandonedCartEligibleCount: abandonedCartFunnel?.eligibleCarts ?? 0,
@@ -145,4 +164,33 @@ export function buildDashboardCategoryData(orders: Order[]): CategorySalesPoint[
     return Array.from(catMap.entries())
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
+}
+
+export function calculateMarketingAttributionMetrics(
+    orders: Order[],
+    dateRange: DashboardDateRange | undefined
+): MarketingAttributionMetrics {
+    const from = dateRange?.from ? startOfDay(dateRange.from) : null;
+    const to = dateRange?.to ? endOfDay(dateRange.to) : from ? endOfDay(from) : null;
+
+    const ordersInRange = from && to
+        ? orders.filter((order) => isWithinInterval(new Date(order.createdAt), { start: from, end: to }))
+        : orders;
+
+    const validOrders = ordersInRange.filter((order) => order.status !== 'CANCELLED');
+    const totalSales = validOrders.reduce((acc, order) => acc + order.total, 0);
+
+    const couponOrders = validOrders.filter((order) => !!order.couponId);
+    const couponOrdersCount = couponOrders.length;
+    const couponAttributedRevenue = couponOrders.reduce((acc, order) => acc + order.total, 0);
+    const couponAttributedRevenueRate = totalSales > 0 ? (couponAttributedRevenue / totalSales) * 100 : 0;
+    const couponOrdersRate = validOrders.length > 0 ? (couponOrdersCount / validOrders.length) * 100 : 0;
+
+    return {
+        couponAttributedRevenue,
+        couponAttributedRevenueRate,
+        couponOrdersCount,
+        couponOrdersRate,
+        validOrdersCount: validOrders.length,
+    };
 }

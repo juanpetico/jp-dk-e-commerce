@@ -1,13 +1,25 @@
-import { AlertTriangle, DollarSign, ShoppingBag, TrendingUp, Truck, ShoppingCart } from 'lucide-react';
-import { DashboardAnalytics } from '@/lib/dashboard/types';
-import { formatPrice } from '@/lib/utils';
+import { AlertTriangle, DollarSign, Megaphone, TrendingUp, Truck, ShoppingCart } from 'lucide-react';
+import { DashboardAnalytics, DashboardAttributionQuickRange, MarketingAttributionMetrics } from '@/lib/dashboard/types';
+import { cn, formatPrice } from '@/lib/utils';
 
 interface DashboardKpiCardsProps {
     analytics: DashboardAnalytics;
+    marketingAttribution: MarketingAttributionMetrics;
+    attributionQuickRanges: DashboardAttributionQuickRange[];
+    selectedAttributionQuickRange: DashboardAttributionQuickRange;
+    onAttributionQuickRangeSelect: (range: DashboardAttributionQuickRange) => void;
 }
 
-export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
+export function DashboardKpiCards({
+    analytics,
+    marketingAttribution,
+    attributionQuickRanges,
+    selectedAttributionQuickRange,
+    onAttributionQuickRangeSelect,
+}: DashboardKpiCardsProps) {
     const abandonedRateLabel = `${analytics.abandonedCartRate.toFixed(1)}%`;
+    const attributedRevenueRateLabel = `${marketingAttribution.couponAttributedRevenueRate.toFixed(1)}%`;
+    const couponOrdersRateLabel = `${marketingAttribution.couponOrdersRate.toFixed(1)}%`;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -42,14 +54,35 @@ export function DashboardKpiCards({ analytics }: DashboardKpiCardsProps) {
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32">
                 <div className="flex justify-between items-start w-full">
                     <div>
-                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Ticket Promedio</p>
-                        <h3 className="font-display text-2xl font-bold mt-1 text-foreground">{formatPrice(analytics.aov)}</h3>
+                        <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Impacto Marketing</p>
                     </div>
-                    <span className="bg-purple-600 p-2 rounded-lg text-white shadow-md shadow-purple-600/20">
-                        <ShoppingBag className="w-5 h-5" />
+                    <span className="bg-fuchsia-700 p-2 rounded-lg text-white shadow-md shadow-fuchsia-700/20">
+                        <Megaphone className="w-5 h-5" />
                     </span>
                 </div>
-                <div className="text-xs text-muted-foreground">Por orden válida</div>
+
+                <div className="flex items-center justify-between gap-3 w-full">
+                    <h3 className="font-display text-2xl font-bold text-foreground">{attributedRevenueRateLabel}</h3>
+                    <div className="flex items-center gap-2">
+                        {attributionQuickRanges.map((range) => (
+                            <button
+                                key={range}
+                                onClick={() => onAttributionQuickRangeSelect(range)}
+                                className={cn(
+                                    'text-[10px] px-1 py-0.5 transition-colors',
+                                    selectedAttributionQuickRange === range
+                                        ? 'font-bold text-foreground'
+                                        : 'font-medium text-muted-foreground hover:text-foreground'
+                                )}
+                            >
+                                {range}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                    {couponOrdersRateLabel} ordenes con cupón ({marketingAttribution.couponOrdersCount}/{marketingAttribution.validOrdersCount})
+                </div>
             </div>
 
             <div className="bg-card dark:bg-card border border-gray-300 dark:border-border p-6 rounded-xl shadow-sm flex flex-col justify-between h-32 relative">
