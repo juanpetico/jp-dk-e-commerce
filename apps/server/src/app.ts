@@ -24,6 +24,26 @@ const parseOrigins = (): string[] => {
     return ["http://localhost:3000", "http://localhost:3001"];
 };
 
+const buildCorsOptions = () => {
+    const allowedOrigins = parseOrigins();
+    const vercelSuffix = process.env.CORS_VERCEL_SUFFIX;
+
+    return {
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+            if (!origin) return callback(null, true);
+            const isAllowed =
+                allowedOrigins.includes(origin) ||
+                (!!vercelSuffix && origin.endsWith(vercelSuffix));
+            if (isAllowed) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+    };
+};
+
 const isDev = process.env.NODE_ENV !== "production";
 
 const globalLimiter = rateLimit({
@@ -49,7 +69,7 @@ const createApp = (): Express => {
     app.set("trust proxy", 1);
 
     app.use(helmet());
-    app.use(cors({ origin: parseOrigins(), credentials: true }));
+    app.use(cors(buildCorsOptions()));
     app
         .disable("x-powered-by")
         .use(express.json({ limit: '1mb' }))
