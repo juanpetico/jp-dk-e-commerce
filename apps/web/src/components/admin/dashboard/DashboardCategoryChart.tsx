@@ -128,7 +128,7 @@ export function DashboardCategoryChart({ categoryData, colors = DEFAULT_COLORS }
                 )}
 
                 {chartData.length > 0 && (
-                    <div className="absolute top-0 left-0 right-0 h-[270px] flex items-center justify-center pointer-events-none">
+                    <div className="absolute top-0 left-0 right-0 h-[215px] flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <p className="text-[10px] uppercase font-bold text-muted-foreground">Total</p>
                             <p className="text-xl font-display font-black text-foreground">{totalUnits}</p>
