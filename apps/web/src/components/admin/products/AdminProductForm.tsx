@@ -78,7 +78,11 @@ const AdminProductForm: React.FC<AdminProductFormProps> = ({ isOpen, onClose, on
     return createPortal(
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
-            onClick={onClose}
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    onClose();
+                }
+            }}
         >
             <div
                 className="bg-background rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-2 border-foreground/20"
