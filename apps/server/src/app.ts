@@ -15,6 +15,7 @@ import couponRoutes from "./routes/coupon.routes.js";
 import shopConfigRoutes from "./routes/shop-config.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import automationRoutes from "./routes/automation.routes.js";
+import seedRoutes from "./routes/seed.routes.js";
 
 const parseOrigins = (): string[] => {
     const raw = process.env.CORS_ORIGINS;
@@ -22,6 +23,26 @@ const parseOrigins = (): string[] => {
         return raw.split(",").map(o => o.trim()).filter(Boolean);
     }
     return ["http://localhost:3000", "http://localhost:3001"];
+};
+
+const buildCorsOptions = () => {
+    const allowedOrigins = parseOrigins();
+    const vercelSuffix = process.env.CORS_VERCEL_SUFFIX;
+
+    return {
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+            if (!origin) return callback(null, true);
+            const isAllowed =
+                allowedOrigins.includes(origin) ||
+                (!!vercelSuffix && origin.endsWith(vercelSuffix));
+            if (isAllowed) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+    };
 };
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -49,7 +70,7 @@ const createApp = (): Express => {
     app.set("trust proxy", 1);
 
     app.use(helmet());
-    app.use(cors({ origin: parseOrigins(), credentials: true }));
+    app.use(cors(buildCorsOptions()));
     app
         .disable("x-powered-by")
         .use(express.json({ limit: '1mb' }))
@@ -78,6 +99,7 @@ const createApp = (): Express => {
     app.use("/api/shop-config", shopConfigRoutes);
     app.use("/api", auditRoutes);
     app.use("/api/automation", automationRoutes);
+    app.use("/api/internal", seedRoutes);
 
     app.use((req, res) => {
         res.status(404).json({ success: false, message: "Route not found" });
