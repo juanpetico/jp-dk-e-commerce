@@ -15,6 +15,7 @@ import couponRoutes from "./routes/coupon.routes.js";
 import shopConfigRoutes from "./routes/shop-config.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import automationRoutes from "./routes/automation.routes.js";
+import seedRoutes from "./routes/seed.routes.js";
 
 const parseOrigins = (): string[] => {
     const raw = process.env.CORS_ORIGINS;
@@ -98,6 +99,7 @@ const createApp = (): Express => {
     app.use("/api/shop-config", shopConfigRoutes);
     app.use("/api", auditRoutes);
     app.use("/api/automation", automationRoutes);
+    app.use("/api/internal", seedRoutes);
 
     app.use((req, res) => {
         res.status(404).json({ success: false, message: "Route not found" });
