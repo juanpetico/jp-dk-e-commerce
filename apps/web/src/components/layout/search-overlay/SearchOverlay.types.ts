@@ -18,6 +18,8 @@ export interface SearchOverlayHeaderProps {
     inputRef: RefObject<HTMLInputElement | null>;
     onChangeSearchTerm: (value: string) => void;
     onClear: () => void;
+    onInputBlur: () => void;
+    onSubmitSearch: () => void;
     onClose: () => void;
 }
 

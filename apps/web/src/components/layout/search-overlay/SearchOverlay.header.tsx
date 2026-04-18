@@ -1,3 +1,4 @@
+import { FocusEvent } from 'react';
 import { Search, X } from 'lucide-react';
 import { SearchOverlayHeaderProps } from './SearchOverlay.types';
 
@@ -6,8 +7,17 @@ export default function SearchOverlayHeader({
     inputRef,
     onChangeSearchTerm,
     onClear,
+    onInputBlur,
+    onSubmitSearch,
     onClose,
 }: SearchOverlayHeaderProps) {
+    const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+        const nextFocusedElement = event.relatedTarget as HTMLElement | null;
+        if (nextFocusedElement && !nextFocusedElement.closest('[data-search-overlay-root]')) {
+            onInputBlur();
+        }
+    };
+
     return (
         <div className="relative pt-6 px-4 md:px-8 pb-4">
             <div className="max-w-4xl mx-auto w-full">
@@ -19,6 +29,13 @@ export default function SearchOverlayHeader({
                             type="text"
                             value={searchTerm}
                             onChange={(event) => onChangeSearchTerm(event.target.value)}
+                            onBlur={handleBlur}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    onSubmitSearch();
+                                }
+                            }}
                             className="bg-transparent text-foreground text-lg font-medium focus:outline-none w-full placeholder-muted-foreground"
                             placeholder="Buscar productos..."
                         />

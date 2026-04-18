@@ -1,5 +1,6 @@
 import { OrderDetailsSummaryCardProps } from './OrderDetailsPage.types';
 import { formatOrderPrice, getOrderSavingsForItem } from './OrderDetailsPage.utils';
+import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 
 export default function OrderDetailsSummaryCard({ order }: OrderDetailsSummaryCardProps) {
     return (
@@ -12,7 +13,17 @@ export default function OrderDetailsSummaryCard({ order }: OrderDetailsSummaryCa
                         return (
                             <div key={item.id} className="flex gap-4">
                                 <div className="relative w-16 h-16 bg-muted rounded flex-shrink-0 overflow-hidden">
-                                    <img src={item.product.images[0]?.url} alt={item.product.name} className="w-full h-full object-cover" />
+                                    <img
+                                        src={item.product.images[0]?.url || getProductImageFallbackDataUrl()}
+                                        alt={item.product.name}
+                                        onError={(event) => {
+                                            const target = event.currentTarget;
+                                            if (target.src !== getProductImageFallbackDataUrl()) {
+                                                target.src = getProductImageFallbackDataUrl();
+                                            }
+                                        }}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
 
                                 <div className="flex-1">

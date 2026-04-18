@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 import { OrdersPageGalleryProps } from './OrdersPage.types';
 import { formatOrderPrice, getOrderItemsCount, getOrderSavingsAmount, getOrderStatusIcon, translateOrderStatus } from './OrdersPage.utils';
 
@@ -24,8 +25,14 @@ export default function OrdersPageGallery({ orders }: OrdersPageGalleryProps) {
                                 <div className="flex flex-col gap-4 mb-6">
                                     <div className="w-full aspect-square bg-muted rounded overflow-hidden">
                                         <img
-                                            src={firstItem.product.images[0]?.url}
+                                            src={firstItem.product.images[0]?.url || getProductImageFallbackDataUrl()}
                                             alt={firstItem.product.name}
+                                            onError={(event) => {
+                                                const target = event.currentTarget;
+                                                if (target.src !== getProductImageFallbackDataUrl()) {
+                                                    target.src = getProductImageFallbackDataUrl();
+                                                }
+                                            }}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>

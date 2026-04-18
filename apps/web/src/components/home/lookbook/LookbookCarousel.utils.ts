@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 
 const CAROUSEL_GAP = 16;
 
@@ -21,5 +22,5 @@ export const getCarouselContainerStyle = (viewportWidth: number): CSSProperties 
 };
 
 export const getFallbackImageDataUrl = () => {
-    return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E";
+    return getProductImageFallbackDataUrl();
 };

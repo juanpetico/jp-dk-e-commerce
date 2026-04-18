@@ -10,6 +10,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { generateOrderPDF } from '@/services/orderReportService';
+import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 import { OrdersPageTableProps } from './OrdersPage.types';
 import {
     formatOrderPrice,
@@ -42,8 +43,14 @@ export default function OrdersPageTable({ orders }: OrdersPageTableProps) {
                                         {firstItem && (
                                             <div className="w-10 h-10 bg-muted rounded overflow-hidden">
                                                 <img
-                                                    src={firstItem.product.images[0]?.url}
+                                                    src={firstItem.product.images[0]?.url || getProductImageFallbackDataUrl()}
                                                     alt={firstItem.product.name}
+                                                    onError={(event) => {
+                                                        const target = event.currentTarget;
+                                                        if (target.src !== getProductImageFallbackDataUrl()) {
+                                                            target.src = getProductImageFallbackDataUrl();
+                                                        }
+                                                    }}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>

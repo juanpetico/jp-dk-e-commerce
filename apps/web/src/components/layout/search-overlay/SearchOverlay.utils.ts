@@ -1,11 +1,10 @@
 import { Product } from '@/types';
+import { getProductImageFallbackDataUrl } from '@/lib/product-image-fallback';
 import { SearchOverlayCategory } from './SearchOverlay.types';
 
 const CATEGORY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-const FALLBACK_IMAGE =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect fill='%23e5e7eb' width='1' height='1'/%3E%3C/svg%3E";
 
-export const getProductFallbackImage = () => FALLBACK_IMAGE;
+export const getProductFallbackImage = () => getProductImageFallbackDataUrl();
 
 export const formatProductPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(price);

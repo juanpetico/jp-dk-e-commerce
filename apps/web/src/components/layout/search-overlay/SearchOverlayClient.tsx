@@ -1,6 +1,7 @@
 'use client';
 
 import { MouseEvent, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { fetchProducts } from '@/services/productService';
 import { Product } from '@/types';
 import SearchOverlayFooter from './SearchOverlay.footer';
@@ -16,6 +17,7 @@ import {
 } from './SearchOverlay.utils';
 
 export default function SearchOverlayClient({ isOpen, onClose }: SearchOverlayProps) {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<SearchOverlayCategory[]>([]);
@@ -69,16 +71,34 @@ export default function SearchOverlayClient({ isOpen, onClose }: SearchOverlayPr
         }
     }, [isOpen]);
 
-    const handleClear = () => {
+    const resetSearch = () => {
         setSearchTerm('');
         setProducts([]);
         setSuggestions([]);
+    };
+
+    const handleClose = () => {
+        resetSearch();
+        onClose();
+    };
+
+    const handleSubmitSearch = () => {
+        const trimmed = searchTerm.trim();
+        if (!trimmed) return;
+
+        router.push(`/catalog?search=${encodeURIComponent(trimmed)}`);
+        resetSearch();
+        onClose();
+    };
+
+    const handleClear = () => {
+        resetSearch();
         inputRef.current?.focus();
     };
 
     const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
         if (event.target === event.currentTarget) {
-            onClose();
+            handleClose();
         }
     };
 
@@ -88,6 +108,7 @@ export default function SearchOverlayClient({ isOpen, onClose }: SearchOverlayPr
 
     return (
         <div
+            data-search-overlay-root
             className="absolute top-full left-0 w-full z-30 bg-background/95 backdrop-blur-md border-b border-border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300"
             onClick={handleBackdropClick}
         >
@@ -97,7 +118,9 @@ export default function SearchOverlayClient({ isOpen, onClose }: SearchOverlayPr
                     inputRef={inputRef}
                     onChangeSearchTerm={setSearchTerm}
                     onClear={handleClear}
-                    onClose={onClose}
+                    onInputBlur={resetSearch}
+                    onSubmitSearch={handleSubmitSearch}
+                    onClose={handleClose}
                 />
 
                 <SearchOverlayResults
@@ -105,10 +128,10 @@ export default function SearchOverlayClient({ isOpen, onClose }: SearchOverlayPr
                     isLoading={isLoading}
                     suggestions={suggestions}
                     products={products}
-                    onClose={onClose}
+                    onClose={handleClose}
                 />
 
-                <SearchOverlayFooter searchTerm={searchTerm} onClose={onClose} />
+                <SearchOverlayFooter searchTerm={searchTerm} onClose={handleClose} />
             </div>
         </div>
     );
