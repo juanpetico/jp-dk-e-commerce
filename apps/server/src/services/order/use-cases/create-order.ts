@@ -8,6 +8,7 @@ import {
     processOrderItems,
     resolveOrderAddresses,
 } from "../create-order.helpers.js";
+import { shopConfigService } from "../../shop-config.service.js";
 
 export const createOrderUseCase = async (
     userId: string,
@@ -18,10 +19,14 @@ export const createOrderUseCase = async (
 ) => {
     assertOrderItems(items);
 
+    // Fetch config before the transaction to avoid a second connection from the pool
+    // (max: 1 on Vercel — using prisma inside $transaction would deadlock)
+    const shopConfig = await shopConfigService.getConfig();
+
     return prisma.$transaction(async (tx: any) => {
         const { total, orderItemsData } = await processOrderItems(tx, items);
         const { discountAmount, couponId } = await applyCouponToOrder(tx, userId, total, couponCode);
-        const { taxes, taxRate, shippingCost, finalTotal, shopConfig } = await calculateOrderTotals(total, discountAmount);
+        const { taxes, taxRate, shippingCost, finalTotal } = calculateOrderTotals(total, discountAmount, shopConfig);
         const { user, shippingAddr, billingAddr } = await resolveOrderAddresses(tx, userId, shippingAddressId, billingAddressId);
 
         const newOrder = await tx.order.create({

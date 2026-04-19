@@ -1,6 +1,5 @@
 import { AppError } from "../../middleware/error-handler.js";
 import { couponService } from "../coupon.service.js";
-import { shopConfigService } from "../shop-config.service.js";
 import type { OrderItemInput } from "./order.types.js";
 
 export const assertOrderItems = (items: OrderItemInput[]) => {
@@ -105,11 +104,14 @@ export const applyCouponToOrder = async (
     return { discountAmount, couponId };
 };
 
-export const calculateOrderTotals = async (total: number, discountAmount: number) => {
+export const calculateOrderTotals = (
+    total: number,
+    discountAmount: number,
+    shopConfig: { freeShippingThreshold: number; baseShippingCost: number }
+) => {
     const netAmount = total - discountAmount;
     const taxRate = 0;
     const taxes = 0;
-    const shopConfig = await shopConfigService.getConfig();
     const qualifiesForFreeShipping =
         shopConfig.freeShippingThreshold > 0 && total >= shopConfig.freeShippingThreshold;
     const shippingCost = qualifiesForFreeShipping ? 0 : shopConfig.baseShippingCost;
@@ -121,7 +123,6 @@ export const calculateOrderTotals = async (total: number, discountAmount: number
         taxes,
         shippingCost,
         finalTotal,
-        shopConfig,
     };
 };
 
