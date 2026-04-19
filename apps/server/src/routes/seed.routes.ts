@@ -9,7 +9,7 @@ const router: Router = Router();
 router.post("/seed", requireInternalApiKey, async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const adminPassword = await bcrypt.hash("Admin123!", 10);
-        const superAdminPassword = await bcrypt.hash("SuperAdmin123!", 10);
+        const superAdminPassword = await bcrypt.hash("Superadmin123!", 10);
 
         const admin = await prisma.user.upsert({
             where: { email: "admin@bg.cl" },

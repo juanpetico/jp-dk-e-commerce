@@ -138,3 +138,108 @@ html {
 .dark .imgDark {
   display: unset;
 }
+
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+}
+
+.hero-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.hero-glass-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.announcement-bar {
+  position: relative;
+  width: 100%;
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.site-header-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+}
+
+.site-header {
+  position: relative;
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.site-header-wrapper.navbar-opaco .site-header {
+  background-color: hsl(var(--background));
+}
+
+.site-header-wrapper.navbar-opaco .announcement-bar {
+  background-color: hsl(var(--background));
+}
+
+.nav-icon-button {
+  color: inherit;
+}
+
+.nav-icon-button:hover {
+  color: hsl(var(--muted-foreground));
+}
+
+.nav-logo-link {
+  color: inherit;
+  border-color: currentColor;
+}
+
+.nav-cart-badge {
+  background-color: hsl(var(--foreground));
+  color: hsl(var(--background));
+  border-color: hsl(var(--foreground));
+}
+
+.site-header-wrapper:not(.navbar-opaco) .announcement-bar,
+.site-header-wrapper:not(.navbar-opaco) .site-header {
+  color: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .hero-banner {
+    min-height: 500px;
+  }
+}

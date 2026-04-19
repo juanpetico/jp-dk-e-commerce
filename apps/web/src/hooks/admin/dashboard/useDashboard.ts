@@ -18,7 +18,7 @@ import { DashboardAttributionQuickRange } from '@/lib/dashboard/types';
 import { DashboardRetentionRange } from '@/types';
 
 const ATTRIBUTION_QUICK_RANGES: DashboardAttributionQuickRange[] = ['1D', '7D', '1M'];
-const RETENTION_QUICK_RANGES: DashboardRetentionRange[] = ['1D', '7D', '1M'];
+const RETENTION_QUICK_RANGES: DashboardRetentionRange[] = ['1D', '7D', '1M', '3M', '6M', '1Y'];
 
 export function useDashboard(): DashboardFacade {
     const data = useAdminDashboardData();

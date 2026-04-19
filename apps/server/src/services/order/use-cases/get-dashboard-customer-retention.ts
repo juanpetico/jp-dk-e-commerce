@@ -3,7 +3,7 @@ import type { OrderStatus } from "@prisma/client";
 
 const COMPLETED_ORDER_STATUSES: OrderStatus[] = ["CONFIRMED", "DELIVERED"];
 
-export type DashboardRetentionRange = "1D" | "7D" | "1M";
+export type DashboardRetentionRange = "1D" | "7D" | "1M" | "3M" | "6M" | "1Y";
 
 interface DashboardCustomerRetentionRevenueSplit {
     newRevenue: number;
@@ -45,6 +45,12 @@ const resolvePeriodRange = (range: DashboardRetentionRange, baseDate: Date = new
             return { start: toStartOfDay(addDays(now, -1)), end: now };
         case "7D":
             return { start: toStartOfDay(addDays(now, -7)), end: now };
+        case "3M":
+            return { start: toStartOfDay(addMonths(now, -3)), end: now };
+        case "6M":
+            return { start: toStartOfDay(addMonths(now, -6)), end: now };
+        case "1Y":
+            return { start: toStartOfDay(addYears(now, -1)), end: now };
         case "1M":
         default:
             return { start: toStartOfDay(addMonths(now, -1)), end: now };
@@ -83,6 +89,12 @@ const addDays = (date: Date, days: number): Date => {
 const addMonths = (date: Date, months: number): Date => {
     const result = new Date(date);
     result.setMonth(result.getMonth() + months);
+    return result;
+};
+
+const addYears = (date: Date, years: number): Date => {
+    const result = new Date(date);
+    result.setFullYear(result.getFullYear() + years);
     return result;
 };
 

@@ -15,7 +15,7 @@ export default function NavbarUserDropdown({
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={onToggle}
-                className="flex items-center gap-1 text-foreground hover:text-muted-foreground p-2 transition-colors"
+                className="nav-icon-button flex items-center gap-1 p-2 transition-colors"
             >
                 <User className="w-6 h-6" />
             </button>
