@@ -1,4 +1,5 @@
 import { Category } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -11,7 +12,7 @@ export const fetchCategories = async (options?: { isPublished?: boolean }): Prom
         const query = params.toString();
         const url = query ? `${API_URL}/categories?${query}` : `${API_URL}/categories`;
 
-        const res = await fetch(url);
+        const res = await apiFetch(url);
         if (!res.ok) throw new Error('Failed to fetch categories');
         const json = await res.json();
         return json.data;
@@ -22,7 +23,7 @@ export const fetchCategories = async (options?: { isPublished?: boolean }): Prom
 };
 
 export const createCategory = async (name: string): Promise<Category> => {
-    const res = await fetch(`${API_URL}/categories`, {
+    const res = await apiFetch(`${API_URL}/categories`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -38,7 +39,7 @@ export const createCategory = async (name: string): Promise<Category> => {
 };
 
 export const updateCategory = async (id: string, name: string): Promise<Category> => {
-    const res = await fetch(`${API_URL}/categories/${id}`, {
+    const res = await apiFetch(`${API_URL}/categories/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -54,7 +55,7 @@ export const updateCategory = async (id: string, name: string): Promise<Category
 };
 
 export const deleteCategory = async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/categories/${id}`, {
+    const res = await apiFetch(`${API_URL}/categories/${id}`, {
         method: 'DELETE',
         credentials: 'include',
     });
@@ -67,7 +68,7 @@ export const deleteCategory = async (id: string): Promise<void> => {
 
 export const getCategoryBySlug = async (slug: string): Promise<Category | undefined> => {
     try {
-        const res = await fetch(`${API_URL}/categories/slug/${slug}?isPublished=true`);
+        const res = await apiFetch(`${API_URL}/categories/slug/${slug}?isPublished=true`);
         if (!res.ok) throw new Error('Failed to fetch category');
         const json = await res.json();
         return json.data;
@@ -78,7 +79,7 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | undefi
 };
 
 export const patchCategory = async (id: string, payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder'>>): Promise<Category> => {
-    const res = await fetch(`${API_URL}/categories/${id}`, {
+    const res = await apiFetch(`${API_URL}/categories/${id}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

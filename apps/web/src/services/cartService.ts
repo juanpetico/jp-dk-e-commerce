@@ -1,4 +1,5 @@
 import { CartItem, Product } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/cart`;
 
@@ -6,7 +7,7 @@ const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
 
 export const cartService = {
     async getCart(): Promise<CartItem[]> {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
             credentials: 'include',
         });
         if (!res.ok) throw new Error('Failed to fetch cart');
@@ -24,7 +25,7 @@ export const cartService = {
     },
 
     async addItem(productId: string, size: string, quantity: number): Promise<CartItem> {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -44,7 +45,7 @@ export const cartService = {
     },
 
     async updateQuantity(itemId: string, quantity: number): Promise<CartItem> {
-        const res = await fetch(`${API_URL}/item/${itemId}`, {
+        const res = await apiFetch(`${API_URL}/item/${itemId}`, {
             method: 'PUT',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -63,7 +64,7 @@ export const cartService = {
     },
 
     async removeItem(itemId: string): Promise<void> {
-        const res = await fetch(`${API_URL}/item/${itemId}`, {
+        const res = await apiFetch(`${API_URL}/item/${itemId}`, {
             method: 'DELETE',
             credentials: 'include',
         });
@@ -71,7 +72,7 @@ export const cartService = {
     },
 
     async clearCart(): Promise<void> {
-        const res = await fetch(API_URL, {
+        const res = await apiFetch(API_URL, {
             method: 'DELETE',
             credentials: 'include',
         });

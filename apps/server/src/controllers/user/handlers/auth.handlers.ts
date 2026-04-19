@@ -16,6 +16,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
             message: "Usuario registrado exitosamente",
             data: {
                 user: result.user,
+                token: result.token,
                 welcomeCoupon: result.welcomeCoupon,
             },
         });
@@ -52,7 +53,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         res.json({
             success: true,
             message: "Inicio de sesión exitoso",
-            data: { user: result.user },
+            data: { user: result.user, token: result.token },
         });
     } catch (error) {
         next(error);

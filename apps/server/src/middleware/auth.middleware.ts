@@ -44,7 +44,10 @@ export const authenticate = async (
     next: NextFunction
 ) => {
     try {
-        const token = (req as Request & { cookies?: { token?: string } }).cookies?.token;
+        const cookieToken = (req as Request & { cookies?: { token?: string } }).cookies?.token;
+        const authHeader = req.headers.authorization;
+        const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+        const token = cookieToken || bearerToken;
 
         if (!token) {
             throw new AppError("No token provided", 401);

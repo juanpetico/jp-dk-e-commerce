@@ -1,4 +1,5 @@
 import { User as Customer, AdminUser, AuditEntry, UserRole } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -20,7 +21,7 @@ export const fetchUsers = async (params?: { role?: UserRole | 'ALL' }): Promise<
         const url = withQuery(`${API_URL}/users`, {
             role: params?.role,
         });
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await apiFetch(url, { credentials: 'include' });
         if (!res.ok) throw new Error('Failed to fetch users');
         const json = await res.json();
         return json.data;
@@ -31,7 +32,7 @@ export const fetchUsers = async (params?: { role?: UserRole | 'ALL' }): Promise<
 };
 
 export const deleteUser = async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    const res = await apiFetch(`${API_URL}/users/${id}`, {
         method: 'DELETE',
         credentials: 'include',
     });
@@ -43,7 +44,7 @@ export const deleteUser = async (id: string): Promise<void> => {
 };
 
 export const getUserById = async (id: string): Promise<Customer & Partial<AdminUser>> => {
-    const res = await fetch(`${API_URL}/users/${id}`, { credentials: 'include' });
+    const res = await apiFetch(`${API_URL}/users/${id}`, { credentials: 'include' });
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || !json.success) {
@@ -68,7 +69,7 @@ export const getAdminUsers = async (params: {
         limit: params.limit,
     });
 
-    const res = await fetch(url, { credentials: 'include' });
+    const res = await apiFetch(url, { credentials: 'include' });
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || !json.success) {
@@ -79,7 +80,7 @@ export const getAdminUsers = async (params: {
 };
 
 export const updateUserRole = async (userId: string, role: UserRole): Promise<AdminUser> => {
-    const res = await fetch(`${API_URL}/admin/users/${userId}/role`, {
+    const res = await apiFetch(`${API_URL}/admin/users/${userId}/role`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -100,7 +101,7 @@ export const toggleUserStatus = async (
     isActive: boolean,
     deactivationReason?: string
 ): Promise<AdminUser> => {
-    const res = await fetch(`${API_URL}/admin/users/${userId}/status`, {
+    const res = await apiFetch(`${API_URL}/admin/users/${userId}/status`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -128,7 +129,7 @@ export const getUserAuditLog = async (
         skip,
     });
 
-    const res = await fetch(url, { credentials: 'include' });
+    const res = await apiFetch(url, { credentials: 'include' });
     const json = await res.json().catch(() => ({}));
 
     if (!res.ok || !json.success) {

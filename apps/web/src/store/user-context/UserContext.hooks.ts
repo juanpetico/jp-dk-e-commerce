@@ -12,6 +12,7 @@ import {
     fetchUpdateProfile,
 } from './UserContext.api';
 import { LoginResult, RegisterResult } from './UserContext.types';
+import { tokenStore } from '@/lib/apiClient';
 
 const UNKNOWN_REASON: LoginResult = { success: false, reason: 'unknown' };
 
@@ -66,6 +67,7 @@ export const createUserActions = ({ setUser, setIsLoading }: UserActionsDependen
 
             if (data.success) {
                 setUser(data.data.user);
+                if (data.data.token) tokenStore.set(data.data.token);
                 toast.success('Sesion iniciada correctamente');
                 return { success: true, role: data.data.user.role };
             }
@@ -91,6 +93,7 @@ export const createUserActions = ({ setUser, setIsLoading }: UserActionsDependen
 
             if (data.success) {
                 setUser(data.data.user);
+                if (data.data.token) tokenStore.set(data.data.token);
                 toast.success('Registro exitoso');
                 return { success: true, welcomeCoupon: data.data.welcomeCoupon };
             }
@@ -111,6 +114,7 @@ export const createUserActions = ({ setUser, setIsLoading }: UserActionsDependen
             console.error('Logout error:', error);
         }
 
+        tokenStore.clear();
         setUser(null);
         toast.success('Sesion cerrada correctamente');
     };

@@ -1,4 +1,5 @@
 import { DashboardCartFunnel, DashboardCustomerRetention, DashboardRetentionRange, Order, OrderStatus, TopProduct } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -33,7 +34,7 @@ export const fetchAllOrders = async (filters?: {
         const queryString = queryParams.toString();
         const url = `${API_URL}/orders/all/admin${queryString ? `?${queryString}` : ''}`;
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -55,7 +56,7 @@ export const fetchAllOrders = async (filters?: {
  */
 export const fetchUserOrders = async (): Promise<Order[]> => {
     try {
-        const res = await fetch(`${API_URL}/orders`, {
+        const res = await apiFetch(`${API_URL}/orders`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -77,7 +78,7 @@ export const fetchUserOrders = async (): Promise<Order[]> => {
  */
 export const fetchOrderById = async (orderId: string): Promise<Order> => {
     try {
-        const res = await fetch(`${API_URL}/orders/${orderId}`, {
+        const res = await apiFetch(`${API_URL}/orders/${orderId}`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -99,7 +100,7 @@ export const fetchOrderById = async (orderId: string): Promise<Order> => {
  */
 export const updateOrderStatus = async (orderId: string, status: OrderStatus): Promise<Order> => {
     try {
-        const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
+        const res = await apiFetch(`${API_URL}/orders/${orderId}/status`, {
             method: 'PUT',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -124,7 +125,7 @@ export const updateOrderStatus = async (orderId: string, status: OrderStatus): P
  */
 export const markOrderAsPaid = async (orderId: string): Promise<Order> => {
     try {
-        const res = await fetch(`${API_URL}/orders/${orderId}/pay`, {
+        const res = await apiFetch(`${API_URL}/orders/${orderId}/pay`, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -148,7 +149,7 @@ export const markOrderAsPaid = async (orderId: string): Promise<Order> => {
  */
 export const cancelOrder = async (orderId: string): Promise<Order> => {
     try {
-        const res = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+        const res = await apiFetch(`${API_URL}/orders/${orderId}/cancel`, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -195,7 +196,7 @@ export const getOrderStatusColor = (status: OrderStatus): string => {
  */
 export const validateCoupon = async (code: string, total: number): Promise<any> => {
     try {
-        const res = await fetch(`${API_URL}/coupons/validate`, {
+        const res = await apiFetch(`${API_URL}/coupons/validate`, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -225,7 +226,7 @@ export const createOrder = async (
     couponCode?: string
 ): Promise<Order> => {
     try {
-        const res = await fetch(`${API_URL}/orders`, {
+        const res = await apiFetch(`${API_URL}/orders`, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -250,7 +251,7 @@ export const createOrder = async (
  */
 export const fetchTopProducts = async (limit: number = 5): Promise<TopProduct[]> => {
     try {
-        const res = await fetch(`${API_URL}/orders/top-products?limit=${limit}`, {
+        const res = await apiFetch(`${API_URL}/orders/top-products?limit=${limit}`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -272,7 +273,7 @@ export const fetchTopProducts = async (limit: number = 5): Promise<TopProduct[]>
  */
 export const fetchDashboardCartFunnel = async (): Promise<DashboardCartFunnel> => {
     try {
-        const res = await fetch(`${API_URL}/orders/cart-funnel`, {
+        const res = await apiFetch(`${API_URL}/orders/cart-funnel`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -296,7 +297,7 @@ export const fetchDashboardCustomerRetention = async (
     range: DashboardRetentionRange = '1M'
 ): Promise<DashboardCustomerRetention> => {
     try {
-        const res = await fetch(`${API_URL}/orders/customer-retention?range=${range}`, {
+        const res = await apiFetch(`${API_URL}/orders/customer-retention?range=${range}`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });

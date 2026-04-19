@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/apiClient';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
@@ -28,7 +30,7 @@ export interface StoreConfig {
 
 export const shopConfigService = {
     async getConfig(): Promise<StoreConfig> {
-        const res = await fetch(`${API_URL}/shop-config/public`, {
+        const res = await apiFetch(`${API_URL}/shop-config/public`, {
             headers: JSON_HEADERS,
         });
         if (!res.ok) throw new Error('Error al obtener la configuración');
@@ -37,7 +39,7 @@ export const shopConfigService = {
     },
 
     async updateConfig(data: Partial<StoreConfig>): Promise<StoreConfig> {
-        const res = await fetch(`${API_URL}/shop-config`, {
+        const res = await apiFetch(`${API_URL}/shop-config`, {
             method: 'PATCH',
             credentials: 'include',
             headers: JSON_HEADERS,

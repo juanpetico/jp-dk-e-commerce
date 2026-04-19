@@ -12,6 +12,8 @@ export interface MyCoupon {
     coupon: Coupon;
 }
 
+import { apiFetch } from '@/lib/apiClient';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
@@ -21,7 +23,7 @@ const JSON_HEADERS: HeadersInit = { 'Content-Type': 'application/json' };
  */
 export const fetchAllCoupons = async (): Promise<Coupon[]> => {
     try {
-        const res = await fetch(`${API_URL}/coupons`, {
+        const res = await apiFetch(`${API_URL}/coupons`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -43,7 +45,7 @@ export const fetchAllCoupons = async (): Promise<Coupon[]> => {
  */
 export const createCoupon = async (couponData: Partial<Coupon>): Promise<Coupon> => {
     try {
-        const res = await fetch(`${API_URL}/coupons`, {
+        const res = await apiFetch(`${API_URL}/coupons`, {
             method: 'POST',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -68,7 +70,7 @@ export const createCoupon = async (couponData: Partial<Coupon>): Promise<Coupon>
  */
 export const updateCoupon = async (id: string, couponData: Partial<Coupon>): Promise<Coupon> => {
     try {
-        const res = await fetch(`${API_URL}/coupons/${id}`, {
+        const res = await apiFetch(`${API_URL}/coupons/${id}`, {
             method: 'PATCH',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -93,7 +95,7 @@ export const updateCoupon = async (id: string, couponData: Partial<Coupon>): Pro
  */
 export const deleteCoupon = async (id: string): Promise<void> => {
     try {
-        const res = await fetch(`${API_URL}/coupons/${id}`, {
+        const res = await apiFetch(`${API_URL}/coupons/${id}`, {
             method: 'DELETE',
             credentials: 'include',
             headers: JSON_HEADERS,
@@ -113,7 +115,7 @@ export const deleteCoupon = async (id: string): Promise<void> => {
  */
 export const fetchMyCoupons = async (): Promise<MyCoupon[]> => {
     try {
-        const res = await fetch(`${API_URL}/coupons/my-coupons`, {
+        const res = await apiFetch(`${API_URL}/coupons/my-coupons`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });
@@ -131,7 +133,7 @@ export const fetchMyCoupons = async (): Promise<MyCoupon[]> => {
 };
 
 export const fetchAdminUserCoupons = async (userId: string): Promise<UserCouponRecord[]> => {
-    const res = await fetch(`${API_URL}/admin/users/${userId}/coupons`, {
+    const res = await apiFetch(`${API_URL}/admin/users/${userId}/coupons`, {
         credentials: 'include',
         headers: JSON_HEADERS,
     });

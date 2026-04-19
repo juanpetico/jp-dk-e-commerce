@@ -1,4 +1,5 @@
 import { AuditLogsResult } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -28,7 +29,7 @@ export const fetchAuditLogs = async (params: FetchAuditLogsParams = {}): Promise
     const query = searchParams.toString();
     const url = `${API_URL}/admin/audit-logs${query ? `?${query}` : ''}`;
 
-    const res = await fetch(url, { credentials: 'include' });
+    const res = await apiFetch(url, { credentials: 'include' });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message || 'Error al cargar los logs de auditoría');

@@ -1,4 +1,5 @@
 import { Product } from '../types';
+import { apiFetch } from '@/lib/apiClient';
 
 const MOCK_PRODUCTS: Product[] = [
     {
@@ -202,7 +203,7 @@ export const fetchProductBySlug = async (slug: string): Promise<Product | undefi
 };
 
 export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
-    const res = await fetch(`${API_URL}/products`, {
+    const res = await apiFetch(`${API_URL}/products`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +220,7 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
 };
 
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product> => {
-    const res = await fetch(`${API_URL}/products/${id}`, {
+    const res = await apiFetch(`${API_URL}/products/${id}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -236,7 +237,7 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/products/${id}`, {
+    const res = await apiFetch(`${API_URL}/products/${id}`, {
         method: 'DELETE',
         credentials: 'include',
     });
