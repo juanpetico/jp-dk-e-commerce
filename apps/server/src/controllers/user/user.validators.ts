@@ -54,9 +54,13 @@ export const updateProfileValidation = [
 
 export const addressValidation = [
     body("street").trim().notEmpty().isLength({ max: 200 }).withMessage("Calle requerida"),
-    body("city").trim().notEmpty().isLength({ max: 100 }).withMessage("Ciudad requerida"),
+    body("comuna").optional().trim().isLength({ max: 100 }),
     body("region").optional().trim().isLength({ max: 100 }),
     body("zipCode").optional().trim().isLength({ max: 20 }),
     body("country").optional().trim().isLength({ max: 100 }),
+    body("phone").optional().trim().isLength({ max: 30 }),
+    body("name").optional().trim().isLength({ max: 200 }),
+    body("rut").optional().trim().isLength({ max: 20 }),
+    body("company").optional().trim().isLength({ max: 200 }),
     body("isDefault").optional().isBoolean(),
 ];
