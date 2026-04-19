@@ -29,10 +29,12 @@ export function invalidateAuthCache(userId: string): void {
     activeCache.delete(userId);
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
+    secure: isProduction,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
     path: "/",
 };
 

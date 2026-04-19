@@ -5,11 +5,13 @@ import { AppError } from "../../middleware/error-handler.js";
 const SESSION_COOKIE = "token";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const setSessionCookie = (res: Response, token: string) => {
     res.cookie(SESSION_COOKIE, token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: SESSION_MAX_AGE_MS,
         path: "/",
     });
@@ -18,8 +20,8 @@ export const setSessionCookie = (res: Response, token: string) => {
 export const clearSessionCookie = (res: Response) => {
     res.clearCookie(SESSION_COOKIE, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
     });
 };
