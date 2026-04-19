@@ -56,9 +56,12 @@ export const errorHandler = (
         statusCode = 400;
         message = "Validation error";
     }
-    // Handle generic errors
+    // Handle generic errors — don't expose internal details in production
     else if (err instanceof Error) {
-        message = err.message; // DEBUG TEMPORAL — revertir después
+        if (process.env.NODE_ENV === "development") {
+            message = err.message;
+        }
+        // In production, keep the default "Internal server error" message
     }
 
     // Log server-side (no body, no PII) — useful in all environments
