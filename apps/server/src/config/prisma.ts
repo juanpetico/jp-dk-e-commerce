@@ -5,7 +5,12 @@ import "dotenv/config";
 
 const prismaClientSingleton = () => {
     const connectionString = process.env.DATABASE_URL;
-    const pool = new Pool({ connectionString });
+    const isServerless = process.env.VERCEL === "1";
+    const pool = new Pool({
+        connectionString,
+        max: isServerless ? 1 : 10,
+        idleTimeoutMillis: isServerless ? 0 : 30_000,
+    });
     const adapter = new PrismaPg(pool as any);
     
     return new PrismaClient({
