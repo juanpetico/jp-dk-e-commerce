@@ -5,7 +5,10 @@ import { clearSessionCookie } from "../user.helpers.js";
 
 export const getSession = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = req.cookies?.token as string | undefined;
+        const cookieToken = req.cookies?.token as string | undefined;
+        const authHeader = req.headers.authorization;
+        const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
+        const token = cookieToken || bearerToken;
 
         if (!token) {
             res.json({ success: true, data: { authenticated: false, user: null } });
