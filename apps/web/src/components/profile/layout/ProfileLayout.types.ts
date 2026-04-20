@@ -5,6 +5,7 @@ export interface ProfileNavigationItem {
 
 export interface ProfileLayoutNavProps {
     isActivePath: (path: string) => boolean;
+    variant?: 'desktop' | 'mobile';
 }
 
 export interface ProfileLayoutUserMenuProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ExternalLink, PenLine, Trash2 } from 'lucide-react';
+import { ExternalLink, Image as ImageIcon, PenLine, Trash2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -28,6 +28,7 @@ export default function CategoriesPageTable({
         <Table>
             <TableHeader>
                 <TableRow className="border-b border-gray-100 hover:bg-transparent dark:border-gray-800">
+                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Imagen</TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Nombre</TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Productos</TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Estado</TableHead>
@@ -42,6 +43,18 @@ export default function CategoriesPageTable({
 
                     return (
                         <TableRow key={category.id} className="transition-colors hover:bg-muted/40">
+                            <TableCell className="px-6 py-4">
+                                {category.imageUrl ? (
+                                    <div className="h-12 w-12 overflow-hidden rounded bg-muted">
+                                        <img src={category.imageUrl} alt={`Imagen de ${category.name}`} className="h-full w-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className="flex h-12 w-12 items-center justify-center rounded bg-muted text-muted-foreground">
+                                        <ImageIcon className="h-4 w-4" />
+                                    </div>
+                                )}
+                            </TableCell>
+
                             <TableCell className="px-6 py-4 text-sm font-bold text-foreground">{category.name}</TableCell>
 
                             <TableCell className="px-6 py-4">

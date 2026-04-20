@@ -10,8 +10,8 @@ export const createCategory = async (req: AuthRequest, res: Response, next: Next
         if (!req.user) throw new AppError("Authentication required", 401);
         assertValidationOk(req);
 
-        const { name } = req.body;
-        const category = await categoryService.createCategory(name, req.user.id);
+        const { name, imageUrl } = req.body;
+        const category = await categoryService.createCategory({ name, imageUrl }, req.user.id);
 
         res.status(201).json({
             success: true,
@@ -102,13 +102,14 @@ export const patchCategory = async (req: AuthRequest, res: Response, next: NextF
         assertValidationOk(req);
 
         const id = getParam(req, "id");
-        const { name, isPublished, sortOrder } = req.body;
+        const { name, isPublished, sortOrder, imageUrl } = req.body;
 
         const hasName = typeof name === "string";
         const hasIsPublished = typeof isPublished === "boolean";
         const hasSortOrder = typeof sortOrder === "number";
+        const hasImageUrl = typeof imageUrl === "string" || imageUrl === null;
 
-        if (!hasName && !hasIsPublished && !hasSortOrder) {
+        if (!hasName && !hasIsPublished && !hasSortOrder && !hasImageUrl) {
             throw new AppError("At least one valid field is required", 400);
         }
 
@@ -118,6 +119,7 @@ export const patchCategory = async (req: AuthRequest, res: Response, next: NextF
                 ...(hasName ? { name } : {}),
                 ...(hasIsPublished ? { isPublished } : {}),
                 ...(hasSortOrder ? { sortOrder } : {}),
+                ...(hasImageUrl ? { imageUrl } : {}),
             },
             req.user.id
         );

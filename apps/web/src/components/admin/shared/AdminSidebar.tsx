@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, ChevronLeft, Menu, Users, UserCog, Tags, ShieldCheck, FolderOpen, X, type LucideIcon } from 'lucide-react';
 import { useUser } from '@/store/UserContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -17,6 +17,43 @@ interface NavItemProps {
     isCollapsed: boolean;
     onClick?: () => void;
     variant?: 'default' | 'danger';
+}
+
+type AdminNavMatchMode = 'dashboard' | 'exact' | 'prefix';
+
+interface AdminNavItemConfig {
+    icon: LucideIcon;
+    label: string;
+    slug: string;
+    match: AdminNavMatchMode;
+    superAdminOnly?: boolean;
+}
+
+const ADMIN_NAV_ITEMS: AdminNavItemConfig[] = [
+    { icon: LayoutDashboard, label: 'Dashboard', slug: 'dashboard', match: 'dashboard' },
+    { icon: UserCog, label: 'Usuarios', slug: 'users', match: 'prefix', superAdminOnly: true },
+    { icon: ShieldCheck, label: 'Auditoría', slug: 'audit', match: 'prefix', superAdminOnly: true },
+    { icon: Package, label: 'Productos', slug: 'products', match: 'prefix' },
+    { icon: FolderOpen, label: 'Categorías', slug: 'categories', match: 'prefix' },
+    { icon: ShoppingBag, label: 'Pedidos', slug: 'orders', match: 'prefix' },
+    { icon: Users, label: 'Clientes', slug: 'customers', match: 'prefix' },
+    { icon: Tags, label: 'Marketing', slug: 'marketing', match: 'prefix' },
+    { icon: Settings, label: 'Configuración', slug: 'settings', match: 'exact' },
+];
+
+function isAdminNavItemActive(
+    pathname: string | null,
+    basePath: string,
+    item: AdminNavItemConfig,
+): boolean {
+    const href = `${basePath}/${item.slug}`;
+    if (item.match === 'dashboard') {
+        return pathname === href || pathname === basePath;
+    }
+    if (item.match === 'exact') {
+        return pathname === href;
+    }
+    return pathname?.startsWith(href) ?? false;
 }
 
 const NavItem: React.FC<NavItemProps> = ({ icon, label, href, isActive, onClick, variant = 'default', isCollapsed = false }) => {
@@ -68,6 +105,7 @@ export default function AdminSidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
 
     // Persistence: Load state
@@ -126,6 +164,21 @@ export default function AdminSidebar() {
         };
     }, [resize, stopResizing]);
 
+    useEffect(() => {
+        setIsMobileOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!isMobileOpen) {
+            return;
+        }
+
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isMobileOpen]);
+
     const toggleCollapse = () => {
         setIsCollapsed(!isCollapsed);
         if (isCollapsed) {
@@ -139,121 +192,115 @@ export default function AdminSidebar() {
     const isSuperAdmin = user?.role === 'SUPERADMIN';
     const basePath = isSuperAdmin ? '/superadmin' : '/admin';
 
-    return (
-        <aside
-            ref={sidebarRef}
-            className="bg-background text-foreground flex-shrink-0 hidden md:flex flex-col border-r border-border relative transition-all duration-75 ease-linear group/sidebar text-left h-screen sticky top-0"
-            style={{ width: isCollapsed ? 80 : sidebarWidth }}
-        >
-            {/* Resizer Handle */}
-            <div
-                className="absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors z-50 opacity-0 hover:opacity-100 active:opacity-100 active:bg-primary/30"
-                onMouseDown={startResizing}
-            />
+    const navContent = (
+        <>
+            {ADMIN_NAV_ITEMS.map((item) => {
+                if (item.superAdminOnly && !isSuperAdmin) {
+                    return null;
+                }
+                const Icon = item.icon;
+                return (
+                    <NavItem
+                        key={item.slug}
+                        icon={<Icon className="w-5 h-5" />}
+                        label={item.label}
+                        href={`${basePath}/${item.slug}`}
+                        isActive={isAdminNavItemActive(pathname, basePath, item)}
+                        isCollapsed={isCollapsed}
+                    />
+                );
+            })}
 
-            <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-                {!isCollapsed && (
-                    <Link href="/" className="relative h-24 w-60 block hover:opacity-80 transition-opacity">
-                        <Image
-                            src="/logo.png"
-                            alt="JP DK ADMIN"
-                            fill
-                            sizes="(max-width: 768px) 100vw, 240px"
-                            className="object-contain dark:invert"
-                            priority
-                        />
-                    </Link>
-                )}
+            <div className="pt-8 mt-auto">
+                <NavItem
+                    icon={<LogOut className="w-5 h-5" />}
+                    label="Cerrar Sesión"
+                    isActive={false}
+                    isCollapsed={isCollapsed}
+                    onClick={handleLogout}
+                    variant="danger"
+                />
+            </div>
+        </>
+    );
+
+    return (
+        <>
+            <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-background border-b border-border px-4 h-16 flex items-center justify-between">
                 <button
-                    onClick={toggleCollapse}
-                    className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                    onClick={() => setIsMobileOpen((current) => !current)}
+                    className="p-2 rounded-lg hover:bg-accent"
+                    aria-label="Abrir menú de administración"
                 >
-                    {isCollapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                    {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
+                <span className="text-sm font-bold uppercase tracking-wider">Panel Admin</span>
+                <div className="w-9" />
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
-                <NavItem
-                    icon={<LayoutDashboard className="w-5 h-5" />}
-                    label="Dashboard"
-                    href={`${basePath}/dashboard`}
-                    isActive={pathname === `${basePath}/dashboard` || pathname === basePath}
-                    isCollapsed={isCollapsed}
-                />
-
-                {isSuperAdmin && (
-                    <>
-                        <NavItem
-                            icon={<UserCog className="w-5 h-5" />}
-                            label="Usuarios"
-                            href="/superadmin/users"
-                            isActive={pathname?.startsWith('/superadmin/users') || false}
-                            isCollapsed={isCollapsed}
-                        />
-                        <NavItem
-                            icon={<ShieldCheck className="w-5 h-5" />}
-                            label="Auditoría"
-                            href="/superadmin/audit"
-                            isActive={pathname?.startsWith('/superadmin/audit') || false}
-                            isCollapsed={isCollapsed}
-                        />
-                    </>
-                )}
-
-                <NavItem
-                    icon={<Package className="w-5 h-5" />}
-                    label="Productos"
-                    href={`${basePath}/products`}
-                    isActive={pathname?.startsWith(`${basePath}/products`) || false}
-                    isCollapsed={isCollapsed}
-                />
-                <NavItem
-                    icon={<FolderOpen className="w-5 h-5" />}
-                    label="Categorías"
-                    href={`${basePath}/categories`}
-                    isActive={pathname?.startsWith(`${basePath}/categories`) || false}
-                    isCollapsed={isCollapsed}
-                />
-                <NavItem
-                    icon={<ShoppingBag className="w-5 h-5" />}
-                    label="Pedidos"
-                    href={`${basePath}/orders`}
-                    isActive={pathname?.startsWith(`${basePath}/orders`) || false}
-                    isCollapsed={isCollapsed}
-                />
-                <NavItem
-                    icon={<Users className="w-5 h-5" />}
-                    label="Clientes"
-                    href={`${basePath}/customers`}
-                    isActive={pathname?.startsWith(`${basePath}/customers`) || false}
-                    isCollapsed={isCollapsed}
-                />
-                <NavItem
-                    icon={<Tags className="w-5 h-5" />}
-                    label="Marketing"
-                    href={`${basePath}/marketing`}
-                    isActive={pathname?.startsWith(`${basePath}/marketing`) || false}
-                    isCollapsed={isCollapsed}
-                />
-                <NavItem
-                    icon={<Settings className="w-5 h-5" />}
-                    label="Configuración"
-                    href={`${basePath}/settings`}
-                    isActive={pathname === `${basePath}/settings`}
-                    isCollapsed={isCollapsed}
-                />
-
-                <div className="pt-8 mt-auto">
-                    <NavItem
-                        icon={<LogOut className="w-5 h-5" />}
-                        label="Cerrar Sesión"
-                        isActive={false}
-                        isCollapsed={isCollapsed}
-                        onClick={handleLogout}
-                        variant="danger"
-                    />
+            {isMobileOpen && (
+                <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setIsMobileOpen(false)}>
+                    <aside
+                        className="bg-background text-foreground w-[85%] max-w-[320px] h-full border-r border-border p-4 flex flex-col"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="pb-4 border-b border-border flex items-center justify-between">
+                            <Link href="/" className="relative h-16 w-32 block hover:opacity-80 transition-opacity">
+                                <Image
+                                    src="/logo.png"
+                                    alt="JP DK ADMIN"
+                                    fill
+                                    sizes="128px"
+                                    className="object-contain dark:invert"
+                                    priority
+                                />
+                            </Link>
+                            <button onClick={() => setIsMobileOpen(false)} className="p-2 rounded-lg hover:bg-accent" aria-label="Cerrar menú">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <nav className="flex-1 pt-4 space-y-2 overflow-y-auto overflow-x-hidden">
+                            {navContent}
+                        </nav>
+                    </aside>
                 </div>
-            </nav>
-        </aside>
+            )}
+
+            <aside
+                ref={sidebarRef}
+                className="bg-background text-foreground flex-shrink-0 hidden md:flex flex-col border-r border-border relative transition-all duration-75 ease-linear group/sidebar text-left h-screen sticky top-0"
+                style={{ width: isCollapsed ? 80 : sidebarWidth }}
+            >
+                <div
+                    className="absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors z-50 opacity-0 hover:opacity-100 active:opacity-100 active:bg-primary/30"
+                    onMouseDown={startResizing}
+                />
+
+                <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+                    {!isCollapsed && (
+                        <Link href="/" className="relative h-24 w-60 block hover:opacity-80 transition-opacity">
+                            <Image
+                                src="/logo.png"
+                                alt="JP DK ADMIN"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 240px"
+                                className="object-contain dark:invert"
+                                priority
+                            />
+                        </Link>
+                    )}
+                    <button
+                        onClick={toggleCollapse}
+                        className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                    >
+                        {isCollapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                    </button>
+                </div>
+
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
+                    {navContent}
+                </nav>
+            </aside>
+        </>
     );
 }

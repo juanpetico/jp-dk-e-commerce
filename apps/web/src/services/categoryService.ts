@@ -3,6 +3,11 @@ import { apiFetch } from '@/lib/apiClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
+interface CreateCategoryPayload {
+    name: string;
+    imageUrl?: string | null;
+}
+
 export const fetchCategories = async (options?: { isPublished?: boolean }): Promise<Category[]> => {
     try {
         const params = new URLSearchParams();
@@ -22,12 +27,12 @@ export const fetchCategories = async (options?: { isPublished?: boolean }): Prom
     }
 };
 
-export const createCategory = async (name: string): Promise<Category> => {
+export const createCategory = async (payload: CreateCategoryPayload): Promise<Category> => {
     const res = await apiFetch(`${API_URL}/categories`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -78,7 +83,10 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | undefi
     }
 };
 
-export const patchCategory = async (id: string, payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder'>>): Promise<Category> => {
+export const patchCategory = async (
+    id: string,
+    payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder' | 'imageUrl'>>
+): Promise<Category> => {
     const res = await apiFetch(`${API_URL}/categories/${id}`, {
         method: 'PATCH',
         credentials: 'include',

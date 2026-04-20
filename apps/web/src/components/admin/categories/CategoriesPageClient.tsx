@@ -43,11 +43,13 @@ export default function CategoriesPageClient() {
 
     const [createOpen, setCreateOpen] = useState(false);
     const [createName, setCreateName] = useState('');
+    const [createImageUrl, setCreateImageUrl] = useState('');
     const [createLoading, setCreateLoading] = useState(false);
     const [createError, setCreateError] = useState('');
 
     const [editTarget, setEditTarget] = useState<Category | null>(null);
     const [editName, setEditName] = useState('');
+    const [editImageUrl, setEditImageUrl] = useState('');
     const [editIsPublished, setEditIsPublished] = useState(true);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState('');
@@ -130,6 +132,7 @@ export default function CategoriesPageClient() {
     const handleCreate = async (event: React.FormEvent) => {
         event.preventDefault();
         const trimmed = createName.trim();
+        const trimmedImageUrl = createImageUrl.trim();
 
         if (!trimmed) {
             setCreateError('El nombre es obligatorio');
@@ -140,10 +143,14 @@ export default function CategoriesPageClient() {
         setCreateError('');
 
         try {
-            const newCategory = await createCategory(trimmed);
+            const newCategory = await createCategory({
+                name: trimmed,
+                imageUrl: trimmedImageUrl === '' ? null : trimmedImageUrl,
+            });
             setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
             setCreateOpen(false);
             setCreateName('');
+            setCreateImageUrl('');
             toast.success(`Categoría "${newCategory.name}" creada`);
         } catch {
             setCreateError('Error al crear la categoría');
@@ -155,6 +162,7 @@ export default function CategoriesPageClient() {
     const openEdit = (category: Category) => {
         setEditTarget(category);
         setEditName(category.name);
+        setEditImageUrl(category.imageUrl ?? '');
         setEditIsPublished(category.isPublished ?? true);
         setEditError('');
     };
@@ -164,6 +172,7 @@ export default function CategoriesPageClient() {
         if (!editTarget) return;
 
         const trimmedName = editName.trim();
+        const trimmedImageUrl = editImageUrl.trim();
         if (!trimmedName) {
             setEditError('El nombre es obligatorio');
             return;
@@ -172,8 +181,10 @@ export default function CategoriesPageClient() {
         const prevIsPublished = editTarget.isPublished ?? true;
         const nameChanged = trimmedName !== editTarget.name;
         const statusChanged = editIsPublished !== prevIsPublished;
+        const currentImageUrl = editTarget.imageUrl ?? '';
+        const imageUrlChanged = trimmedImageUrl !== currentImageUrl;
 
-        if (!nameChanged && !statusChanged) {
+        if (!nameChanged && !statusChanged && !imageUrlChanged) {
             setEditTarget(null);
             return;
         }
@@ -185,6 +196,9 @@ export default function CategoriesPageClient() {
                 `estado: ${prevIsPublished ? 'Visible' : 'Oculta'} -> ${editIsPublished ? 'Visible' : 'Oculta'}`
             );
         }
+        if (imageUrlChanged) {
+            changes.push('imagen del hero actualizada');
+        }
 
         const confirmed = await confirm(
             '¿Guardar cambios de la categoría?',
@@ -195,9 +209,10 @@ export default function CategoriesPageClient() {
         setEditLoading(true);
         setEditError('');
         try {
-            const payload: Partial<Pick<Category, 'name' | 'isPublished'>> = {};
+            const payload: Partial<Pick<Category, 'name' | 'isPublished' | 'imageUrl'>> = {};
             if (nameChanged) payload.name = trimmedName;
             if (statusChanged) payload.isPublished = editIsPublished;
+            if (imageUrlChanged) payload.imageUrl = trimmedImageUrl === '' ? null : trimmedImageUrl;
 
             const updated = await patchCategory(editTarget.id, payload);
             setCategories((prev) =>
@@ -317,6 +332,7 @@ export default function CategoriesPageClient() {
                 currentExportCount={hasFilters ? filteredCategories.length : paginatedCategories.length}
                 onCreate={() => {
                     setCreateName('');
+                    setCreateImageUrl('');
                     setCreateError('');
                     setCreateOpen(true);
                 }}
@@ -393,6 +409,7 @@ export default function CategoriesPageClient() {
             <CategoriesCreateDialog
                 open={createOpen}
                 createName={createName}
+                createImageUrl={createImageUrl}
                 createLoading={createLoading}
                 createError={createError}
                 onOpenChange={(open) => {
@@ -402,12 +419,17 @@ export default function CategoriesPageClient() {
                     setCreateName(value);
                     setCreateError('');
                 }}
+                onCreateImageUrlChange={(value) => {
+                    setCreateImageUrl(value);
+                    setCreateError('');
+                }}
                 onSubmit={handleCreate}
             />
 
             <CategoriesEditDialog
                 open={!!editTarget}
                 editName={editName}
+                editImageUrl={editImageUrl}
                 editIsPublished={editIsPublished}
                 editLoading={editLoading}
                 editError={editError}
@@ -416,6 +438,10 @@ export default function CategoriesPageClient() {
                 }}
                 onEditNameChange={(value) => {
                     setEditName(value);
+                    setEditError('');
+                }}
+                onEditImageUrlChange={(value) => {
+                    setEditImageUrl(value);
                     setEditError('');
                 }}
                 onEditIsPublishedChange={setEditIsPublished}

@@ -16,8 +16,8 @@ export default function NavbarMobileMenu({
     }
 
     return (
-        <div className="absolute top-full left-0 w-full h-[calc(100vh-100%)] bg-background border-t border-border animate-slide-in z-20 flex flex-col shadow-2xl">
-            <div className="flex-1 overflow-y-auto py-8 px-6 flex flex-col items-center justify-center space-y-6">
+        <div className="fixed inset-0 bg-background z-[35] flex flex-col animate-slide-in">
+            <div className="flex-1 overflow-y-auto pt-28 pb-8 px-6 flex flex-col items-center justify-center space-y-6">
                 <Link
                     href="/"
                     onClick={onClose}

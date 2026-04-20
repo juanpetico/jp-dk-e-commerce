@@ -2,6 +2,25 @@ import { body } from "express-validator";
 
 export const categoryValidation = [
     body("name").trim().notEmpty().withMessage("Category name is required"),
+    body("imageUrl")
+        .optional({ nullable: true })
+        .customSanitizer((value) => {
+            if (typeof value !== "string") return value;
+            const trimmed = value.trim();
+            return trimmed === "" ? null : trimmed;
+        })
+        .custom((value) => {
+            if (value === null || value === undefined) return true;
+            if (typeof value !== "string") return false;
+
+            try {
+                const parsed = new URL(value);
+                return parsed.protocol === "http:" || parsed.protocol === "https:";
+            } catch {
+                return false;
+            }
+        })
+        .withMessage("imageUrl must be a valid HTTP/HTTPS URL"),
 ];
 
 export const categoryPartialValidation = [
@@ -18,4 +37,23 @@ export const categoryPartialValidation = [
         .trim()
         .notEmpty()
         .withMessage("Category name cannot be empty"),
+    body("imageUrl")
+        .optional({ nullable: true })
+        .customSanitizer((value) => {
+            if (typeof value !== "string") return value;
+            const trimmed = value.trim();
+            return trimmed === "" ? null : trimmed;
+        })
+        .custom((value) => {
+            if (value === null || value === undefined) return true;
+            if (typeof value !== "string") return false;
+
+            try {
+                const parsed = new URL(value);
+                return parsed.protocol === "http:" || parsed.protocol === "https:";
+            } catch {
+                return false;
+            }
+        })
+        .withMessage("imageUrl must be a valid HTTP/HTTPS URL"),
 ];

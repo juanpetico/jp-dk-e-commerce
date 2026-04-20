@@ -23,10 +23,10 @@ export default function UsersPageHeader({
     showAllExportOptions,
 }: UsersPageHeaderProps) {
     return (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-                <div className="flex items-baseline gap-3">
-                    <h1 className="font-display text-4xl font-black uppercase tracking-tight text-foreground">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h1 className="font-display text-3xl md:text-4xl font-black uppercase tracking-tight text-foreground">
                         Gestión de Usuarios
                     </h1>
                     {!loading && (

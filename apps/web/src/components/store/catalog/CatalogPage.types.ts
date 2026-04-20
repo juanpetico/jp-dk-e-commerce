@@ -2,9 +2,12 @@ import { Product } from '@/types';
 
 export type CatalogFilter = 'All' | 'Poleras' | 'Polerones' | 'Lentes';
 
+export type CatalogHeroImageMap = Partial<Record<Exclude<CatalogFilter, 'All'>, string>>;
+
 export interface CatalogHeroProps {
     filter: CatalogFilter;
     counts: Record<Exclude<CatalogFilter, 'All'>, number>;
+    imagesByFilter: CatalogHeroImageMap;
     onFilterChange: (nextFilter: CatalogFilter) => void;
 }
 

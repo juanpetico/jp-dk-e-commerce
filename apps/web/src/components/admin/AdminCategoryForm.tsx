@@ -31,7 +31,7 @@ const AdminCategoryForm: React.FC<AdminCategoryFormProps> = ({ onClose, onSucces
         setError('');
 
         try {
-            const newCategory = await createCategory(name);
+            const newCategory = await createCategory({ name });
             onSuccess(newCategory);
             onClose();
         } catch (err) {
