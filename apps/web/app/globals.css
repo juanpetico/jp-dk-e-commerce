@@ -43,6 +43,8 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
     --color-amber-900: #78350f;
+    --top-acrylic-bg: hsl(0 0% 0% / 0.62);
+    --top-acrylic-blur: blur(24px) saturate(150%);
   }
 
   .dark {
@@ -71,6 +73,8 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --color-amber-900: #78350f;
+    --top-acrylic-bg: hsl(0 0% 0% / 0.62);
+    --top-acrylic-blur: blur(24px) saturate(150%);
   }
 }
 
@@ -206,12 +210,64 @@ html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+.site-header-mainbar {
+  background-color: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  margin-top: 0;
+}
+
 .site-header-wrapper.navbar-opaco .site-header {
   background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .site-header-wrapper.navbar-opaco .announcement-bar {
   background-color: hsl(var(--background));
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.site-header-wrapper.navbar-search-active:not(.navbar-opaco) {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.site-header-wrapper.navbar-search-active:not(.navbar-opaco) .announcement-bar,
+.site-header-wrapper.navbar-search-active:not(.navbar-opaco) .site-header {
+  background-color: var(--top-acrylic-bg);
+  backdrop-filter: var(--top-acrylic-blur);
+  -webkit-backdrop-filter: var(--top-acrylic-blur);
+}
+
+.search-overlay-acrylic {
+  background-color: var(--top-acrylic-bg);
+  backdrop-filter: var(--top-acrylic-blur);
+  -webkit-backdrop-filter: var(--top-acrylic-blur);
+}
+
+.search-overlay-solid {
+  background-color: hsl(var(--background) / 0.95);
+}
+
+.site-header-wrapper.navbar-search-active:not(.navbar-opaco) .announcement-bar {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.site-header-wrapper.navbar-search-active:not(.navbar-opaco) .site-header {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.site-header-wrapper.navbar-search-active .site-header-mainbar {
+  background-color: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .nav-icon-button {
@@ -238,8 +294,21 @@ html {
   color: #ffffff;
 }
 
+.site-header-wrapper.navbar-menu-active .announcement-bar,
+.site-header-wrapper.navbar-menu-active .site-header {
+  color: hsl(var(--foreground));
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 @media (max-width: 767px) {
   .hero-banner {
     min-height: 500px;
+  }
+
+  .site-header-mainbar {
+    border-radius: 0;
+    margin-top: 0;
   }
 }

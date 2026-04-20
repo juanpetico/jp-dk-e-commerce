@@ -1,9 +1,13 @@
 import { Product } from '@/types';
 import { RefObject } from 'react';
 
+export type SearchOverlayVariant = 'fullscreen' | 'dropdown';
+
 export interface SearchOverlayProps {
     isOpen: boolean;
     onClose: () => void;
+    variant?: SearchOverlayVariant;
+    isNavTransparent?: boolean;
 }
 
 export interface SearchOverlayCategory {

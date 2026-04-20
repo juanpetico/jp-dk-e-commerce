@@ -35,7 +35,7 @@ export default function ProfileLayoutClient({ children }: ProfileLayoutClientPro
                                 JP DK
                             </Link>
 
-                            <ProfileLayoutNav isActivePath={isActivePath} />
+                            <ProfileLayoutNav isActivePath={isActivePath} variant="desktop" />
                         </div>
 
                         <ProfileLayoutUserMenu
@@ -45,6 +45,8 @@ export default function ProfileLayoutClient({ children }: ProfileLayoutClientPro
                             onLogout={handleLogout}
                         />
                     </div>
+
+                    <ProfileLayoutNav isActivePath={isActivePath} variant="mobile" />
                 </div>
             </nav>
 

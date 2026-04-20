@@ -5,18 +5,18 @@ import { OrderDetailsHeaderProps } from './OrderDetailsPage.types';
 
 export default function OrderDetailsPageHeader({ order, onBackToHome, onExportPdf }: OrderDetailsHeaderProps) {
     return (
-        <div className="flex justify-between items-start mb-8">
-            <div>
+        <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:justify-between sm:items-start">
+            <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h1 className="font-display text-2xl font-bold text-foreground">Pedido #{order.id}</h1>
+                    <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-all">Pedido #{order.id}</h1>
                 </div>
                 <p className="text-sm text-muted-foreground ml-7">Fecha de confirmacion: {order.date}</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
                 <Button
                     variant="outline"
                     onClick={onExportPdf}

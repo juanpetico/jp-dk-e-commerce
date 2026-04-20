@@ -8,7 +8,7 @@ export default function SearchOverlayFooter({ searchTerm, onClose }: SearchOverl
     }
 
     return (
-        <div className="border-t border-border bg-muted/50 p-4">
+        <div className="border-t border-border/50 bg-transparent p-4">
             <div className="max-w-4xl mx-auto w-full">
                 <Link
                     href={`/catalog?search=${encodeURIComponent(searchTerm)}`}

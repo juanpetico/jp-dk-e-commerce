@@ -11,10 +11,10 @@ export default function OrdersPageHeader({
     onResetFilters,
 }: OrdersPageHeaderProps) {
     return (
-        <div className="flex items-center justify-between mb-8">
-            <h1 className="font-display text-3xl font-bold text-foreground">Pedidos</h1>
+        <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Pedidos</h1>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
                 <div className="relative">
                     <button
                         onClick={onToggleViewDropdown}
