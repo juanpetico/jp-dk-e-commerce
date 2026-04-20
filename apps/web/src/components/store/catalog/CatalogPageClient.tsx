@@ -66,8 +66,8 @@ export default function CatalogPageClient() {
         };
     }, [categories]);
 
-    return (
-        <div className="min-h-screen pb-12">
+return (
+        <div className="min-h-screen pb-12 pt-20 md:pt-0">
             <CatalogPageHero filter={filter} counts={counts} imagesByFilter={imagesByFilter} onFilterChange={setFilter} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
