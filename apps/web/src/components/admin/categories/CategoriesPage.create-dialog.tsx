@@ -13,20 +13,24 @@ import { Label } from '@/components/ui/label';
 interface CategoriesCreateDialogProps {
     open: boolean;
     createName: string;
+    createImageUrl: string;
     createLoading: boolean;
     createError: string;
     onOpenChange: (open: boolean) => void;
     onCreateNameChange: (value: string) => void;
+    onCreateImageUrlChange: (value: string) => void;
     onSubmit: (event: React.FormEvent) => void;
 }
 
 export default function CategoriesCreateDialog({
     open,
     createName,
+    createImageUrl,
     createLoading,
     createError,
     onOpenChange,
     onCreateNameChange,
+    onCreateImageUrlChange,
     onSubmit,
 }: CategoriesCreateDialogProps) {
     return (
@@ -52,6 +56,16 @@ export default function CategoriesCreateDialog({
                             className="h-11 bg-muted/50"
                         />
                         {createError && <p className="text-xs text-destructive">{createError}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase text-muted-foreground">URL imagen (Catalog Hero)</Label>
+                        <Input
+                            placeholder="https://..."
+                            value={createImageUrl}
+                            onChange={(e) => onCreateImageUrlChange(e.target.value)}
+                            className="h-11 bg-muted/50"
+                        />
                     </div>
 
                     <DialogFooter className="gap-2 sm:gap-0">

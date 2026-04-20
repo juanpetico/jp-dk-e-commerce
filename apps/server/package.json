@@ -11,7 +11,9 @@
     "start": "node dist/index.js",
     "vercel-build": "prisma generate",
     "postinstall": "prisma generate",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "migrate:deploy": "node scripts/deploy-migrations.mjs",
+    "migrate:deploy:local": "node scripts/deploy-migrations.mjs --env=local"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

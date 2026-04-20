@@ -4,11 +4,15 @@ import { getAllCategoriesUseCase } from "./category/use-cases/get-all-categories
 import { getCategoryByIdUseCase } from "./category/use-cases/get-category-by-id.js";
 import { getCategoryBySlugUseCase } from "./category/use-cases/get-category-by-slug.js";
 import { updateCategoryFieldsUseCase } from "./category/use-cases/update-category-fields.js";
-import type { CategoryFieldsUpdateInput, CategoryFilters } from "./category/category.types.js";
+import type {
+    CategoryFieldsUpdateInput,
+    CategoryFilters,
+    CreateCategoryInput,
+} from "./category/category.types.js";
 
 export const categoryService = {
-    async createCategory(name: string, actorId: string) {
-        return createCategoryUseCase(name, actorId);
+    async createCategory(input: CreateCategoryInput, actorId: string) {
+        return createCategoryUseCase(input, actorId);
     },
 
     async getAllCategories(filters?: CategoryFilters) {

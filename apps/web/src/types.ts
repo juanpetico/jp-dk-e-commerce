@@ -2,6 +2,7 @@ export interface Category {
     id: string;
     name: string;
     slug: string;
+    imageUrl?: string | null;
     isPublished?: boolean;
     sortOrder?: number;
     description?: string;

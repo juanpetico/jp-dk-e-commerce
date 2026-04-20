@@ -14,11 +14,13 @@ import { Switch } from '@/components/ui/switch';
 interface CategoriesEditDialogProps {
     open: boolean;
     editName: string;
+    editImageUrl: string;
     editIsPublished: boolean;
     editLoading: boolean;
     editError: string;
     onOpenChange: (open: boolean) => void;
     onEditNameChange: (value: string) => void;
+    onEditImageUrlChange: (value: string) => void;
     onEditIsPublishedChange: (value: boolean) => void;
     onSubmit: (event: React.FormEvent) => void;
 }
@@ -26,11 +28,13 @@ interface CategoriesEditDialogProps {
 export default function CategoriesEditDialog({
     open,
     editName,
+    editImageUrl,
     editIsPublished,
     editLoading,
     editError,
     onOpenChange,
     onEditNameChange,
+    onEditImageUrlChange,
     onEditIsPublishedChange,
     onSubmit,
 }: CategoriesEditDialogProps) {
@@ -56,6 +60,16 @@ export default function CategoriesEditDialog({
                             className="h-11 bg-muted/50"
                         />
                         {editError && <p className="text-xs text-destructive">{editError}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase text-muted-foreground">URL imagen (Catalog Hero)</Label>
+                        <Input
+                            value={editImageUrl}
+                            placeholder="https://..."
+                            onChange={(e) => onEditImageUrlChange(e.target.value)}
+                            className="h-11 bg-muted/50"
+                        />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">

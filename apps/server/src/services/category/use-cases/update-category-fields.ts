@@ -35,6 +35,10 @@ export const updateCategoryFieldsUseCase = async (
         updateData.sortOrder = fields.sortOrder;
     }
 
+    if (typeof fields.imageUrl === "string" || fields.imageUrl === null) {
+        updateData.imageUrl = fields.imageUrl;
+    }
+
     if (Object.keys(updateData).length === 0) {
         throw new AppError("At least one field is required", 400);
     }

@@ -22,7 +22,7 @@ E-commerce con panel de administración. Incluye tienda pública (catálogo, car
 | Package manager | pnpm 9 |
 | Node | >= 22 |
 
-Deployments: frontend en Vercel, backend en Railway.
+Deployments: frontend y backend en Vercel. Base de datos PostgreSQL en Supabase.
 
 ---
 
@@ -148,6 +148,8 @@ Copiar desde `apps/web/.env.example`.
 | Variable | Descripción |
 |----------|-------------|
 | `DATABASE_URL` | Cadena de conexión PostgreSQL |
+| `PRISMA_DATABASE_URL` | (Opcional) URL específica para comandos Prisma en CI/CD |
+| `DATABASE_URL_LOCAL` | (Opcional) URL local para migraciones en desarrollo |
 | `JWT_SECRET` | Secret para firmar JWT |
 | `RESEND_API_KEY` | API key de Resend para emails |
 | `STOREFRONT_REVALIDATE_SECRET` | Debe coincidir con `REVALIDATE_SECRET` del frontend |
@@ -157,6 +159,17 @@ Copiar desde `apps/web/.env.example`.
 - Nunca commitear `.env.local` ni `.env` con valores reales
 - Variables públicas del frontend llevan prefijo `NEXT_PUBLIC_`
 - Al agregar una variable nueva, actualizar el `.env.example` correspondiente y esta tabla
+
+### Flujo recomendado para migraciones Prisma
+
+- En desarrollo local:
+  - `DATABASE_URL_LOCAL` → base local (ej: `localhost`)
+  - Ejecutar: `pnpm --filter @repo/server migrate:deploy:local`
+- En staging/producción:
+  - `PRISMA_DATABASE_URL` → base remota (Supabase)
+  - `DATABASE_URL` puede mantenerse para runtime del backend (idealmente mismo entorno remoto en deploy)
+  - Ejecutar: `pnpm --filter @repo/server migrate:deploy`
+- Evitar cambiar/comentar variables manualmente para alternar entre local y remoto.
 
 ---
 
