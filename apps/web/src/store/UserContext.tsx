@@ -17,6 +17,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         actions.checkAuth();
     }, []);
 
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            setUser(null);
+        };
+        window.addEventListener('auth:session-expired', handleSessionExpired);
+        return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+    }, []);
+
     return (
         <UserContext.Provider
             value={{

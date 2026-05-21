@@ -9,6 +9,7 @@ import CatalogPageEmpty from './CatalogPage.empty';
 import CatalogPageGrid from './CatalogPage.grid';
 import CatalogPageHero from './CatalogPage.hero';
 import CatalogPageQuickFilters from './CatalogPage.quick-filters';
+import CatalogPageSkeleton from './CatalogPage.skeleton';
 import { CatalogFilter, CatalogHeroImageMap } from './CatalogPage.types';
 import { CATALOG_CATEGORIES, getCatalogCounts, getFilteredProducts, normalizeCategoryToFilter } from './CatalogPage.utils';
 
@@ -21,6 +22,7 @@ export default function CatalogPageClient() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [filter, setFilter] = useState<CatalogFilter>('All');
     const [searchTerm, setSearchTerm] = useState(initialSearch || '');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setFilter(normalizeCategoryToFilter(initialCategory));
@@ -30,18 +32,17 @@ export default function CatalogPageClient() {
     }, [initialCategory, initialSearch]);
 
     useEffect(() => {
-        const loadProducts = async () => {
-            const allProducts = await fetchProducts();
+        const loadData = async () => {
+            const [allProducts, categoryList] = await Promise.all([
+                fetchProducts(),
+                fetchCategories({ isPublished: true }),
+            ]);
             setProducts(allProducts);
-        };
-
-        const loadCategories = async () => {
-            const categoryList = await fetchCategories({ isPublished: true });
             setCategories(categoryList);
+            setLoading(false);
         };
 
-        void loadProducts();
-        void loadCategories();
+        void loadData();
     }, []);
 
     const filteredProducts = useMemo(() => {
@@ -66,7 +67,11 @@ export default function CatalogPageClient() {
         };
     }, [categories]);
 
-return (
+    if (loading) {
+        return <CatalogPageSkeleton />;
+    }
+
+    return (
         <div className="min-h-screen pb-12 pt-20 md:pt-0">
             <CatalogPageHero filter={filter} counts={counts} imagesByFilter={imagesByFilter} onFilterChange={setFilter} />
 

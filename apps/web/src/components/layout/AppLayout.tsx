@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import CartDrawer from './CartDrawer';
 import { Toaster } from 'sonner';
+
+const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();

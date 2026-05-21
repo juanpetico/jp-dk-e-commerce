@@ -12,7 +12,7 @@ export const fetchLogin = (email: string, password: string) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-    });
+    }, true);
 };
 
 export const fetchRegister = (email: string, password: string, name: string, phone?: string) => {
@@ -20,7 +20,7 @@ export const fetchRegister = (email: string, password: string, name: string, pho
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password, name, phone: phone?.trim() || undefined }),
-    });
+    }, true);
 };
 
 export const fetchCheckEmailAvailability = (email: string) => {
@@ -28,7 +28,7 @@ export const fetchCheckEmailAvailability = (email: string) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
-    });
+    }, true);
 };
 
 export const fetchLogout = () => {

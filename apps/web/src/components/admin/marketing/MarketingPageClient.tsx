@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, Tag } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import SonnerConfirm from '@/components/ui/SonnerConfirm';
@@ -317,19 +317,6 @@ export default function MarketingPageClient() {
         toast.success(`Reporte PDF generado (${rows.length} registros, todos)`);
     };
 
-    if (loading && coupons.length === 0) {
-        return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="font-medium text-muted-foreground">Cargando métricas de marketing...</p>
-            </div>
-        );
-    }
-
-    if (error && !loading) {
-        return <AdminDataLoadErrorState message={error} onRetry={loadData} />;
-    }
-
     const totalRevenue = enrichedCoupons.reduce((sum, coupon) => sum + coupon._stats.revenue, 0);
     const activeCoupons = enrichedCoupons.filter((coupon) => coupon._status === 'ACTIVO').length;
     const totalUses = enrichedCoupons.reduce((sum, coupon) => sum + coupon.usedCount, 0);
@@ -351,68 +338,88 @@ export default function MarketingPageClient() {
                 }}
             />
 
-            <MarketingPageStats
-                activeCoupons={activeCoupons}
-                totalCoupons={coupons.length}
-                totalUses={totalUses}
-                totalRevenueFormatted={formatMarketingPrice(totalRevenue)}
-            />
+            {loading ? (
+                <div className="animate-pulse grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {[0, 1, 2, 3].map((i) => (
+                        <div key={i} className="h-24 rounded-lg bg-muted" />
+                    ))}
+                </div>
+            ) : (
+                <MarketingPageStats
+                    activeCoupons={activeCoupons}
+                    totalCoupons={coupons.length}
+                    totalUses={totalUses}
+                    totalRevenueFormatted={formatMarketingPrice(totalRevenue)}
+                />
+            )}
 
             <TriggersConfigCard />
 
-            <div className="flex items-center gap-3 pt-2">
-                <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    Cupones
-                </span>
-                <div className="h-px flex-1 bg-border" />
-            </div>
+            {error && !loading ? (
+                <AdminDataLoadErrorState message={error} onRetry={loadData} />
+            ) : loading ? (
+                <div className="animate-pulse grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="h-40 rounded-lg bg-muted" />
+                    ))}
+                </div>
+            ) : (
+                <>
+                    <div className="flex items-center gap-3 pt-2">
+                        <Tag className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                            Cupones
+                        </span>
+                        <div className="h-px flex-1 bg-border" />
+                    </div>
 
-            <MarketingPageFilters
-                couponsCount={coupons.length}
-                searchRaw={searchRaw}
-                filterStatus={filterStatus}
-                filterType={filterType}
-                sortKey={sortKey}
-                sortDir={sortDir}
-                hasActiveFilters={hasActiveFilters}
-                onSearchRawChange={setSearchRaw}
-                onFilterStatusChange={setFilterStatus}
-                onFilterTypeChange={setFilterType}
-                onSortKeyChange={setSortKey}
-                onToggleSortDir={() => setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))}
-                onClearFilters={clearFilters}
-            />
+                    <MarketingPageFilters
+                        couponsCount={coupons.length}
+                        searchRaw={searchRaw}
+                        filterStatus={filterStatus}
+                        filterType={filterType}
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        hasActiveFilters={hasActiveFilters}
+                        onSearchRawChange={setSearchRaw}
+                        onFilterStatusChange={setFilterStatus}
+                        onFilterTypeChange={setFilterType}
+                        onSortKeyChange={setSortKey}
+                        onToggleSortDir={() => setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'))}
+                        onClearFilters={clearFilters}
+                    />
 
-            <MarketingPageCouponsGrid
-                loading={loading}
-                error={error}
-                couponsCount={coupons.length}
-                filteredCount={filteredSorted.length}
-                hasActiveFilters={hasActiveFilters}
-                paginatedCoupons={paginatedCoupons}
-                totalPages={totalPages}
-                page={page}
-                deletingIds={deletingIds}
-                onCreateCoupon={() => {
-                    setEditingCoupon(null);
-                    setIsModalOpen(true);
-                }}
-                onClearFilters={clearFilters}
-                onEditCoupon={(coupon) => {
-                    setEditingCoupon(coupon);
-                    setIsModalOpen(true);
-                }}
-                onDeleteCoupon={handleDeleteCoupon}
-                formatPrice={formatMarketingPrice}
-            />
+                    <MarketingPageCouponsGrid
+                        loading={loading}
+                        error={error}
+                        couponsCount={coupons.length}
+                        filteredCount={filteredSorted.length}
+                        hasActiveFilters={hasActiveFilters}
+                        paginatedCoupons={paginatedCoupons}
+                        totalPages={totalPages}
+                        page={page}
+                        deletingIds={deletingIds}
+                        onCreateCoupon={() => {
+                            setEditingCoupon(null);
+                            setIsModalOpen(true);
+                        }}
+                        onClearFilters={clearFilters}
+                        onEditCoupon={(coupon) => {
+                            setEditingCoupon(coupon);
+                            setIsModalOpen(true);
+                        }}
+                        onDeleteCoupon={handleDeleteCoupon}
+                        formatPrice={formatMarketingPrice}
+                    />
 
-            <MarketingPagePagination
-                page={page}
-                totalPages={totalPages}
-                onPrevious={() => setPage((current) => Math.max(1, current - 1))}
-                onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
-            />
+                    <MarketingPagePagination
+                        page={page}
+                        totalPages={totalPages}
+                        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+                        onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    />
+                </>
+            )}
 
             <CouponModal
                 isOpen={isModalOpen}

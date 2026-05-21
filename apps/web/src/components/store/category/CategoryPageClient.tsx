@@ -11,16 +11,29 @@ import CategoryPageHeader from './CategoryPage.header';
 import CategoryPageNotFound from './CategoryPage.not-found';
 import CategoryPageSkeleton from './CategoryPage.skeleton';
 
-export default function CategoryPageClient() {
+interface CategoryPageClientProps {
+    initialCategory?: Category;
+    initialProducts?: Product[];
+}
+
+export default function CategoryPageClient({ initialCategory, initialProducts }: CategoryPageClientProps) {
     const params = useParams<{ slug: string }>();
     const slug = params?.slug;
 
-    const [products, setProducts] = useState<Product[]>([]);
-    const [category, setCategory] = useState<Category | null>(null);
+    const [products, setProducts] = useState<Product[]>(initialProducts ?? []);
+    const [category, setCategory] = useState<Category | null>(initialCategory ?? null);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialCategory);
 
     useEffect(() => {
+        fetchCategories({ isPublished: true })
+            .then(setCategories)
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (initialCategory) return;
+
         const loadData = async () => {
             if (!slug) return;
 
@@ -48,6 +61,7 @@ export default function CategoryPageClient() {
         };
 
         void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slug]);
 
     if (loading) {

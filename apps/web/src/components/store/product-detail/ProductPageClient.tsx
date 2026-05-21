@@ -14,16 +14,20 @@ import ProductPageReviews from './ProductPage.reviews';
 import ProductPageSkeleton from './ProductPage.skeleton';
 import { getDefaultSelectedSize } from './ProductPage.utils';
 
-export default function ProductPageClient() {
+interface ProductPageClientProps {
+    initialProduct?: Product
+}
+
+export default function ProductPageClient({ initialProduct }: ProductPageClientProps) {
     const { slug } = useParams<{ slug: string }>();
     const router = useRouter();
     const { addToCart, setBuyNowItem } = useCart();
 
-    const [product, setProduct] = useState<Product | undefined>(undefined);
-    const [selectedImage, setSelectedImage] = useState('');
-    const [selectedSize, setSelectedSize] = useState('');
+    const [product, setProduct] = useState<Product | undefined>(initialProduct);
+    const [selectedImage, setSelectedImage] = useState(initialProduct?.images?.[0]?.url || '');
+    const [selectedSize, setSelectedSize] = useState(initialProduct ? getDefaultSelectedSize(initialProduct) : '');
     const [quantity, setQuantity] = useState(1);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialProduct);
     const [isAdding, setIsAdding] = useState(false);
     const [isError, setIsError] = useState(false);
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -32,6 +36,8 @@ export default function ProductPageClient() {
     const maxStock = selectedVariant?.stock || 0;
 
     useEffect(() => {
+        if (initialProduct) return;
+
         const loadProduct = async () => {
             if (!slug) return;
 
@@ -45,15 +51,21 @@ export default function ProductPageClient() {
             setSelectedImage(data.images?.[0]?.url || '');
             setSelectedSize(getDefaultSelectedSize(data));
             setLoading(false);
-
-            if (data.category?.id) {
-                const related = await fetchProducts({ categoryId: data.category.id });
-                setRelatedProducts(related.filter((p) => p.id !== data.id).slice(0, 4));
-            }
         };
 
         void loadProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slug, router]);
+
+    useEffect(() => {
+        const categoryId = product?.category?.id;
+        const productId = product?.id;
+        if (!categoryId || !productId) return;
+
+        fetchProducts({ categoryId })
+            .then((related) => setRelatedProducts(related.filter((p) => p.id !== productId).slice(0, 4)))
+            .catch(() => {});
+    }, [product?.id, product?.category?.id]);
 
     useEffect(() => {
         if (!product) return;

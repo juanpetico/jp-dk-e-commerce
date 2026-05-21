@@ -219,24 +219,28 @@ model StoreConfig {
 }
 
 model User {
-  id                 String       @id @default(cuid())
-  name               String?
-  email              String       @unique
-  password           String
-  phone              String?
-  role               Role         @default(CLIENT)
+  id                   String       @id @default(cuid())
+  name                 String?
+  email                String       @unique
+  password             String
+  phone                String?
+  role                 Role         @default(CLIENT)
   isActive             Boolean      @default(true)
   deactivationReason   String?
   lastLogin            DateTime?
   passwordResetToken   String?
   passwordResetExpires DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  addresses          Address[]
-  cart               Cart?
-  orders             Order[]
-  userCoupons        UserCoupon[]
-  auditLogsAsActor   AuditLog[]   @relation("AuditActor")
+  refreshToken         String?      @unique
+  refreshTokenExpires  DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  addresses            Address[]
+  cart                 Cart?
+  orders               Order[]
+  userCoupons          UserCoupon[]
+  auditLogsAsActor     AuditLog[]   @relation("AuditActor")
+
+  @@index([refreshToken])
 }
 
 model AuditLog {

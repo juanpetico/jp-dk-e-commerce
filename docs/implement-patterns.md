@@ -137,7 +137,89 @@ Cada vez que se modifica el schema (`apps/server/prisma/schema.prisma`), verific
 
 ---
 
-## 9. Ideas a considerar (backlog de mejoras)
+## 9. Sistema de loading
+
+### Capas de loading
+
+El proyecto usa dos capas de loading separadas con propósitos distintos:
+
+| Capa | Archivo | Cuándo se muestra |
+|------|---------|-------------------|
+| **Navegación** (route-level) | `loading.tsx` en cada carpeta de ruta | Al navegar hacia la página (Next.js Suspense automático) |
+| **Datos en cliente** | Estado `loading` interno del componente | Después que el JS carga y el componente hace fetch por useEffect |
+| **Streaming de servidor** | Suspense boundary en el server component | Mientras un server component async resuelve su fetch |
+
+### Componentes compartidos
+
+**`@/components/admin/shared/AdminSectionLoadingSpinner`** — spinner de carga inline dentro de una sección de contenido. Acepta:
+
+```tsx
+<AdminSectionLoadingSpinner label="Cargando clientes..." />
+```
+
+Usar en: cualquier componente cliente que hace fetch en `useEffect` y necesita mostrar estado de carga en el área de datos. No usar en botones ni acciones (esos usan `Loader2` directo).
+
+**`@/components/admin/shared/AdminTableBodySkeleton`** — skeleton de solo la tabla (sin header ni filtros). Usar como fallback de Suspense o loading interno cuando el header ya está visible en pantalla:
+
+```tsx
+<AdminTableBodySkeleton columns={7} rows={5} />
+```
+
+**`@/components/admin/shared/AdminTablePageLoading`** — skeleton de página completa (header + stats + filtros + tabla). Solo usar en los archivos `loading.tsx` de ruta (Next.js navigation loading), nunca dentro de un componente. Acepta:
+
+```tsx
+<AdminTablePageLoading
+    columns={7}       // número de columnas de la tabla
+    rows={5}          // filas de placeholder (default: 5)
+    hasStats={3}      // 0 | 3 | 4 — muestra tarjetas de stats arriba
+    hasTabs           // agrega fila de tabs (ej: pedidos)
+/>
+```
+
+### Inventario de loading.tsx
+
+| Ruta | Archivo | Componente | Variante |
+|------|---------|------------|----------|
+| `/admin` (fallback) | `app/admin/loading.tsx` | inline | dashboard |
+| `/admin/dashboard` | `app/admin/dashboard/loading.tsx` | inline | dashboard |
+| `/admin/products` | `app/admin/products/loading.tsx` | `AdminTablePageLoading` | tabla 7 cols |
+| `/admin/orders` | `app/admin/orders/loading.tsx` | `AdminTablePageLoading` | tabla 6 cols + tabs |
+| `/admin/categories` | `app/admin/categories/loading.tsx` | `AdminTablePageLoading` | tabla 5 cols |
+| `/admin/customers` | `app/admin/customers/loading.tsx` | `AdminTablePageLoading` | tabla 7 cols + 3 stats |
+| `/admin/marketing` | `app/admin/marketing/loading.tsx` | inline | 4 stats + grid de cards |
+| `/admin/settings` | `app/admin/settings/loading.tsx` | inline | 2 form cards |
+| `/catalog` | `app/catalog/loading.tsx` | inline | product grid |
+| `/category/[slug]` | `app/category/[slug]/loading.tsx` | inline | product grid |
+| `/product/[slug]` | `app/product/[slug]/loading.tsx` | inline | detalle de producto |
+| `/(profile)` | `app/(profile)/loading.tsx` | inline | lista de filas |
+
+### Reglas
+
+- **No duplicar cuerpos**: si la sección tiene tabla, usar `AdminTablePageLoading`. Inline solo para layouts únicos (dashboard, marketing, settings).
+- **El `loading.tsx` y el Suspense fallback interno deben usar el mismo componente**: evitar que el usuario vea dos skeletons distintos en la misma carga.
+- **Los estados de carga cliente (useEffect)** siguen en el componente. Son una capa diferente que cubre refetches y cambios de filtro.
+
+### Loading parcial implementado
+
+El header y los filtros siempre son visibles; solo el área de datos muestra skeleton.
+
+| Sección | Header visible durante carga | Skeleton de datos |
+|---------|------------------------------|-------------------|
+| Products | ✓ (`ProductsClientManager` fuera del Suspense) | `AdminTableBodySkeleton` |
+| Orders | ✓ (siempre) | `AdminTableBodySkeleton` |
+| Categories | ✓ (siempre) | `AdminSectionLoadingSpinner` en card |
+| Customers | ✓ (siempre) | `AdminSectionLoadingSpinner` en card |
+| Marketing | ✓ (siempre) | grid de cards pulse + `TriggersConfigCard` con su propio estado |
+| Settings | ✓ (siempre) | `SettingsFormSkeleton` (inline en el componente) |
+| Dashboard | ✓ (siempre) | `DashboardContentSkeleton` (inline en el componente) |
+
+### Plan pendiente
+
+- **Loading en la tienda pública**: agregar loading granular en páginas de producto, perfil y carrito (no solo el route-level loading.tsx que ya existe).
+
+---
+
+## 10. Ideas a considerar (backlog de mejoras)
 
 - **Lint en pre-commit**: agregar `husky` + `lint-staged` para correr ESLint y Prettier automáticamente antes de cada commit.
 - **Validación de tipos en CI**: agregar `pnpm typecheck` en el pipeline de GitHub Actions para bloquear merges con errores TypeScript.

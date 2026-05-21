@@ -1,44 +1,71 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+interface JWTPayload {
+    id: string
+    email: string
+    role: string
+    exp: number
+}
+
+function decodeJWT(token: string): JWTPayload | null {
+    try {
+        const parts = token.split('.')
+        if (parts.length !== 3) return null
+        const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(
+            parts[1].length + (4 - (parts[1].length % 4)) % 4, '='
+        )
+        return JSON.parse(atob(padded)) as JWTPayload
+    } catch {
+        return null
+    }
+}
+
+const ROUTE_RULES: { pattern: RegExp; roles: string[] }[] = [
+    { pattern: /^\/superadmin/, roles: ['SUPERADMIN'] },
+    { pattern: /^\/admin/, roles: ['ADMIN', 'SUPERADMIN'] },
+    { pattern: /^\/(orders|profile|settings|coupons|checkout)/, roles: ['CLIENT', 'ADMIN', 'SUPERADMIN'] },
+]
+
 export function proxy(request: NextRequest) {
-    // Only run on admin routes
-    if (request.nextUrl.pathname.startsWith('/admin')) {
-        const token = request.cookies.get('token')?.value
+    const { pathname } = request.nextUrl
 
-        if (!token) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
+    const rule = ROUTE_RULES.find(r => r.pattern.test(pathname))
+    if (!rule) return NextResponse.next()
 
-        try {
-            // Decode JWT payload without external libraries (Edge compatible)
-            // Token format: header.payload.signature
-            const base64Url = token.split('.')[1]
-            if (!base64Url) return NextResponse.redirect(new URL('/login', request.url))
+    const token = request.cookies.get('token')?.value
 
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-            }).join(''))
+    if (!token) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirect', pathname)
+        return NextResponse.redirect(loginUrl)
+    }
 
-            const payload = JSON.parse(jsonPayload)
+    const payload = decodeJWT(token)
 
-            if (payload.role !== 'ADMIN') {
-                // If not admin, redirect to login (or 403 page if we had one, but login is requested)
-                return NextResponse.redirect(new URL('/login', request.url))
-            }
-        } catch (e) {
-            console.error('Middleware token parse error:', e)
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
-        if (request.nextUrl.pathname === '/admin') {
-            return NextResponse.redirect(new URL('/admin/dashboard', request.url))
-        }
+    if (!payload || payload.exp * 1000 < Date.now()) {
+        const loginUrl = new URL('/login', request.url)
+        loginUrl.searchParams.set('redirect', pathname)
+        const response = NextResponse.redirect(loginUrl)
+        response.cookies.delete('token')
+        return response
+    }
+
+    if (!rule.roles.includes(payload.role)) {
+        return NextResponse.redirect(new URL('/', request.url))
     }
 
     return NextResponse.next()
 }
 
 export const config = {
-    matcher: '/admin/:path*',
+    matcher: [
+        '/admin/:path*',
+        '/superadmin/:path*',
+        '/orders/:path*',
+        '/profile/:path*',
+        '/settings',
+        '/coupons',
+        '/checkout/:path*',
+    ],
 }

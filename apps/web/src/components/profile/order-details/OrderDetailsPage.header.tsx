@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/lib/utils';
 import { OrderDetailsHeaderProps } from './OrderDetailsPage.types';
 
 export default function OrderDetailsPageHeader({ order, onBackToHome, onExportPdf }: OrderDetailsHeaderProps) {
@@ -13,7 +14,7 @@ export default function OrderDetailsPageHeader({ order, onBackToHome, onExportPd
                     </Link>
                     <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-all">Pedido #{order.id}</h1>
                 </div>
-                <p className="text-sm text-muted-foreground ml-7">Fecha de confirmacion: {order.date}</p>
+                <p className="text-sm text-muted-foreground ml-7">Fecha de confirmacion: {formatDate(order.date)}</p>
             </div>
 
             <div className="flex flex-wrap gap-3">

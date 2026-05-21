@@ -1,14 +1,9 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
+import AdminSectionLoadingSpinner from '@/components/admin/shared/AdminSectionLoadingSpinner';
 
 export function AuditLoadingState() {
-    return (
-        <div className="flex min-h-[300px] items-center justify-center gap-3 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Cargando registros...</span>
-        </div>
-    );
+    return <AdminSectionLoadingSpinner label="Cargando registros..." />;
 }
 
 export function AuditErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {

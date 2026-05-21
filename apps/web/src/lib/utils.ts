@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -18,4 +20,12 @@ export function formatPrice(price: number) {
     style: "currency",
     currency: "CLP",
   }).format(price)
+}
+
+export function formatDate(date: string | Date): string {
+  try {
+    return format(new Date(date), "d 'de' MMMM 'de' yyyy 'a las' h:mm a", { locale: es })
+  } catch {
+    return "Fecha inválida"
+  }
 }

@@ -2,9 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
+import AdminSectionLoadingSpinner from '@/components/admin/shared/AdminSectionLoadingSpinner';
 import UserEditModal from '@/components/admin/users/UserEditModal';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import { AdminUser } from '@/types';
@@ -265,10 +265,7 @@ export default function UsersPageClient() {
             <div className="overflow-hidden rounded border border-border bg-card shadow-sm dark:border-none">
                 <div className="overflow-x-auto">
                     {loading ? (
-                        <div className="flex min-h-[280px] items-center justify-center gap-3 text-muted-foreground">
-                            <Loader2 className="h-6 w-6 animate-spin" />
-                            <span>Cargando usuarios...</span>
-                        </div>
+                        <AdminSectionLoadingSpinner label="Cargando usuarios..." />
                     ) : error ? (
                         <AdminDataLoadErrorState message={error} onRetry={loadUsers} minHeightClassName="min-h-[280px]" />
                     ) : (

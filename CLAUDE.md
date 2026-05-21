@@ -162,14 +162,23 @@ Copiar desde `apps/web/.env.example`.
 
 ### Flujo recomendado para migraciones Prisma
 
-- En desarrollo local:
-  - `DATABASE_URL_LOCAL` → base local (ej: `localhost`)
-  - Ejecutar: `pnpm --filter @repo/server migrate:deploy:local`
-- En staging/producción:
-  - `PRISMA_DATABASE_URL` → base remota (Supabase)
-  - `DATABASE_URL` puede mantenerse para runtime del backend (idealmente mismo entorno remoto en deploy)
-  - Ejecutar: `pnpm --filter @repo/server migrate:deploy`
-- Evitar cambiar/comentar variables manualmente para alternar entre local y remoto.
+**Comandos disponibles:**
+
+| Comando | Entorno | Descripción |
+|---------|---------|-------------|
+| `pnpm --filter @repo/server migrate:deploy` | Remoto (Supabase) | Aplica migraciones en producción/staging |
+| `pnpm --filter @repo/server migrate:deploy:local` | Local | Aplica migraciones en desarrollo local |
+
+**Configuración de variables:**
+
+- **Local:** Usar `DATABASE_URL_LOCAL` → base local (ej: `localhost`)
+- **Remoto:** Usar `PRISMA_DATABASE_URL` → base remota (Supabase)
+- `DATABASE_URL` se mantiene para runtime del backend (idealmente mismo entorno remoto en deploy)
+
+**Reglas:**
+- Evitar cambiar/comentar variables manualmente para alternar entre local y remoto
+- En desarrollo, usar siempre el comando `:local`
+- En CI/CD o deploy, usar el comando sin sufijo
 
 ---
 

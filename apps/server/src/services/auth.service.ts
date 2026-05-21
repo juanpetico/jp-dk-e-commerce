@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { userService } from "./user.service.js";
 import { couponService } from "./coupon.service.js";
@@ -9,6 +10,8 @@ import { forgotPasswordUseCase } from "./auth/use-cases/forgot-password.js";
 import { resetPasswordUseCase } from "./auth/use-cases/reset-password.js";
 import { validateResetTokenUseCase } from "./auth/use-cases/validate-reset-token.js";
 import type { TokenValidationResult } from "./auth/use-cases/validate-reset-token.js";
+
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export const authService = {
     async register(data: { email: string; password: string; name?: string; phone?: string }) {
@@ -48,7 +51,9 @@ export const authService = {
             role: user.role,
         });
 
-        return { user, token, welcomeCoupon };
+        const refreshToken = await this.issueRefreshToken(user.id);
+
+        return { user, token, refreshToken, welcomeCoupon };
     },
 
     async isEmailAvailable(email: string) {
@@ -89,9 +94,10 @@ export const authService = {
             role: user.role,
         });
 
+        const refreshToken = await this.issueRefreshToken(user.id);
         const { password: _, ...userWithoutPassword } = user;
 
-        return { user: userWithoutPassword, token };
+        return { user: userWithoutPassword, token, refreshToken };
     },
 
     generateToken(payload: { id: string; email: string; role: string }): string {
@@ -117,6 +123,51 @@ export const authService = {
         } catch (error) {
             throw new AppError("Invalid token", 401);
         }
+    },
+
+    generateRefreshToken(): string {
+        return crypto.randomBytes(64).toString("hex");
+    },
+
+    async issueRefreshToken(userId: string): Promise<string> {
+        const prisma = (await import("../config/prisma.js")).default;
+        const token = this.generateRefreshToken();
+        const expires = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken: token, refreshTokenExpires: expires },
+        });
+        return token;
+    },
+
+    async refreshAccessToken(refreshToken: string): Promise<{ token: string; refreshToken: string }> {
+        const prisma = (await import("../config/prisma.js")).default;
+
+        const user = await prisma.user.findUnique({
+            where: { refreshToken },
+            select: { id: true, email: true, role: true, isActive: true, refreshTokenExpires: true },
+        });
+
+        if (!user || !user.refreshTokenExpires || user.refreshTokenExpires < new Date()) {
+            throw new AppError("Invalid or expired refresh token", 401);
+        }
+
+        if (!user.isActive) {
+            throw new AppError("Account deactivated", 401);
+        }
+
+        const accessToken = this.generateToken({ id: user.id, email: user.email, role: user.role });
+        const newRefreshToken = await this.issueRefreshToken(user.id);
+
+        return { token: accessToken, refreshToken: newRefreshToken };
+    },
+
+    async revokeRefreshToken(userId: string): Promise<void> {
+        const prisma = (await import("../config/prisma.js")).default;
+        await prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken: null, refreshTokenExpires: null },
+        });
     },
 
     async forgotPassword(email: string): Promise<void> {

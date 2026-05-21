@@ -18,7 +18,7 @@ import OrderFilters from './OrderFilters';
 import { exportOrdersExcel } from './OrdersPage.csv';
 import { exportOrdersPdf } from './OrdersPage.pdf';
 import OrdersPageHeader from './OrdersPage.header';
-import OrdersPageSkeleton from './OrdersPage.skeleton';
+import AdminTableBodySkeleton from '@/components/admin/shared/AdminTableBodySkeleton';
 import OrdersPageTable from './OrdersPage.table';
 import { OrderFiltersState } from './OrdersPage.types';
 
@@ -312,7 +312,7 @@ export default function OrdersPageClient() {
             <OrderFilters onFilterChange={handleFilterChange} activeFiltersCount={activeFiltersCount} />
 
             {!isMounted || orders === null ? (
-                <OrdersPageSkeleton />
+                <AdminTableBodySkeleton columns={6} />
             ) : error ? (
                 <div className="rounded border border-border bg-card shadow-sm">
                     <AdminDataLoadErrorState message={error} onRetry={loadOrders} />

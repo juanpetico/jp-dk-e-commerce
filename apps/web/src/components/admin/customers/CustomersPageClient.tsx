@@ -2,11 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import CustomerDrawer from '@/components/admin/users/CustomerDrawer';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import TablePagination from '@/components/admin/shared/TablePagination';
+import AdminSectionLoadingSpinner from '@/components/admin/shared/AdminSectionLoadingSpinner';
 import { fetchUsers } from '@/services/userService';
 import { exportRowsToExcel } from '@/services/exportExcelService';
 import { exportRowsToPdf } from '@/services/exportPdfService';
@@ -203,10 +203,7 @@ export default function CustomersPageClient() {
                 <div className="overflow-hidden rounded border border-border bg-card shadow-sm dark:border-none">
                     <div className="overflow-x-auto">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center gap-3 py-20">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="animate-pulse text-muted-foreground">Cargando clientes...</p>
-                            </div>
+                            <AdminSectionLoadingSpinner label="Cargando clientes..." />
                         ) : error ? (
                             <AdminDataLoadErrorState
                                 message={error}

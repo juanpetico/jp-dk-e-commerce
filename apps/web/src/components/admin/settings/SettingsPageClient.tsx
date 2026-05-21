@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
 import { shopConfigService } from '@/services/shopConfigService';
@@ -10,6 +9,29 @@ import SettingsPageHeader from './SettingsPage.header';
 import SettingsPageShippingCard from './SettingsPage.shipping-card';
 import { SettingsForm } from './SettingsPage.types';
 import { formatThousandsCL, parseThousandsCL, validateSettingsForm } from './SettingsPage.utils';
+
+function SettingsFormSkeleton() {
+    return (
+        <div className="animate-pulse space-y-6">
+            {[4, 2].map((fields, cardIdx) => (
+                <div
+                    key={cardIdx}
+                    className="space-y-4 rounded border border-border bg-card p-6 shadow-sm dark:border-none"
+                >
+                    <div className="h-5 w-36 rounded-md bg-muted" />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {Array.from({ length: fields }).map((_, i) => (
+                            <div key={i} className="space-y-2">
+                                <div className="h-4 w-24 rounded bg-muted" />
+                                <div className="h-9 w-full rounded-md bg-muted" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export default function SettingsPageClient() {
     const [loading, setLoading] = useState(true);
@@ -72,35 +94,31 @@ export default function SettingsPageClient() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-20 text-muted-foreground">
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Cargando configuración...
-            </div>
-        );
-    }
-
-    if (error) {
-        return <AdminDataLoadErrorState message={error} onRetry={loadSettings} />;
-    }
-
     return (
         <div className="max-w-4xl animate-fade-in space-y-6 text-foreground">
             <SettingsPageHeader />
 
-            <SettingsPageGeneralCard
-                form={form}
-                errors={errors}
-                onChange={(partial) => setForm((current) => ({ ...current, ...partial }))}
-            />
+            {loading ? (
+                <SettingsFormSkeleton />
+            ) : error ? (
+                <AdminDataLoadErrorState message={error} onRetry={loadSettings} />
+            ) : (
+                <>
+                    <SettingsPageGeneralCard
+                        form={form}
+                        errors={errors}
+                        onChange={(partial) => setForm((current) => ({ ...current, ...partial }))}
+                    />
 
-            <SettingsPageShippingCard
-                form={form}
-                errors={errors}
-                isSaving={isSaving}
-                onChange={(partial) => setForm((current) => ({ ...current, ...partial }))}
-                onSave={handleSave}
-            />
+                    <SettingsPageShippingCard
+                        form={form}
+                        errors={errors}
+                        isSaving={isSaving}
+                        onChange={(partial) => setForm((current) => ({ ...current, ...partial }))}
+                        onSave={handleSave}
+                    />
+                </>
+            )}
         </div>
     );
 }

@@ -2,10 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import TablePagination from '@/components/admin/shared/TablePagination';
 import AdminDataLoadErrorState from '@/components/admin/shared/AdminDataLoadErrorState';
+import AdminSectionLoadingSpinner from '@/components/admin/shared/AdminSectionLoadingSpinner';
 import { Category } from '@/types';
 import { toast } from 'sonner';
 import { confirm } from '@/utils/confirm';
@@ -364,10 +364,7 @@ export default function CategoriesPageClient() {
 
             <div className="overflow-hidden rounded border border-border bg-card shadow-sm dark:border-none">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center gap-3 py-20">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="animate-pulse text-muted-foreground">Cargando categorías...</p>
-                    </div>
+                    <AdminSectionLoadingSpinner label="Cargando categorías..." />
                 ) : error ? (
                     <AdminDataLoadErrorState message={error} onRetry={load} minHeightClassName="min-h-[320px]" />
                 ) : filteredCategories.length === 0 ? (

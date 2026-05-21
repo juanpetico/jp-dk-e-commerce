@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import ImageMagnifier from '@/components/ui/ImageMagnifier';
 import { isProductNew } from '@/lib/utils';
 import { ProductPageGalleryProps } from './ProductPage.types';
@@ -32,16 +33,19 @@ export default function ProductPageGallery({ product, selectedImage, onSelectIma
                     <button
                         key={image.id || index}
                         onClick={() => onSelectImage(image.url)}
-                        className={`aspect-square bg-gray-100 rounded border overflow-hidden transition-all ${
+                        className={`relative aspect-square bg-gray-100 rounded border overflow-hidden transition-all ${
                             selectedImage === image.url
                                 ? 'border-black dark:border-white ring-1 ring-black dark:ring-white'
                                 : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                     >
-                        <img
+                        <Image
                             src={image.url}
                             alt={`${product.name} view ${index + 1}`}
-                            className={`w-full h-full object-cover transition-opacity ${
+                            fill
+                            sizes="(max-width: 1024px) 25vw, 10vw"
+                            priority={index === 0}
+                            className={`object-cover transition-opacity ${
                                 selectedImage === image.url ? 'opacity-100' : 'opacity-70 hover:opacity-100'
                             }`}
                         />

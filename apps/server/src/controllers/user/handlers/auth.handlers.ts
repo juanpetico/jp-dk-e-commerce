@@ -1,6 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { authService } from "../../../services/auth.service.js";
-import { assertValidationOk, clearSessionCookie, setSessionCookie } from "../user.helpers.js";
+import {
+    assertValidationOk,
+    clearRefreshCookie,
+    clearSessionCookie,
+    setRefreshCookie,
+    setSessionCookie,
+} from "../user.helpers.js";
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -10,6 +16,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
         const result = await authService.register({ email, password, name, phone });
 
         setSessionCookie(res, result.token);
+        setRefreshCookie(res, result.refreshToken);
 
         res.status(201).json({
             success: true,
@@ -49,6 +56,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         const result = await authService.login(email, password);
 
         setSessionCookie(res, result.token);
+        setRefreshCookie(res, result.refreshToken);
 
         res.json({
             success: true,
@@ -60,10 +68,46 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     }
 };
 
-export const logout = async (_req: Request, res: Response, next: NextFunction) => {
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const refreshToken = (req as Request & { cookies?: { refresh_token?: string } }).cookies?.refresh_token;
+        if (refreshToken) {
+            try {
+                const { authService } = await import("../../../services/auth.service.js");
+                // Revoke by finding user via token — best-effort, non-blocking
+                const prisma = (await import("../../../config/prisma.js")).default;
+                const user = await prisma.user.findUnique({ where: { refreshToken }, select: { id: true } });
+                if (user) await authService.revokeRefreshToken(user.id);
+            } catch {
+                // Non-critical
+            }
+        }
         clearSessionCookie(res);
+        clearRefreshCookie(res);
         res.json({ success: true, message: "Sesión cerrada" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refreshToken = (req as Request & { cookies?: { refresh_token?: string } }).cookies?.refresh_token;
+
+        if (!refreshToken) {
+            res.status(401).json({ success: false, message: "No refresh token provided" });
+            return;
+        }
+
+        const result = await authService.refreshAccessToken(refreshToken);
+
+        setSessionCookie(res, result.token);
+        setRefreshCookie(res, result.refreshToken);
+
+        res.json({
+            success: true,
+            data: { token: result.token },
+        });
     } catch (error) {
         next(error);
     }
