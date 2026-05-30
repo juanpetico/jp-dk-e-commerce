@@ -60,8 +60,8 @@ export default function OrderDetailsContactCard({
                 </div>
 
                 <div>
-                    <h3 className="font-bold text-sm mb-4 text-foreground">Metodo de envio</h3>
-                    <p className="text-sm text-muted-foreground">{shippingMethod || 'Estandar'}</p>
+                    <h3 className="font-bold text-sm mb-4 text-foreground">Método de envío</h3>
+                    <p className="text-sm text-muted-foreground">{shippingMethod || 'Estándar'}</p>
                 </div>
             </div>
         </div>

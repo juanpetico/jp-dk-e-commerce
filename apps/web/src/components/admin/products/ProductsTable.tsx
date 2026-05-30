@@ -3,6 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { Product } from '@/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { isProductLowStock } from '@/lib/stock/stock-status';
+import { useShopConfigPublic } from '@/hooks/useShopConfigPublic';
 import {
     Table,
     TableBody,
@@ -42,8 +44,10 @@ export default function ProductsTable({ products }: ProductsTableProps) {
     const [search, setSearch] = useState(searchParams.get('search') ?? '');
     const [statusFilter, setStatusFilter] = useState<'ALL' | 'PUBLISHED' | 'DRAFT'>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get('category') ?? 'ALL');
+    const [stockAlertFilter, setStockAlertFilter] = useState(searchParams.get('stockAlert') === 'true');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const { lowStockThreshold } = useShopConfigPublic();
 
     const categoryOptions = useMemo(() => {
         const seen = new Set<string>();
@@ -76,16 +80,19 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 categoryFilter === 'ALL' ||
                 product.category.slug === categoryFilter;
 
-            return matchesSearch && matchesStatus && matchesCategory;
+            const matchesStockAlert =
+                !stockAlertFilter || isProductLowStock(product, lowStockThreshold);
+
+            return matchesSearch && matchesStatus && matchesCategory && matchesStockAlert;
         });
-    }, [products, search, statusFilter, categoryFilter]);
+    }, [products, search, statusFilter, categoryFilter, stockAlertFilter, lowStockThreshold]);
 
     const totalItems = filteredProducts.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
-    const hasFilters = search.trim() !== '' || statusFilter !== 'ALL' || categoryFilter !== 'ALL';
+    const hasFilters = search.trim() !== '' || statusFilter !== 'ALL' || categoryFilter !== 'ALL' || stockAlertFilter;
 
     const { openEditModal, setFilteredCount, setCurrentExportCount, setExportHandlers } = useAdminProducts();
     React.useEffect(() => {
@@ -173,7 +180,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [search, statusFilter, categoryFilter, itemsPerPage]);
+    }, [search, statusFilter, categoryFilter, stockAlertFilter, itemsPerPage]);
 
     React.useEffect(() => {
         if (currentPage > totalPages) {
@@ -200,6 +207,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
         setSearch('');
         setStatusFilter('ALL');
         setCategoryFilter('ALL');
+        setStockAlertFilter(false);
     };
 
     return (
@@ -244,6 +252,19 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                             <SelectItem value="DRAFT">Borradores</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    <button
+                        type="button"
+                        onClick={() => setStockAlertFilter((prev) => !prev)}
+                        className={cn(
+                            'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors',
+                            stockAlertFilter
+                                ? 'border-amber-900 bg-amber-900 text-white'
+                                : 'border-amber-900/40 text-amber-800 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                        )}
+                    >
+                        ⚠ Stock bajo
+                    </button>
 
                     {hasFilters && (
                         <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">

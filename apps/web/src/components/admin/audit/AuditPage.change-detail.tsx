@@ -1,6 +1,7 @@
 import React from 'react';
 import { AuditEntry } from '@/types';
 import {
+    CATEGORY_FIELD_LABELS,
     CONFIG_FIELD_LABELS,
     COUPON_FIELD_LABELS,
     ORDER_STATUS_LABELS,
@@ -95,16 +96,29 @@ export default function ChangeDetail({ entry }: { entry: AuditEntry }) {
             );
         }
 
-        case 'ORDER_STATUS_CHANGE':
+        case 'ORDER_STATUS_CHANGE': {
+            const orderShortId = metadata?.orderShortId as string | undefined;
+            const customerName = metadata?.customerName as string | undefined;
             return (
-                <div className="flex flex-wrap items-center gap-0.5">
-                    <OldVal>{ORDER_STATUS_LABELS[oldValue ?? ''] ?? oldValue ?? '—'}</OldVal>
-                    <DiffArrow />
-                    <NewVal className="text-indigo-600 dark:text-indigo-400">
-                        {ORDER_STATUS_LABELS[newValue ?? ''] ?? newValue ?? '—'}
-                    </NewVal>
+                <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                        {orderShortId && (
+                            <span className="font-mono text-[10px] text-muted-foreground">#{orderShortId}</span>
+                        )}
+                        {customerName && (
+                            <span className="text-[10px] text-muted-foreground">{customerName}</span>
+                        )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-0.5">
+                        <OldVal>{ORDER_STATUS_LABELS[oldValue ?? ''] ?? oldValue ?? '—'}</OldVal>
+                        <DiffArrow />
+                        <NewVal className="text-indigo-600 dark:text-indigo-400">
+                            {ORDER_STATUS_LABELS[newValue ?? ''] ?? newValue ?? '—'}
+                        </NewVal>
+                    </div>
                 </div>
             );
+        }
 
         case 'STORE_CONFIG_CHANGE': {
             let oldObj: Record<string, unknown> = {};
@@ -180,6 +194,34 @@ export default function ChangeDetail({ entry }: { entry: AuditEntry }) {
 
         case 'CATEGORY_DELETED':
             return <span className="text-xs text-muted-foreground line-through opacity-70">{oldValue ?? '—'}</span>;
+
+        case 'CATEGORY_UPDATED': {
+            let oldObj: Record<string, unknown> = {};
+            let newObj: Record<string, unknown> = {};
+            try { oldObj = JSON.parse(oldValue ?? '{}'); } catch {}
+            try { newObj = JSON.parse(newValue ?? '{}'); } catch {}
+
+            const catName = metadata?.categoryName as string | undefined;
+            const keys = Object.keys(newObj);
+
+            return (
+                <div className="flex flex-col gap-0.5">
+                    {catName && <span className="text-[10px] text-muted-foreground">{catName}</span>}
+                    {keys.map((key) => (
+                        <div key={key} className="flex flex-wrap items-center gap-0.5">
+                            <span className="mr-1 text-[10px] text-muted-foreground">
+                                {CATEGORY_FIELD_LABELS[key] ?? key}:
+                            </span>
+                            <OldVal>{String(oldObj[key] ?? '—')}</OldVal>
+                            <DiffArrow />
+                            <NewVal className="text-teal-600 dark:text-teal-400">
+                                {String(newObj[key] ?? '—')}
+                            </NewVal>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
 
         case 'COUPON_CREATED': {
             const couponCode = (metadata?.couponCode as string | undefined) ?? newValue;

@@ -36,6 +36,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "prisma/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "retro_assign.ts", "audit_coupons.ts", "fix_coupons.ts", "update_config_v2.ts", "src/test-register.ts"]
 }

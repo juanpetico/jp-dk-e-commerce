@@ -44,9 +44,7 @@ export default function CategoriesPageClient() {
     const [createOpen, setCreateOpen] = useState(false);
     const [createName, setCreateName] = useState('');
     const [createImageUrl, setCreateImageUrl] = useState('');
-    const [createIsPublished, setCreateIsPublished] = useState(true);
     const [createShowInHero, setCreateShowInHero] = useState(false);
-    const [createShowInMenu, setCreateShowInMenu] = useState(true);
     const [createLoading, setCreateLoading] = useState(false);
     const [createError, setCreateError] = useState('');
 
@@ -55,7 +53,6 @@ export default function CategoriesPageClient() {
     const [editImageUrl, setEditImageUrl] = useState('');
     const [editIsPublished, setEditIsPublished] = useState(true);
     const [editShowInHero, setEditShowInHero] = useState(false);
-    const [editShowInMenu, setEditShowInMenu] = useState(true);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState('');
 
@@ -144,14 +141,6 @@ export default function CategoriesPageClient() {
             return;
         }
 
-        if (createShowInHero) {
-            const heroCount = categories.filter((c) => c.showInHero).length;
-            if (heroCount >= 3) {
-                setCreateError('Solo se permiten 3 categorías en el hero. Desactiva una antes de agregar otra.');
-                return;
-            }
-        }
-
         setCreateLoading(true);
         setCreateError('');
 
@@ -159,17 +148,13 @@ export default function CategoriesPageClient() {
             const newCategory = await createCategory({
                 name: trimmed,
                 imageUrl: trimmedImageUrl === '' ? null : trimmedImageUrl,
-                isPublished: createIsPublished,
                 showInHero: createShowInHero,
-                showInMenu: createShowInMenu,
             });
             setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
             setCreateOpen(false);
             setCreateName('');
             setCreateImageUrl('');
-            setCreateIsPublished(true);
             setCreateShowInHero(false);
-            setCreateShowInMenu(true);
             toast.success(`Categoría "${newCategory.name}" creada`);
         } catch {
             setCreateError('Error al crear la categoría');
@@ -184,7 +169,6 @@ export default function CategoriesPageClient() {
         setEditImageUrl(category.imageUrl ?? '');
         setEditIsPublished(category.isPublished ?? true);
         setEditShowInHero(category.showInHero ?? false);
-        setEditShowInMenu(category.showInMenu ?? true);
         setEditError('');
     };
 
@@ -201,15 +185,13 @@ export default function CategoriesPageClient() {
 
         const prevIsPublished = editTarget.isPublished ?? true;
         const prevShowInHero = editTarget.showInHero ?? false;
-        const prevShowInMenu = editTarget.showInMenu ?? true;
         const nameChanged = trimmedName !== editTarget.name;
         const statusChanged = editIsPublished !== prevIsPublished;
         const currentImageUrl = editTarget.imageUrl ?? '';
         const imageUrlChanged = trimmedImageUrl !== currentImageUrl;
         const showInHeroChanged = editShowInHero !== prevShowInHero;
-        const showInMenuChanged = editShowInMenu !== prevShowInMenu;
 
-        if (!nameChanged && !statusChanged && !imageUrlChanged && !showInHeroChanged && !showInMenuChanged) {
+        if (!nameChanged && !statusChanged && !imageUrlChanged && !showInHeroChanged) {
             setEditTarget(null);
             return;
         }
@@ -223,15 +205,6 @@ export default function CategoriesPageClient() {
         }
         if (imageUrlChanged) changes.push('imagen del hero actualizada');
         if (showInHeroChanged) changes.push(`hero: ${prevShowInHero ? 'activo' : 'inactivo'} -> ${editShowInHero ? 'activo' : 'inactivo'}`);
-        if (showInMenuChanged) changes.push(`menú: ${prevShowInMenu ? 'visible' : 'oculta'} -> ${editShowInMenu ? 'visible' : 'oculta'}`);
-
-        if (showInHeroChanged && editShowInHero) {
-            const heroCount = categories.filter((c) => c.showInHero && c.id !== editTarget.id).length;
-            if (heroCount >= 3) {
-                setEditError('Solo se permiten 3 categorías en el hero. Desactiva una antes de agregar otra.');
-                return;
-            }
-        }
 
         const confirmed = await confirm(
             '¿Guardar cambios de la categoría?',
@@ -242,12 +215,11 @@ export default function CategoriesPageClient() {
         setEditLoading(true);
         setEditError('');
         try {
-            const payload: Partial<Pick<Category, 'name' | 'isPublished' | 'imageUrl' | 'showInHero' | 'showInMenu'>> = {};
+            const payload: Partial<Pick<Category, 'name' | 'isPublished' | 'imageUrl' | 'showInHero'>> = {};
             if (nameChanged) payload.name = trimmedName;
             if (statusChanged) payload.isPublished = editIsPublished;
             if (imageUrlChanged) payload.imageUrl = trimmedImageUrl === '' ? null : trimmedImageUrl;
             if (showInHeroChanged) payload.showInHero = editShowInHero;
-            if (showInMenuChanged) payload.showInMenu = editShowInMenu;
 
             const updated = await patchCategory(editTarget.id, payload);
             setCategories((prev) =>
@@ -368,9 +340,6 @@ export default function CategoriesPageClient() {
                 onCreate={() => {
                     setCreateName('');
                     setCreateImageUrl('');
-                    setCreateIsPublished(true);
-                    setCreateShowInHero(false);
-                    setCreateShowInMenu(true);
                     setCreateError('');
                     setCreateOpen(true);
                 }}
@@ -445,9 +414,7 @@ export default function CategoriesPageClient() {
                 open={createOpen}
                 createName={createName}
                 createImageUrl={createImageUrl}
-                createIsPublished={createIsPublished}
                 createShowInHero={createShowInHero}
-                createShowInMenu={createShowInMenu}
                 createLoading={createLoading}
                 createError={createError}
                 onOpenChange={(open) => {
@@ -461,9 +428,7 @@ export default function CategoriesPageClient() {
                     setCreateImageUrl(value);
                     setCreateError('');
                 }}
-                onCreateIsPublishedChange={setCreateIsPublished}
                 onCreateShowInHeroChange={setCreateShowInHero}
-                onCreateShowInMenuChange={setCreateShowInMenu}
                 onSubmit={handleCreate}
             />
 
@@ -473,7 +438,6 @@ export default function CategoriesPageClient() {
                 editImageUrl={editImageUrl}
                 editIsPublished={editIsPublished}
                 editShowInHero={editShowInHero}
-                editShowInMenu={editShowInMenu}
                 editLoading={editLoading}
                 editError={editError}
                 onOpenChange={(open) => {
@@ -489,7 +453,6 @@ export default function CategoriesPageClient() {
                 }}
                 onEditIsPublishedChange={setEditIsPublished}
                 onEditShowInHeroChange={setEditShowInHero}
-                onEditShowInMenuChange={setEditShowInMenu}
                 onSubmit={handleEdit}
             />
 

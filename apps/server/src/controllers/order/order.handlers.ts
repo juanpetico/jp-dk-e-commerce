@@ -121,8 +121,10 @@ export const cancelOrder = async (req: AuthRequest, res: Response, next: NextFun
 
 export const getTopProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
-        const topProducts = await orderService.getTopProducts(limit);
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+        const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
+        const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+        const topProducts = await orderService.getTopProducts(limit, startDate, endDate);
 
         res.json({ success: true, data: topProducts });
     } catch (error) {

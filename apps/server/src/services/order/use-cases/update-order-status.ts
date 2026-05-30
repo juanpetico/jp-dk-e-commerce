@@ -7,7 +7,7 @@ import type { OrderStatus } from "../order.types.js";
 export const updateOrderStatusUseCase = async (orderId: string, status: OrderStatus, actorId: string) => {
     const current = await prisma.order.findUnique({
         where: { id: orderId },
-        select: { status: true },
+        select: { status: true, customerName: true },
     });
     if (!current) throw new AppError("Order not found", 404);
 
@@ -24,6 +24,10 @@ export const updateOrderStatusUseCase = async (orderId: string, status: OrderSta
         entityId: orderId,
         oldValue: current.status,
         newValue: status,
+        metadata: {
+            orderShortId: orderId.slice(0, 8).toUpperCase(),
+            customerName: current.customerName ?? null,
+        },
     });
 
     return order;

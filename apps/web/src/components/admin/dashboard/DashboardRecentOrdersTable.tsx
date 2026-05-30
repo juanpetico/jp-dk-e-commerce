@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
 import { ORDER_STATUS_LABELS, getOrderStatusColor } from '@/services/orderService';
 import TablePagination from '@/components/admin/shared/TablePagination';
-import { formatPrice } from '@/lib/utils';
-import { Order } from '@/types';
+import { formatPrice, cn } from '@/lib/utils';
+import { Order, OrderStatus } from '@/types';
 
 interface DashboardRecentOrdersTableProps {
     basePath: '/admin' | '/superadmin';
@@ -17,6 +20,14 @@ interface DashboardRecentOrdersTableProps {
     onViewOrder: (order: Order) => void;
 }
 
+const STATUS_CHIPS: { label: string; value: OrderStatus | null }[] = [
+    { label: 'Todos', value: null },
+    { label: 'Pendiente', value: 'PENDING' },
+    { label: 'Confirmado', value: 'CONFIRMED' },
+    { label: 'Entregado', value: 'DELIVERED' },
+    { label: 'Cancelado', value: 'CANCELLED' },
+];
+
 export function DashboardRecentOrdersTable({
     basePath,
     orders,
@@ -28,13 +39,76 @@ export function DashboardRecentOrdersTable({
     onItemsPerPageChange,
     onViewOrder,
 }: DashboardRecentOrdersTableProps) {
+    const [statusFilter, setStatusFilter] = useState<OrderStatus | null>(null);
+    const [localPage, setLocalPage] = useState(1);
+
+    const statusCounts = useMemo(() => {
+        const counts: Partial<Record<OrderStatus, number>> = {};
+        for (const order of orders) {
+            counts[order.status] = (counts[order.status] ?? 0) + 1;
+        }
+        return counts;
+    }, [orders]);
+
+    const filteredOrders = useMemo(() => {
+        if (!statusFilter) return orders;
+        return orders.filter((o) => o.status === statusFilter);
+    }, [orders, statusFilter]);
+
+    const isFiltered = statusFilter !== null;
+    const displayTotal = isFiltered ? filteredOrders.length : totalItems;
+    const displayPage = isFiltered ? localPage : currentPage;
+    const displayPaginated = isFiltered
+        ? filteredOrders.slice((localPage - 1) * itemsPerPage, localPage * itemsPerPage)
+        : paginatedOrders;
+
+    const handlePageChange = (page: number) => {
+        if (isFiltered) setLocalPage(page);
+        else onPageChange(page);
+    };
+
+    const handleFilterChange = (value: OrderStatus | null) => {
+        setStatusFilter(value);
+        setLocalPage(1);
+    };
+
     return (
         <div className="bg-card dark:bg-card rounded-xl border border-gray-300 dark:border-border shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-300 dark:border-border flex justify-between items-center">
+            <div className="p-6 border-b border-gray-300 dark:border-border flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="font-bold text-sm uppercase tracking-wide text-foreground">Pedidos Recientes</h3>
-                <Link href={`${basePath}/orders`} className="text-xs text-muted-foreground hover:text-foreground underline">
-                    Ver todos
-                </Link>
+                <div className="flex items-center gap-2 flex-wrap">
+                    {STATUS_CHIPS.map(({ label, value }) => {
+                        const count = value === null ? orders.length : (statusCounts[value] ?? 0);
+                        const isActive = statusFilter === value;
+                        return (
+                            <button
+                                key={label}
+                                type="button"
+                                onClick={() => handleFilterChange(value)}
+                                className={cn(
+                                    'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-colors',
+                                    isActive
+                                        ? 'bg-foreground text-background'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-gray-300 dark:border-border'
+                                )}
+                            >
+                                {label}
+                                <span className={cn(
+                                    'ml-0.5 tabular-nums',
+                                    isActive ? 'text-background/70' : 'text-muted-foreground'
+                                )}>
+                                    {count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                    <Link
+                        href={`${basePath}/orders`}
+                        className="text-xs text-muted-foreground hover:text-foreground underline ml-1"
+                    >
+                        Ver todos
+                    </Link>
+                </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -49,7 +123,7 @@ export function DashboardRecentOrdersTable({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border dark:divide-border/50">
-                        {paginatedOrders.map((order) => (
+                        {displayPaginated.map((order) => (
                             <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="text-xs font-bold text-foreground">{order.customerName || order.user?.name || 'Invitado'}</div>
@@ -73,10 +147,10 @@ export function DashboardRecentOrdersTable({
                             </tr>
                         ))}
 
-                        {orders.length === 0 && (
+                        {displayPaginated.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
-                                    No hay pedidos recientes
+                                    {isFiltered ? `No hay pedidos con estado "${ORDER_STATUS_LABELS[statusFilter!]}"` : 'No hay pedidos recientes'}
                                 </td>
                             </tr>
                         )}
@@ -85,10 +159,10 @@ export function DashboardRecentOrdersTable({
             </div>
 
             <TablePagination
-                currentPage={currentPage}
-                totalItems={totalItems}
+                currentPage={displayPage}
+                totalItems={displayTotal}
                 itemsPerPage={itemsPerPage}
-                onPageChange={onPageChange}
+                onPageChange={handlePageChange}
                 onItemsPerPageChange={onItemsPerPageChange}
             />
         </div>

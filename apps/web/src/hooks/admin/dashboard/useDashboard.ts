@@ -5,7 +5,10 @@ import {
     buildDashboardCategoryData,
     buildDashboardSalesTrendData,
 } from '@/lib/dashboard/analytics';
-import { resolveDashboardQuickRange } from '@/lib/dashboard/dateRanges';
+import {
+    calculatePreviousPeriod,
+    resolveDashboardQuickRange,
+} from '@/lib/dashboard/dateRanges';
 import { useAdminDashboardData } from './useAdminDashboardData';
 import { useDashboardDateRange } from './useDashboardDateRange';
 import { useDashboardOrderActions } from './useDashboardOrderActions';
@@ -22,7 +25,8 @@ const RETENTION_QUICK_RANGES: DashboardRetentionRange[] = ['1D', '7D', '1M', '3M
 
 export function useDashboard(): DashboardFacade {
     const data = useAdminDashboardData();
-    const dateRange = useDashboardDateRange();
+    const kpiDateRange = useDashboardDateRange();
+    const chartDateRange = useDashboardDateRange();
     const topProducts = useTopProducts();
     const shopConfig = useShopConfigPublic();
     const [selectedAttributionQuickRange, setSelectedAttributionQuickRange] = useState<DashboardAttributionQuickRange>('1M');
@@ -42,15 +46,30 @@ export function useDashboard(): DashboardFacade {
         return calculateDashboardAnalytics(
             data.orders,
             data.products,
-            dateRange.dateRange,
+            kpiDateRange.dateRange,
             data.cartFunnel,
             shopConfig.lowStockThreshold
         );
-    }, [data.orders, data.products, dateRange.dateRange, data.cartFunnel, shopConfig.lowStockThreshold]);
+    }, [data.orders, data.products, kpiDateRange.dateRange, data.cartFunnel, shopConfig.lowStockThreshold]);
+
+    const previousDateRange = useMemo(() => {
+        if (!kpiDateRange.dateRange?.from) return undefined;
+        return calculatePreviousPeriod(kpiDateRange.dateRange);
+    }, [kpiDateRange.dateRange]);
+
+    const previousAnalytics = useMemo(() => {
+        return calculateDashboardAnalytics(
+            data.orders,
+            data.products,
+            previousDateRange,
+            data.cartFunnel,
+            shopConfig.lowStockThreshold
+        );
+    }, [data.orders, data.products, previousDateRange, data.cartFunnel, shopConfig.lowStockThreshold]);
 
     const salesTrendData = useMemo(() => {
-        return buildDashboardSalesTrendData(data.orders, dateRange.dateRange);
-    }, [data.orders, dateRange.dateRange]);
+        return buildDashboardSalesTrendData(data.orders, chartDateRange.dateRange);
+    }, [data.orders, chartDateRange.dateRange]);
 
     const marketingAttribution = useMemo(() => {
         return calculateMarketingAttributionMetrics(data.orders, attributionDateRange);
@@ -69,7 +88,8 @@ export function useDashboard(): DashboardFacade {
     const report = useDashboardReport({
         analytics,
         categoryData,
-        dateRange: dateRange.dateRange,
+        topProducts: topProducts.topProducts,
+        dateRange: kpiDateRange.dateRange,
     });
 
     return {
@@ -79,20 +99,32 @@ export function useDashboard(): DashboardFacade {
         orders: data.orders,
 
         analytics,
+        previousAnalytics,
+        previousDateRange,
         marketingAttribution,
         salesTrendData,
         categoryData,
         topProducts: topProducts.topProducts,
         topProductsLoading: topProducts.loading,
+        topProductsRange: topProducts.selectedRange,
+        topProductsAvailableRanges: topProducts.availableRanges,
+        setTopProductsRange: topProducts.setSelectedRange,
         customerRetention: data.customerRetention,
         customerRetentionLoading: data.loadingCustomerRetention,
 
-        dateRange: dateRange.dateRange,
-        defaultDateRange: dateRange.defaultDateRange,
-        selectedQuickRange: dateRange.selectedQuickRange,
-        quickRanges: dateRange.quickRanges,
-        setQuickRange: dateRange.setQuickRange,
-        setDateRange: dateRange.setDateRange,
+        kpiDateRange: kpiDateRange.dateRange,
+        kpiDefaultDateRange: kpiDateRange.defaultDateRange,
+        kpiSelectedQuickRange: kpiDateRange.selectedQuickRange,
+        kpiQuickRanges: kpiDateRange.quickRanges,
+        setKpiQuickRange: kpiDateRange.setQuickRange,
+        setKpiDateRange: kpiDateRange.setDateRange,
+
+        dateRange: chartDateRange.dateRange,
+        defaultDateRange: chartDateRange.defaultDateRange,
+        selectedQuickRange: chartDateRange.selectedQuickRange,
+        quickRanges: chartDateRange.quickRanges,
+        setQuickRange: chartDateRange.setQuickRange,
+        setDateRange: chartDateRange.setDateRange,
 
         attributionQuickRanges: ATTRIBUTION_QUICK_RANGES,
         selectedAttributionQuickRange,

@@ -29,8 +29,8 @@ export default function CheckoutPageContactCard({
             </div>
             <div className="p-4 flex items-center">
                 <div className="flex-1 grid grid-cols-[100px_1fr] gap-2 items-center">
-                    <p className="text-muted-foreground text-xs font-medium">Metodo</p>
-                    <p className="font-medium text-foreground text-xs md:text-sm">Envio Estandar · <span className="font-bold">{shippingCostLabel}</span></p>
+                    <p className="text-muted-foreground text-xs font-medium">Método</p>
+                    <p className="font-medium text-foreground text-xs md:text-sm">Envío Estándar · <span className="font-bold">{shippingCostLabel}</span></p>
                 </div>
             </div>
         </div>

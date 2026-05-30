@@ -24,6 +24,7 @@ export const ACTION_CONFIG: Record<string, { label: string; className: string }>
     CATEGORY_PUBLISHED: { label: 'Estado de Categoria', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     CATEGORY_UNPUBLISHED: { label: 'Estado de Categoria', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     CATEGORY_DELETED: { label: 'Estado de Categoria', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
+    CATEGORY_UPDATED: { label: 'Estado de Categoria', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300' },
     STORE_CONFIG_CHANGE: { label: 'Estado de Configuracion', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
     COUPON_CREATED: { label: 'Estado de Cupon', className: 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
     COUPON_UPDATED: { label: 'Estado de Cupon', className: 'bg-violet-200 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300' },
@@ -59,6 +60,13 @@ export const COUPON_FIELD_LABELS: Record<string, string> = {
     minAmount: 'Monto minimo',
     maxUses: 'Usos maximos',
     isPublic: 'Publico',
+};
+
+export const CATEGORY_FIELD_LABELS: Record<string, string> = {
+    name: 'Nombre',
+    showInMenu: 'En menú',
+    showInHero: 'En hero',
+    sortOrder: 'Orden',
 };
 
 export const CONFIG_FIELD_LABELS: Record<string, string> = {

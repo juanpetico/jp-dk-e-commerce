@@ -76,7 +76,7 @@ export default async function ProductPage({ params }: Props) {
 
     const breadcrumbs = [
         { name: 'Inicio', item: SITE_URL },
-        { name: product.category?.name ?? 'Categoría', item: `${SITE_URL}/category/${product.category?.slug}` },
+        { name: product.category?.name ?? 'Categoría', item: `${SITE_URL}/catalog?category=${product.category?.slug}` },
         { name: product.name, item: `${SITE_URL}/product/${slug}` },
     ]
 

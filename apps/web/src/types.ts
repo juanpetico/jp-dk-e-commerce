@@ -3,6 +3,8 @@ export interface Category {
     name: string;
     slug: string;
     imageUrl?: string | null;
+    showInHero?: boolean;
+    showInMenu?: boolean;
     isPublished?: boolean;
     sortOrder?: number;
     description?: string;
@@ -229,6 +231,7 @@ export interface TopProduct {
     price: number;
     imageUrl: string | null;
     totalQuantitySold: number;
+    totalRevenue: number;
     category: {
         id: string;
         name: string;

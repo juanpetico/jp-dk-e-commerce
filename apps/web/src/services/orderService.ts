@@ -249,9 +249,12 @@ export const createOrder = async (
 /**
  * Obtener los productos más vendidos (Top Performers)
  */
-export const fetchTopProducts = async (limit: number = 5): Promise<TopProduct[]> => {
+export const fetchTopProducts = async (limit: number = 50, startDate?: Date, endDate?: Date): Promise<TopProduct[]> => {
     try {
-        const res = await apiFetch(`${API_URL}/orders/top-products?limit=${limit}`, {
+        const params = new URLSearchParams({ limit: String(limit) });
+        if (startDate) params.append('startDate', startDate.toISOString());
+        if (endDate) params.append('endDate', endDate.toISOString());
+        const res = await apiFetch(`${API_URL}/orders/top-products?${params.toString()}`, {
             credentials: 'include',
             headers: JSON_HEADERS,
         });

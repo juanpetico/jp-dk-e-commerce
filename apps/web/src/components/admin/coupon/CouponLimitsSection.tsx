@@ -23,7 +23,7 @@ export function CouponLimitsSection({ minAmount, maxUses, startDate, endDate, er
         <>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="minAmount" className="text-[11px] font-black uppercase tracking-widest ml-1">Venta Mínima ($)</Label>
+                    <Label htmlFor="minAmount" className="text-[11px] font-black uppercase tracking-widest ml-1">Venta Mínima Para Usar ($)</Label>
                     <Input
                         id="minAmount"
                         type="text"
@@ -79,13 +79,26 @@ export function CouponLimitsSection({ minAmount, maxUses, startDate, endDate, er
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className={cn('text-[11px] font-black uppercase tracking-widest ml-1', errors.endDate && 'text-destructive')}>
+                    <Label className={cn('text-[11px] font-black uppercase tracking-widest ml-1 flex justify-between items-center', errors.endDate && 'text-destructive')}>
                         Fecha Término
+                        <button
+                            type="button"
+                            onClick={() => onChange({ endDate: endDate ? '' : (new Date().toISOString().split('T')[0] || '') })}
+                            className={cn(
+                                'text-[9px] px-1.5 py-0.5 rounded border transition-colors flex items-center gap-1',
+                                !endDate
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-muted text-muted-foreground border-border'
+                            )}
+                        >
+                            <Infinity className="w-3 h-3" />
+                            Sin fin
+                        </button>
                     </Label>
                     <DatePicker
                         date={endDate ? new Date(endDate + 'T00:00:00') : undefined}
                         setDate={(date) => onChange({ endDate: date ? (date.toISOString().split('T')[0] || '') : '' })}
-                        placeholder="Sin fin"
+                        placeholder="Sin fecha de término"
                     />
                     {errors.endDate && (
                         <p className="text-[10px] text-destructive font-black flex items-center gap-1 uppercase tracking-tighter ml-1">

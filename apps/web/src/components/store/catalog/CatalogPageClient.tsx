@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchCategories } from '@/services/categoryService';
 import { fetchProducts } from '@/services/productService';
 import { Category, Product } from '@/types';
@@ -10,26 +10,26 @@ import CatalogPageGrid from './CatalogPage.grid';
 import CatalogPageHero from './CatalogPage.hero';
 import CatalogPageQuickFilters from './CatalogPage.quick-filters';
 import CatalogPageSkeleton from './CatalogPage.skeleton';
-import { CatalogFilter, CatalogHeroImageMap } from './CatalogPage.types';
-import { CATALOG_CATEGORIES, getCatalogCounts, getFilteredProducts, normalizeCategoryToFilter } from './CatalogPage.utils';
+import { CatalogFilter, HeroCategory } from './CatalogPage.types';
+import { getCatalogCounts, getFilteredProducts, normalizeCategoryToFilter } from './CatalogPage.utils';
 
 export default function CatalogPageClient() {
+    const router = useRouter();
     const searchParams = useSearchParams();
-    const initialCategory = searchParams.get('category');
-    const initialSearch = searchParams.get('search');
 
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [filter, setFilter] = useState<CatalogFilter>('All');
-    const [searchTerm, setSearchTerm] = useState(initialSearch || '');
+    const [filter, setFilter] = useState<CatalogFilter>(() =>
+        normalizeCategoryToFilter(searchParams.get('category')),
+    );
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setFilter(normalizeCategoryToFilter(initialCategory));
-        if (initialSearch) {
-            setSearchTerm(initialSearch);
-        }
-    }, [initialCategory, initialSearch]);
+        setFilter(normalizeCategoryToFilter(searchParams.get('category')));
+        const s = searchParams.get('search');
+        if (s !== null) setSearchTerm(s);
+    }, [searchParams]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -41,47 +41,57 @@ export default function CatalogPageClient() {
             setCategories(categoryList);
             setLoading(false);
         };
-
         void loadData();
     }, []);
+
+    const handleFilterChange = (nextFilter: CatalogFilter) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (nextFilter === 'All') {
+            params.delete('category');
+        } else {
+            params.set('category', nextFilter);
+        }
+        const query = params.toString();
+        router.push(query ? `/catalog?${query}` : '/catalog', { scroll: false });
+    };
+
+    const heroCategories = useMemo<HeroCategory[]>(() => {
+        return categories
+            .filter((c) => c.showInHero)
+            .slice(0, 3)
+            .map((c) => ({ slug: c.slug, name: c.name, imageUrl: c.imageUrl }));
+    }, [categories]);
+
+    const allCategoriesForFilters = useMemo<HeroCategory[]>(() => {
+        return categories.map((c) => ({ slug: c.slug, name: c.name, imageUrl: c.imageUrl }));
+    }, [categories]);
 
     const filteredProducts = useMemo(() => {
         return getFilteredProducts(products, filter, searchTerm);
     }, [products, filter, searchTerm]);
 
     const counts = useMemo(() => {
-        return getCatalogCounts(products);
-    }, [products]);
+        return getCatalogCounts(products, categories);
+    }, [products, categories]);
 
-    const imagesByFilter = useMemo<CatalogHeroImageMap>(() => {
-        const mapBySlug = new Map(
-            categories
-                .filter((category) => typeof category.imageUrl === 'string' && category.imageUrl.trim() !== '')
-                .map((category) => [category.slug.toLowerCase(), category.imageUrl as string])
-        );
-
-        return {
-            Poleras: mapBySlug.get('poleras'),
-            Polerones: mapBySlug.get('polerones'),
-            Lentes: mapBySlug.get('lentes'),
-        };
-    }, [categories]);
-
-    if (loading) {
-        return <CatalogPageSkeleton />;
-    }
+    if (loading) return <CatalogPageSkeleton />;
 
     return (
-        <div className="min-h-screen pb-12 pt-20 md:pt-0">
-            <CatalogPageHero filter={filter} counts={counts} imagesByFilter={imagesByFilter} onFilterChange={setFilter} />
+        <div className="min-h-screen pb-12 pt-28">
+            <CatalogPageHero
+                filter={filter}
+                counts={counts}
+                heroCategories={heroCategories}
+                onFilterChange={handleFilterChange}
+            />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <CatalogPageQuickFilters
                     filter={filter}
                     searchTerm={searchTerm}
                     filteredCount={filteredProducts.length}
-                    categories={CATALOG_CATEGORIES}
-                    onFilterChange={setFilter}
+                    allCategories={allCategoriesForFilters}
+                    onFilterChange={handleFilterChange}
                     onClearSearch={() => setSearchTerm('')}
                 />
 
@@ -90,8 +100,8 @@ export default function CatalogPageClient() {
                 ) : (
                     <CatalogPageEmpty
                         onReset={() => {
-                            setFilter('All');
                             setSearchTerm('');
+                            handleFilterChange('All');
                         }}
                     />
                 )}

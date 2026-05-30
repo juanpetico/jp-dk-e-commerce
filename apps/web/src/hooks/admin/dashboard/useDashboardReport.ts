@@ -2,16 +2,19 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { CategorySalesPoint, DashboardAnalytics, DashboardDateRange } from '@/lib/dashboard/types';
 import { generateDashboardReport } from '@/services/reportService';
+import { TopProduct } from '@/types';
 
 interface UseDashboardReportParams {
     analytics: DashboardAnalytics;
     categoryData: CategorySalesPoint[];
+    topProducts: TopProduct[];
     dateRange: DashboardDateRange | undefined;
 }
 
 export function useDashboardReport({
     analytics,
     categoryData,
+    topProducts,
     dateRange,
 }: UseDashboardReportParams) {
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -26,6 +29,7 @@ export function useDashboardReport({
             const reportData = {
                 analytics,
                 categoryData,
+                topProducts,
                 dateRange: { from: dateRange?.from, to: dateRange?.to },
             };
 
@@ -38,7 +42,7 @@ export function useDashboardReport({
         } finally {
             setIsGeneratingReport(false);
         }
-    }, [analytics, categoryData, dateRange]);
+    }, [analytics, categoryData, topProducts, dateRange]);
 
     const closeReportModal = useCallback(() => {
         setIsReportModalOpen(false);

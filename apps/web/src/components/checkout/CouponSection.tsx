@@ -60,7 +60,6 @@ export function CouponSection({
                                     : `$${appliedCoupon.value.toLocaleString('es-CL')} OFF`
                                 }
                             </p>
-                            <p className="text-[10px] text-muted-foreground">{appliedCoupon.description || 'Descuento aplicado'}</p>
                         </div>
                     </div>
                     <button

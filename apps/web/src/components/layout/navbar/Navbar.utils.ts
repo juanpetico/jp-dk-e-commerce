@@ -1,9 +1,9 @@
 import { NavbarMenuChild, NavbarMenuItem } from './Navbar.types';
 
 export const FALLBACK_CATEGORIES: NavbarMenuChild[] = [
-    { label: 'Poleras', path: '/category/poleras' },
-    { label: 'Polerones', path: '/category/polerones' },
-    { label: 'Lentes', path: '/category/lentes' },
+    { label: 'Poleras', path: '/catalog?category=poleras' },
+    { label: 'Polerones', path: '/catalog?category=polerones' },
+    { label: 'Lentes', path: '/catalog?category=lentes' },
 ];
 
 export const PROFILE_HIDDEN_ROUTES = ['/profile', '/orders', '/settings', '/admin', '/superadmin', '/checkout'];

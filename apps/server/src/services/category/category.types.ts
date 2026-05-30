@@ -5,6 +5,8 @@ export interface CategoryFilters {
 export interface CategoryFieldsUpdateInput {
     name?: string;
     imageUrl?: string | null;
+    showInHero?: boolean;
+    showInMenu?: boolean;
     isPublished?: boolean;
     sortOrder?: number;
 }
@@ -12,4 +14,7 @@ export interface CategoryFieldsUpdateInput {
 export interface CreateCategoryInput {
     name: string;
     imageUrl?: string | null;
+    showInHero?: boolean;
+    showInMenu?: boolean;
+    isPublished?: boolean;
 }

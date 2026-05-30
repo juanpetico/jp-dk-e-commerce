@@ -4,46 +4,64 @@ export default function CatalogPageQuickFilters({
     filter,
     searchTerm,
     filteredCount,
-    categories,
+    allCategories,
     onFilterChange,
     onClearSearch,
 }: CatalogQuickFiltersProps) {
-    return (
-        <div className="flex flex-col mb-12 border-b border-gray-100 pb-6 gap-4">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <h1 className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-2">
-                    {filter === 'All' ? 'Catalogo Completo' : filter}
-                    <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full align-middle font-sans">
-                        {filteredCount}
-                    </span>
-                </h1>
+    const activeCategory = allCategories.find((c) => c.slug === filter);
 
-                <div className="flex gap-2">
-                    {categories.map((category) => (
+    return (
+        <>
+            <div className="flex flex-col gap-4 mb-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <h1 className="text-2xl font-display font-bold uppercase tracking-tight flex items-center gap-2">
+                        {filter === 'All' ? 'Catálogo Completo' : (activeCategory?.name ?? filter)}
+                        <span className="bg-foreground text-background text-xs font-bold px-2 py-1 rounded-full align-middle font-sans">
+                            {filteredCount}
+                        </span>
+                    </h1>
+
+                    <div className="flex gap-2 flex-wrap justify-center">
                         <button
-                            key={category}
-                            onClick={() => onFilterChange(category)}
+                            onClick={() => onFilterChange('All')}
                             className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${
-                                filter === category ? 'bg-black text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                filter === 'All'
+                                    ? 'bg-foreground text-background'
+                                    : 'text-foreground/50 hover:text-foreground'
                             }`}
                         >
-                            {category === 'All' ? 'Ver Todo' : category}
+                            Ver Todo
                         </button>
-                    ))}
+                        {allCategories.map((category) => (
+                            <button
+                                key={category.slug}
+                                onClick={() => onFilterChange(category.slug)}
+                                className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${
+                                    filter === category.slug
+                                        ? 'bg-foreground text-background'
+                                        : 'text-foreground/50 hover:text-foreground'
+                                }`}
+                            >
+                                {category.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
+
+                {searchTerm && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-foreground/50">Resultados para:</span>
+                        <span className="font-bold text-sm bg-muted text-foreground px-3 py-1 rounded-full flex items-center gap-2">
+                            &quot;{searchTerm}&quot;
+                            <button onClick={onClearSearch} className="text-foreground/40 hover:text-foreground">
+                                &times;
+                            </button>
+                        </span>
+                    </div>
+                )}
             </div>
 
-            {searchTerm && (
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">Resultados para:</span>
-                    <span className="font-bold text-sm bg-gray-100 px-3 py-1 rounded-full flex items-center gap-2">
-                        "{searchTerm}"
-                        <button onClick={onClearSearch} className="text-gray-400 hover:text-black">
-                            &times;
-                        </button>
-                    </span>
-                </div>
-            )}
-        </div>
+            <div className="h-px bg-gray-300 dark:bg-gray-700 mb-12" />
+        </>
     );
 }

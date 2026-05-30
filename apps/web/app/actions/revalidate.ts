@@ -3,29 +3,35 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function revalidateProducts() {
-    revalidateTag('products')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)('products')
     revalidatePath('/catalog')
     revalidatePath('/', 'layout')
 }
 
 export async function revalidateCategories() {
-    revalidateTag('categories')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)('categories')
     revalidatePath('/catalog')
     revalidatePath('/', 'layout')
 }
 
 export async function revalidateProductBySlug(slug: string) {
-    revalidateTag(`product-${slug}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)(`product-${slug}`)
     revalidatePath(`/product/${slug}`)
 }
 
 export async function revalidateCategoryBySlug(slug: string) {
-    revalidateTag(`category-${slug}`)
-    revalidatePath(`/category/${slug}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)(`category-${slug}`)
+    revalidatePath('/catalog')
 }
 
 export async function revalidateAll() {
-    revalidateTag('products')
-    revalidateTag('categories')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)('products')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(revalidateTag as any)('categories')
     revalidatePath('/', 'layout')
 }

@@ -66,10 +66,12 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
                 <>
                     <DashboardKpiCards
                         analytics={dashboard.analytics}
-                        marketingAttribution={dashboard.marketingAttribution}
-                        attributionQuickRanges={dashboard.attributionQuickRanges}
-                        selectedAttributionQuickRange={dashboard.selectedAttributionQuickRange}
-                        onAttributionQuickRangeSelect={dashboard.setAttributionQuickRange}
+                        previousAnalytics={dashboard.previousAnalytics}
+                        previousDateRange={dashboard.previousDateRange}
+                        basePath={basePath}
+                        quickRanges={dashboard.kpiQuickRanges}
+                        selectedQuickRange={dashboard.kpiSelectedQuickRange}
+                        onQuickRangeSelect={dashboard.setKpiQuickRange}
                     />
 
                     <DashboardSalesTrendChart
@@ -97,6 +99,8 @@ export function AdminDashboardView({ dashboard, basePath }: AdminDashboardViewPr
                         topProducts={dashboard.topProducts}
                         loading={dashboard.topProductsLoading}
                         basePath={basePath}
+                        selectedRange={dashboard.topProductsRange}
+                        onRangeSelect={dashboard.setTopProductsRange}
                     />
 
                     <DashboardRecentOrdersTable

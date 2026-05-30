@@ -1,4 +1,5 @@
 import React from 'react';
+import { Eye, Menu, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
     Dialog,
@@ -16,12 +17,16 @@ interface CategoriesEditDialogProps {
     editName: string;
     editImageUrl: string;
     editIsPublished: boolean;
+    editShowInHero: boolean;
+    editShowInMenu: boolean;
     editLoading: boolean;
     editError: string;
     onOpenChange: (open: boolean) => void;
     onEditNameChange: (value: string) => void;
     onEditImageUrlChange: (value: string) => void;
     onEditIsPublishedChange: (value: boolean) => void;
+    onEditShowInHeroChange: (value: boolean) => void;
+    onEditShowInMenuChange: (value: boolean) => void;
     onSubmit: (event: React.FormEvent) => void;
 }
 
@@ -30,12 +35,16 @@ export default function CategoriesEditDialog({
     editName,
     editImageUrl,
     editIsPublished,
+    editShowInHero,
+    editShowInMenu,
     editLoading,
     editError,
     onOpenChange,
     onEditNameChange,
     onEditImageUrlChange,
     onEditIsPublishedChange,
+    onEditShowInHeroChange,
+    onEditShowInMenuChange,
     onSubmit,
 }: CategoriesEditDialogProps) {
     return (
@@ -63,27 +72,69 @@ export default function CategoriesEditDialog({
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase text-muted-foreground">URL imagen (Catalog Hero)</Label>
+                        <Label className="text-xs font-bold uppercase text-muted-foreground">Imagen de portada</Label>
                         <Input
                             value={editImageUrl}
                             placeholder="https://..."
                             onChange={(e) => onEditImageUrlChange(e.target.value)}
                             className="h-11 bg-muted/50"
                         />
+                        <p className="text-[10px] text-muted-foreground">
+                            URL de imagen que aparece en el banner de catálogo.
+                        </p>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
-                        <div>
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Visible en tienda</Label>
-                            <p className="text-[10px] text-muted-foreground">
-                                Este cambio se guarda al confirmar la edición.
-                            </p>
+                        <div className="flex items-center gap-2">
+                            <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Visible en tienda</Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    La categoría aparece en la tienda pública.
+                                </p>
+                            </div>
                         </div>
                         <Switch
                             checked={editIsPublished}
                             onCheckedChange={onEditIsPublishedChange}
                             disabled={editLoading}
                             aria-label="Cambiar visibilidad de la categoría"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
+                        <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Destacar en portada</Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Aparece en el banner principal del catálogo (máx. 3).
+                                </p>
+                            </div>
+                        </div>
+                        <Switch
+                            checked={editShowInHero}
+                            onCheckedChange={onEditShowInHeroChange}
+                            disabled={editLoading}
+                            aria-label="Destacar categoría en portada del catálogo"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
+                        <div className="flex items-center gap-2">
+                            <Menu className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Mostrar en Menú</Label>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Aparece en el desplegable de categorías del menú.
+                                </p>
+                            </div>
+                        </div>
+                        <Switch
+                            checked={editShowInMenu}
+                            onCheckedChange={onEditShowInMenuChange}
+                            disabled={editLoading}
+                            aria-label="Mostrar categoría en menú de navegación"
                         />
                     </div>
 

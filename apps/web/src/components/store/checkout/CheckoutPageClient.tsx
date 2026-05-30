@@ -201,10 +201,10 @@ export default function CheckoutPageClient() {
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
-                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Politica de reembolso</a>
-                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Politica de envio</a>
-                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Politica de privacidad</a>
-                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Terminos del servicio</a>
+                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Política de reembolso</a>
+                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Política de envío</a>
+                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Política de privacidad</a>
+                            <a href="#" className="hover:text-foreground underline decoration-1 underline-offset-2">Términos del servicio</a>
                         </div>
                     </div>
                 </div>

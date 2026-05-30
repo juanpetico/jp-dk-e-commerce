@@ -58,6 +58,8 @@ model Category {
   name        String    @unique
   slug        String    @unique
   imageUrl    String?
+  showInHero  Boolean   @default(false)
+  showInMenu  Boolean   @default(true)
   isPublished Boolean   @default(true)
   sortOrder   Int       @default(0)
   products    Product[]

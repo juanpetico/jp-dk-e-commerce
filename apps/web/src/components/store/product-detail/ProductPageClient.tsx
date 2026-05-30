@@ -130,7 +130,7 @@ export default function ProductPageClient({ initialProduct }: ProductPageClientP
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-6">
             {product.category?.isPublished !== false && (
                 <nav className="flex mb-8 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <span className="hover:text-black dark:hover:text-white cursor-pointer">Inicio</span>

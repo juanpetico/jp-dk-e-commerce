@@ -9,6 +9,7 @@ import {
     DashboardQuickRange,
     SalesTrendPoint,
 } from '@/lib/dashboard/types';
+import { DashboardTopProductsRange } from '@/lib/dashboard/dateRanges';
 
 export interface DashboardFacade {
     loading: boolean;
@@ -18,13 +19,25 @@ export interface DashboardFacade {
     orders: Order[];
 
     analytics: DashboardAnalytics;
+    previousAnalytics: DashboardAnalytics;
+    previousDateRange: DashboardDateRange | undefined;
     marketingAttribution: MarketingAttributionMetrics;
     salesTrendData: SalesTrendPoint[];
     categoryData: CategorySalesPoint[];
     topProducts: TopProduct[];
     topProductsLoading: boolean;
+    topProductsRange: DashboardTopProductsRange;
+    topProductsAvailableRanges: DashboardTopProductsRange[];
+    setTopProductsRange: (range: DashboardTopProductsRange) => void;
     customerRetention: DashboardCustomerRetention | null;
     customerRetentionLoading: boolean;
+
+    kpiDateRange: DashboardDateRange | undefined;
+    kpiDefaultDateRange: DashboardDateRange;
+    kpiSelectedQuickRange: DashboardQuickRange | null;
+    kpiQuickRanges: DashboardQuickRange[];
+    setKpiQuickRange: (range: DashboardQuickRange) => void;
+    setKpiDateRange: (range: DashboardDateRange | undefined) => void;
 
     dateRange: DashboardDateRange | undefined;
     defaultDateRange: DashboardDateRange;

@@ -1,13 +1,17 @@
 import { Product } from '@/types';
 
-export type CatalogFilter = 'All' | 'Poleras' | 'Polerones' | 'Lentes';
+export type CatalogFilter = string; // 'All' | category slug
 
-export type CatalogHeroImageMap = Partial<Record<Exclude<CatalogFilter, 'All'>, string>>;
+export interface HeroCategory {
+    slug: string;
+    name: string;
+    imageUrl?: string | null;
+}
 
 export interface CatalogHeroProps {
     filter: CatalogFilter;
-    counts: Record<Exclude<CatalogFilter, 'All'>, number>;
-    imagesByFilter: CatalogHeroImageMap;
+    counts: Record<string, number>;
+    heroCategories: HeroCategory[];
     onFilterChange: (nextFilter: CatalogFilter) => void;
 }
 
@@ -15,7 +19,7 @@ export interface CatalogQuickFiltersProps {
     filter: CatalogFilter;
     searchTerm: string;
     filteredCount: number;
-    categories: CatalogFilter[];
+    allCategories: HeroCategory[];
     onFilterChange: (nextFilter: CatalogFilter) => void;
     onClearSearch: () => void;
 }

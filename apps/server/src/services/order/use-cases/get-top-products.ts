@@ -7,16 +7,20 @@ export interface TopProduct {
     price: number;
     imageUrl: string | null;
     totalQuantitySold: number;
+    totalRevenue: number;
     category: {
         id: string;
         name: string;
     };
 }
 
-export const getTopProductsUseCase = async (limit: number = 5): Promise<TopProduct[]> => {
-    const startDate = new Date();
-    startDate.setDate(1);
-    startDate.setHours(0, 0, 0, 0);
+export const getTopProductsUseCase = async (limit: number = 5, startDate?: Date, endDate?: Date): Promise<TopProduct[]> => {
+    const createdAtFilter = (startDate || endDate)
+        ? {
+            ...(startDate ? { gte: startDate } : {}),
+            ...(endDate ? { lte: endDate } : {}),
+        }
+        : undefined;
 
     const topProducts = await prisma.orderItem.groupBy({
         by: ['productId'],
@@ -25,9 +29,7 @@ export const getTopProductsUseCase = async (limit: number = 5): Promise<TopProdu
                 status: {
                     not: 'CANCELLED'
                 },
-                createdAt: {
-                    gte: startDate
-                }
+                ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
             }
         },
         _sum: {
@@ -72,13 +74,15 @@ export const getTopProductsUseCase = async (limit: number = 5): Promise<TopProdu
             const product = productMap.get(item.productId);
             if (!product) return null;
 
+            const qty = item._sum.quantity ?? 0;
             return {
                 id: product.id,
                 name: product.name,
                 slug: product.slug,
                 price: product.price,
                 imageUrl: product.images[0]?.url ?? null,
-                totalQuantitySold: item._sum.quantity ?? 0,
+                totalQuantitySold: qty,
+                totalRevenue: qty * product.price,
                 category: {
                     id: product.category.id,
                     name: product.category.name

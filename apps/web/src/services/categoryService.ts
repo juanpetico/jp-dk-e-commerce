@@ -6,6 +6,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 interface CreateCategoryPayload {
     name: string;
     imageUrl?: string | null;
+    isPublished?: boolean;
+    showInHero?: boolean;
+    showInMenu?: boolean;
 }
 
 export const fetchCategories = async (options?: { isPublished?: boolean }): Promise<Category[]> => {
@@ -85,7 +88,7 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | undefi
 
 export const patchCategory = async (
     id: string,
-    payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder' | 'imageUrl'>>
+    payload: Partial<Pick<Category, 'name' | 'isPublished' | 'sortOrder' | 'imageUrl' | 'showInHero' | 'showInMenu'>>
 ): Promise<Category> => {
     const res = await apiFetch(`${API_URL}/categories/${id}`, {
         method: 'PATCH',

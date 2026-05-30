@@ -43,7 +43,7 @@ export default function CartDrawerFooter({ couponDiscount, total, formatPrice, o
 
             <div className="flex flex-col gap-2 pt-2">
                 <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-bold">
-                    Metodos de pago aceptados
+                    Métodos de pago aceptados
                 </p>
                 <div className="flex justify-center gap-4 opacity-100 items-center">
                     {PAYMENT_METHODS.map((paymentMethod) => (

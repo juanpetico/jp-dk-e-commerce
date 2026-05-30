@@ -18,7 +18,8 @@ export type AuditAction =
     | "COUPON_CREATED"
     | "COUPON_UPDATED"
     | "COUPON_DELETED"
-    | "PRODUCT_SALE_CHANGE";
+    | "PRODUCT_SALE_CHANGE"
+    | "CATEGORY_UPDATED";
 
 export interface AuditEntry {
     id: string;

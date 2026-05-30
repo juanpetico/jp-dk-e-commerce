@@ -54,7 +54,8 @@ export function calculateDashboardAnalytics(
     const validOrders = ordersInRange.filter((order) => order.status !== 'CANCELLED');
     const totalSales = validOrders.reduce((acc, order) => acc + order.total, 0);
 
-    const pendingOrders = ordersInRange.filter((order) => order.status === 'PENDING').length;
+    // pendingOrders es una métrica operativa: cuenta todas las órdenes pendientes sin filtro de fecha
+    const pendingOrders = orders.filter((order) => order.status === 'PENDING').length;
 
     const validOrdersCount = validOrders.length;
     const aov = validOrdersCount > 0 ? totalSales / validOrdersCount : 0;

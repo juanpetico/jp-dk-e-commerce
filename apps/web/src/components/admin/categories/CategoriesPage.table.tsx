@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ExternalLink, Image as ImageIcon, PenLine, Trash2 } from 'lucide-react';
+import { ExternalLink, Image as ImageIcon, Menu, PenLine, Star, Trash2 } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -32,6 +32,8 @@ export default function CategoriesPageTable({
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Nombre</TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Productos</TableHead>
                     <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Estado</TableHead>
+                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Portada</TableHead>
+                    <TableHead className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Menú</TableHead>
                     <TableHead className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Acciones</TableHead>
                 </TableRow>
             </TableHeader>
@@ -79,6 +81,22 @@ export default function CategoriesPageTable({
                                         }`}
                                     />
                                 </div>
+                            </TableCell>
+
+                            <TableCell className="px-6 py-4">
+                                {category.showInHero ? (
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                ) : (
+                                    <Star className="h-4 w-4 text-gray-200" />
+                                )}
+                            </TableCell>
+
+                            <TableCell className="px-6 py-4">
+                                {(category.showInMenu ?? true) ? (
+                                    <Menu className="h-4 w-4 text-blue-500" />
+                                ) : (
+                                    <Menu className="h-4 w-4 text-gray-200" />
+                                )}
                             </TableCell>
 
                             <TableCell className="px-6 py-4">

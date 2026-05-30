@@ -2,6 +2,18 @@ import { body } from "express-validator";
 
 export const categoryValidation = [
     body("name").trim().notEmpty().withMessage("Category name is required"),
+    body("isPublished")
+        .optional()
+        .isBoolean()
+        .withMessage("isPublished must be a boolean"),
+    body("showInHero")
+        .optional()
+        .isBoolean()
+        .withMessage("showInHero must be a boolean"),
+    body("showInMenu")
+        .optional()
+        .isBoolean()
+        .withMessage("showInMenu must be a boolean"),
     body("imageUrl")
         .optional({ nullable: true })
         .customSanitizer((value) => {
@@ -28,6 +40,14 @@ export const categoryPartialValidation = [
         .optional()
         .isBoolean()
         .withMessage("isPublished must be a boolean"),
+    body("showInHero")
+        .optional()
+        .isBoolean()
+        .withMessage("showInHero must be a boolean"),
+    body("showInMenu")
+        .optional()
+        .isBoolean()
+        .withMessage("showInMenu must be a boolean"),
     body("sortOrder")
         .optional()
         .isInt()

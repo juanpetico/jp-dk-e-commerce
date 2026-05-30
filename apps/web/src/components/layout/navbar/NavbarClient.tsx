@@ -53,11 +53,12 @@ export default function NavbarClient() {
             try {
                 const data = await fetchCategories({ isPublished: true });
 
-                if (data.length > 0) {
+                const menuCategories = data.filter((c) => c.showInMenu !== false);
+                if (menuCategories.length > 0) {
                     setCategories(
-                        data.map((category) => ({
+                        menuCategories.map((category) => ({
                             label: category.name,
-                            path: `/category/${category.slug}`,
+                            path: `/catalog?category=${category.slug}`,
                         })),
                     );
                     return;

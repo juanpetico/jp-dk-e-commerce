@@ -138,7 +138,40 @@ No usar `Edit`, `Edit2` ni `Trash` (sin número); siempre `Pencil` y `Trash2`.
 
 ---
 
-## 9. Ideas a considerar (backlog de mejoras)
+## 9. Líneas divisorias (dividers)
+
+Hay dos variantes del mismo patrón visual. Ambas usan `bg-gray-300 dark:bg-gray-700` como color de línea — nunca `border-gray-100` ni valores sin par dark.
+
+### Variante A — Línea sola (separador de sección)
+
+Para separar bloques de contenido sin texto encima:
+
+```tsx
+<div className="h-px bg-gray-300 dark:bg-gray-700 mb-12" />
+```
+
+Usada debajo de los filtros del catálogo, antes de la grilla de productos.
+
+### Variante B — Título sobre línea (section header)
+
+Para títulos de sección con línea decorativa detrás. El contenedor es `relative`, el texto tiene `bg-background px-6` para tapar la línea, y la línea es `absolute`:
+
+```tsx
+<div className="relative text-center mb-12">
+  <h2 className="inline-block relative z-10 bg-background px-6 font-display font-black uppercase tracking-tight text-3xl md:text-5xl">
+    Título de sección
+  </h2>
+  <div className="absolute top-1/2 left-0 w-full h-px bg-gray-300 dark:bg-gray-700 -z-0" />
+</div>
+```
+
+Usada en la homepage para "Nuevo Drop Shooters BG".
+
+**Regla**: no usar `border-b` con colores hardcoded para separadores — siempre una de estas dos variantes para garantizar consistencia dark/light.
+
+---
+
+## 10. Ideas a considerar (backlog de mejoras)
 
 - **Storybook / catálogo local**: documentar los componentes compartidos con ejemplos visuales.
 - **Tokens de z-index**: definir capas explícitas para modales, toasts y dropdowns para evitar conflictos.

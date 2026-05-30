@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Order } from '../types';
+import { TopProduct } from '../types';
 
 interface ReportData {
     analytics: {
@@ -15,6 +15,7 @@ interface ReportData {
         lowStockThreshold: number;
     };
     categoryData: { name: string; value: number }[];
+    topProducts: TopProduct[];
     dateRange: { from?: Date; to?: Date };
 }
 
@@ -71,7 +72,7 @@ export const generateDashboardReport = async (data: ReportData): Promise<Blob> =
         ['Ventas Totales', formatPrice(data.analytics.totalSales)],
         ['Órdenes Pendientes', data.analytics.pendingOrders.toString()],
         [
-            'Impacto Marketing (Revenue)',
+            'Impacto Marketing (Ingresos)',
             `${data.analytics.couponAttributedRevenueRate.toFixed(1)}% (${formatPrice(data.analytics.couponAttributedRevenue)} de ${formatPrice(data.analytics.totalSales)})`,
         ],
         [
@@ -123,6 +124,44 @@ export const generateDashboardReport = async (data: ReportData): Promise<Blob> =
         columnStyles: {
             1: { halign: 'right' },
             2: { halign: 'right' }
+        },
+        margin: { left: margin, right: margin }
+    });
+
+    // --- TOP PRODUCTS SECTION ---
+    // @ts-ignore
+    yPos = doc.lastAutoTable.finalY + 20;
+
+    if (doc.internal.pageSize.height - yPos < 60) {
+        doc.addPage();
+        yPos = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Productos Estrella', margin, yPos);
+
+    yPos += 10;
+    const topProductRows = data.topProducts.slice(0, 10).map((p, i) => [
+        (i + 1).toString(),
+        p.name,
+        p.category.name,
+        p.totalQuantitySold.toString(),
+        formatPrice(p.totalRevenue),
+    ]);
+
+    autoTable(doc, {
+        startY: yPos,
+        head: [['#', 'Producto', 'Categoría', 'Uds. Vendidas', 'Ingresos']],
+        body: topProductRows,
+        theme: 'striped',
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 12 },
+            3: { halign: 'right' },
+            4: { halign: 'right' },
         },
         margin: { left: margin, right: margin }
     });

@@ -1,6 +1,6 @@
 export default function CatalogPageSkeleton() {
     return (
-        <div className="min-h-screen pb-12 pt-20 md:pt-0 animate-pulse">
+        <div className="min-h-screen pb-12 pt-28 animate-pulse">
             <div className="mb-8 border-b border-muted md:mb-12">
                 <div className="grid grid-cols-1 md:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (

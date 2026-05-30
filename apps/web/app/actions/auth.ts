@@ -33,7 +33,7 @@ export async function getServerSession() {
 
     try {
         const parts = token.split('.')
-        if (parts.length !== 3) return null
+        if (parts.length !== 3 || !parts[1]) return null
         const padded = parts[1]
             .replace(/-/g, '+')
             .replace(/_/g, '/')

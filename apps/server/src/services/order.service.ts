@@ -47,8 +47,8 @@ export const orderService = {
         return cancelOrderUseCase(orderId, userId);
     },
 
-    async getTopProducts(limit?: number) {
-        return getTopProductsUseCase(limit);
+    async getTopProducts(limit?: number, startDate?: Date, endDate?: Date) {
+        return getTopProductsUseCase(limit, startDate, endDate);
     },
 
     async getDashboardCartFunnel() {

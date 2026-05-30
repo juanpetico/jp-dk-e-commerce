@@ -39,6 +39,14 @@ export const updateCategoryFieldsUseCase = async (
         updateData.imageUrl = fields.imageUrl;
     }
 
+    if (typeof fields.showInHero === "boolean") {
+        updateData.showInHero = fields.showInHero;
+    }
+
+    if (typeof fields.showInMenu === "boolean") {
+        updateData.showInMenu = fields.showInMenu;
+    }
+
     if (Object.keys(updateData).length === 0) {
         throw new AppError("At least one field is required", 400);
     }
@@ -66,6 +74,32 @@ export const updateCategoryFieldsUseCase = async (
         });
 
         await triggerStorefrontRevalidation();
+    }
+
+    if (actorId) {
+        const trackedFields = ["name", "showInMenu", "showInHero", "sortOrder"] as const;
+        const oldFields: Record<string, unknown> = {};
+        const newFields: Record<string, unknown> = {};
+
+        for (const field of trackedFields) {
+            const next = updateData[field as keyof CategoryFieldsUpdateInput];
+            if (next !== undefined && existing[field] !== next) {
+                oldFields[field] = existing[field];
+                newFields[field] = next;
+            }
+        }
+
+        if (Object.keys(newFields).length > 0) {
+            await createLog({
+                actorId,
+                action: "CATEGORY_UPDATED",
+                entityType: "CATEGORY",
+                entityId: category.id,
+                oldValue: JSON.stringify(oldFields),
+                newValue: JSON.stringify(newFields),
+                metadata: { categoryName: category.name },
+            });
+        }
     }
 
     return category;
