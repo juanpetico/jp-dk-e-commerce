@@ -180,6 +180,18 @@ Copiar desde `apps/web/.env.example`.
 - En desarrollo, usar siempre el comando `:local`
 - En CI/CD o deploy, usar el comando sin sufijo
 
+### Build del backend en Vercel (`ecommerce-api`)
+
+El proyecto `ecommerce-api` (root `apps/server`) se construye con el builder `@vercel/node`, que ejecuta `tsc` para typecheckear `api/index.ts` y todos sus imports.
+
+**Reglas para no romper el build:**
+- El cliente de Prisma **debe estar generado antes del typecheck**. Por eso `apps/server/package.json` tiene `"postinstall": "prisma generate"`. Si falta, `import { Prisma } from "@prisma/client"` falla y arrastra en cascada errores falsos de tipos de Express (`Router.post`, `Request.method`, parámetros `any` implícito). **No tocar/eliminar el `postinstall`.**
+- `dev` usa `tsx`, que **no** chequea tipos. Antes de pushear cambios al backend, correr `pnpm --filter @repo/server build` (o `npx tsc --noEmit`) para detectar errores que solo aparecerían en el build de Vercel.
+- Toda dependencia runtime que se importe en TS necesita sus tipos en `devDependencies` (ej. `pg` → `@types/pg`).
+- `engines.node` se fija a `"22.x"` (no `">=22"`) para evitar el warning de auto-upgrade de major de Vercel.
+
+> Nota: `@vercel/node` imprime los errores de tipo pero **no falla el deploy** (queda `READY`). Conviene revisar el log igual.
+
 ---
 
 ## Commits y ramas
