@@ -1,5 +1,5 @@
 import prisma from "../../../config/prisma.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { userInclude } from "../user.queries.js";
 import { mapUserToResponse } from "../user.mappers.js";
 import type { CreateUserData } from "../user.types.js";

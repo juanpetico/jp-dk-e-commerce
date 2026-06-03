@@ -188,7 +188,8 @@ El proyecto `ecommerce-api` (root `apps/server`) se construye con el builder `@v
 - El cliente de Prisma **debe estar generado antes del typecheck**. Por eso `apps/server/package.json` tiene `"postinstall": "prisma generate"`. Si falta, `import { Prisma } from "@prisma/client"` falla y arrastra en cascada errores falsos de tipos de Express (`Router.post`, `Request.method`, parámetros `any` implícito). **No tocar/eliminar el `postinstall`.**
 - `dev` usa `tsx`, que **no** chequea tipos. Antes de pushear cambios al backend, correr `pnpm --filter @repo/server build` (o `npx tsc --noEmit`) para detectar errores que solo aparecerían en el build de Vercel.
 - Toda dependencia runtime que se importe en TS necesita sus tipos en `devDependencies` (ej. `pg` → `@types/pg`).
-- `engines.node` se fija a `"22.x"` (no `">=22"`) para evitar el warning de auto-upgrade de major de Vercel.
+- `engines.node` se fija a la major exacta del proyecto en Vercel (ej. `"24.x"`, no `">=22"`) para evitar el warning de auto-upgrade y no forzar un downgrade respecto al setting del proyecto.
+- **No usar dependencias con binarios nativos** (`.node`). pnpm ignora sus build scripts por seguridad, así que el binario no se compila y la lambda crashea en runtime con `Cannot find module '...bcrypt_lib.node'`. Preferir alternativas en JS puro (ej. `bcryptjs` en vez de `bcrypt`, ya adoptado). Si un nativo es inevitable, agregarlo a `onlyBuiltDependencies` en la config de pnpm y validar el binario en la arquitectura del runtime.
 
 > Nota: `@vercel/node` imprime los errores de tipo pero **no falla el deploy** (queda `READY`). Conviene revisar el log igual.
 
