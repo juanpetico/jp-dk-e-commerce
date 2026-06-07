@@ -1,5 +1,10 @@
 import ProfileLayoutClient from '@/components/profile/layout/ProfileLayoutClient';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
-    return <ProfileLayoutClient>{children}</ProfileLayoutClient>;
+    return (
+        <ProtectedRoute roles={['CLIENT', 'ADMIN', 'SUPERADMIN']}>
+            <ProfileLayoutClient>{children}</ProfileLayoutClient>
+        </ProtectedRoute>
+    );
 }
