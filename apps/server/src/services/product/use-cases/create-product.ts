@@ -3,6 +3,7 @@ import { AppError } from "../../../middleware/error-handler.js";
 import { createLog } from "../../audit.service.js";
 import { productWithRelationsInclude } from "../product.queries.js";
 import { generateSlug } from "../product.utils.js";
+import { triggerStorefrontRevalidation } from "../../../utils/storefront-revalidation.js";
 import type { CreateProductData } from "../product.types.js";
 
 export const createProductUseCase = async (data: CreateProductData, actorId: string) => {
@@ -59,6 +60,8 @@ export const createProductUseCase = async (data: CreateProductData, actorId: str
         newValue: product.name,
         metadata: { categoryId: product.categoryId, price: product.price },
     });
+
+    await triggerStorefrontRevalidation(["/", "/catalog", `/product/${product.slug}`]);
 
     return product;
 };

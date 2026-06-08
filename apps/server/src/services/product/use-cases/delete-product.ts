@@ -1,11 +1,12 @@
 import prisma from "../../../config/prisma.js";
 import { AppError } from "../../../middleware/error-handler.js";
 import { createLog } from "../../audit.service.js";
+import { triggerStorefrontRevalidation } from "../../../utils/storefront-revalidation.js";
 
 export const deleteProductUseCase = async (id: string, actorId: string) => {
     const product = await prisma.product.findUnique({
         where: { id },
-        select: { name: true, categoryId: true, price: true },
+        select: { name: true, categoryId: true, price: true, slug: true },
     });
     if (!product) throw new AppError("Product not found", 404);
 
@@ -19,4 +20,6 @@ export const deleteProductUseCase = async (id: string, actorId: string) => {
         oldValue: product.name,
         metadata: { categoryId: product.categoryId, price: product.price },
     });
+
+    await triggerStorefrontRevalidation(["/", "/catalog", `/product/${product.slug}`]);
 };

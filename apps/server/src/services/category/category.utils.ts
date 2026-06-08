@@ -31,26 +31,5 @@ export const generateCategorySlug = async (name: string, excludeId?: string): Pr
     return slug;
 };
 
-export const triggerStorefrontRevalidation = async () => {
-    const revalidateUrl = process.env.STOREFRONT_REVALIDATE_URL;
-    const revalidateSecret = process.env.STOREFRONT_REVALIDATE_SECRET;
-
-    if (!revalidateUrl || !revalidateSecret) {
-        return;
-    }
-
-    try {
-        await fetch(revalidateUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-revalidate-secret": revalidateSecret,
-            },
-            body: JSON.stringify({
-                paths: ["/", "/catalog"],
-            }),
-        });
-    } catch {
-        // Best effort invalidation
-    }
-};
+// Re-exportado desde el util compartido para no romper imports existentes.
+export { triggerStorefrontRevalidation } from "../../utils/storefront-revalidation.js";

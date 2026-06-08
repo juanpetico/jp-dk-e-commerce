@@ -145,6 +145,8 @@ Copiar desde `apps/web/.env.example`.
 
 ### Backend (`apps/server/.env`)
 
+> **Setup local obligatorio:** copiar `apps/server/.env.example` → `apps/server/.env` antes de levantar el server. Sin este archivo, `DATABASE_URL` queda `undefined`, el server **arranca igual pero falla silenciosamente con `400 Bad Request`** en cada query (el `error-handler` mapea el error de Prisma a 400 "Database error"). Para dev local, `DATABASE_URL` apunta al Postgres de `docker-compose` (`postgresql://ecommerce_user:ecommerce_password@localhost:5432/ecommerce_db`).
+
 | Variable | Descripción |
 |----------|-------------|
 | `DATABASE_URL` | Cadena de conexión PostgreSQL |

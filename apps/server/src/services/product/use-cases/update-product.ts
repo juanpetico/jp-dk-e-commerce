@@ -4,6 +4,7 @@ import { createLog } from "../../audit.service.js";
 import { productWithRelationsInclude } from "../product.queries.js";
 import { buildUpdateProductPayload } from "../product.mappers.js";
 import { validateUpdateProductPricing } from "../product.validators.js";
+import { triggerStorefrontRevalidation } from "../../../utils/storefront-revalidation.js";
 import type { UpdateProductData } from "../product.types.js";
 
 export const updateProductUseCase = async (id: string, actorId: string, productData: UpdateProductData) => {
@@ -98,6 +99,8 @@ export const updateProductUseCase = async (id: string, actorId: string, productD
             }
         }
     }
+
+    await triggerStorefrontRevalidation(["/", "/catalog", `/product/${product.slug}`]);
 
     return product;
 };
