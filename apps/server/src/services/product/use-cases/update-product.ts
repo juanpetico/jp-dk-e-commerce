@@ -4,6 +4,7 @@ import { createLog } from "../../audit.service.js";
 import { productWithRelationsInclude } from "../product.queries.js";
 import { buildUpdateProductPayload } from "../product.mappers.js";
 import { validateUpdateProductPricing } from "../product.validators.js";
+import { generateUniqueProductSlug } from "../product.utils.js";
 import { triggerStorefrontRevalidation } from "../../../utils/storefront-revalidation.js";
 import type { UpdateProductData } from "../product.types.js";
 
@@ -22,6 +23,12 @@ export const updateProductUseCase = async (id: string, actorId: string, productD
         if (!category) {
             throw new AppError("Category not found", 404);
         }
+    }
+
+    // El slug se deriva del nombre (no es editable desde el form). Si el nombre
+    // cambia, regeneramos el slug garantizando unicidad.
+    if (productData.name !== undefined && productData.name !== current.name) {
+        productData.slug = await generateUniqueProductSlug(productData.name, id);
     }
 
     validateUpdateProductPricing(current.price, current.originalPrice, productData);

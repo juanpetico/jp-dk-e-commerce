@@ -32,6 +32,7 @@ export interface ProductFilters {
 
 export interface UpdateProductData {
     name?: string;
+    slug?: string;
     description?: string;
     price?: number;
     originalPrice?: number;

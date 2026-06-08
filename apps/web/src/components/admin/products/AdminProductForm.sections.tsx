@@ -79,26 +79,20 @@ export function AdminProductFormSections({
                 <div className="space-y-2">
                     <Label htmlFor="slug" className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1.5">
                         Slug (URL)
-                        {!isEditing && <span className="text-red-500">*</span>}
-                        {isEditing && <span className="text-[10px] font-normal normal-case text-muted-foreground/60">(no editable)</span>}
+                        <span className="text-[10px] font-normal normal-case text-muted-foreground/60">(se genera del nombre)</span>
                     </Label>
                     <Input
                         id="slug"
                         type="text"
                         name="slug"
                         value={formData.slug ?? ''}
-                        onChange={(e) => onTextChange('slug', e.target.value)}
-                        readOnly={isEditing}
+                        readOnly
                         className={cn(
-                            'bg-muted/50 h-11 font-mono text-muted-foreground',
-                            !isEditing && 'focus:ring-primary focus:bg-background',
-                            isEditing && 'cursor-not-allowed opacity-60 select-none',
-                            errors.slug && 'ring-2 ring-destructive focus:ring-destructive bg-destructive/10 border-destructive'
+                            'bg-muted/50 h-11 font-mono text-muted-foreground cursor-not-allowed opacity-60 select-none'
                         )}
                         placeholder="slug-del-producto"
-                        tabIndex={isEditing ? -1 : undefined}
+                        tabIndex={-1}
                     />
-                    {errors.slug && <p className="text-destructive text-xs font-medium">{errors.slug}</p>}
                 </div>
             </div>
 

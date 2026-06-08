@@ -6,6 +6,10 @@ import { fetchProducts } from '../src/services/productService';
 import { Hero } from '../src/components/home/Hero';
 import { LookbookCarousel } from '../src/components/home/LookbookCarousel';
 
+// ISR: la home queda cacheada pero participa de la revalidación on-demand
+// (`revalidatePath('/')` que dispara el backend al crear/editar/borrar productos).
+export const revalidate = 60;
+
 const HomePage = async () => {
   const products = await fetchProducts();
   const featuredProducts = products.slice(0, 8);

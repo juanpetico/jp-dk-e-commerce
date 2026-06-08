@@ -2,12 +2,12 @@ import prisma from "../../../config/prisma.js";
 import { AppError } from "../../../middleware/error-handler.js";
 import { createLog } from "../../audit.service.js";
 import { productWithRelationsInclude } from "../product.queries.js";
-import { generateSlug } from "../product.utils.js";
+import { generateUniqueProductSlug } from "../product.utils.js";
 import { triggerStorefrontRevalidation } from "../../../utils/storefront-revalidation.js";
 import type { CreateProductData } from "../product.types.js";
 
 export const createProductUseCase = async (data: CreateProductData, actorId: string) => {
-    const slug = generateSlug(data.name);
+    const slug = await generateUniqueProductSlug(data.name);
 
     const category = await prisma.category.findUnique({
         where: { id: data.categoryId },

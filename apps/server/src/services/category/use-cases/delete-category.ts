@@ -1,6 +1,7 @@
 import prisma from "../../../config/prisma.js";
 import { AppError } from "../../../middleware/error-handler.js";
 import { createLog } from "../../audit.service.js";
+import { triggerStorefrontRevalidation } from "../category.utils.js";
 
 export const deleteCategoryUseCase = async (id: string, actorId: string) => {
     const category = await prisma.category.findUnique({
@@ -23,4 +24,6 @@ export const deleteCategoryUseCase = async (id: string, actorId: string) => {
         entityId: id,
         oldValue: category.name,
     });
+
+    await triggerStorefrontRevalidation();
 };

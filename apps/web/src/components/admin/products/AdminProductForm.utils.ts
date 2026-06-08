@@ -75,7 +75,6 @@ export const validateProductForm = (formData: FormProduct, isEditing: boolean): 
     }));
 
     if (!formData.name) errors.name = 'El nombre es obligatorio';
-    if (!isEditing && !formData.slug) errors.slug = 'El slug es obligatorio';
 
     if (!rawPrice || rawPrice <= 0) {
         errors.price = 'El precio debe ser mayor a 0';

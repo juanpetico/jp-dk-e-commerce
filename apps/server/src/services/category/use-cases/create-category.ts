@@ -1,6 +1,6 @@
 import prisma from "../../../config/prisma.js";
 import { createLog } from "../../audit.service.js";
-import { generateCategorySlug } from "../category.utils.js";
+import { generateCategorySlug, triggerStorefrontRevalidation } from "../category.utils.js";
 import type { CreateCategoryInput } from "../category.types.js";
 
 export const createCategoryUseCase = async ({ name, imageUrl, showInHero, showInMenu, isPublished }: CreateCategoryInput, actorId: string) => {
@@ -24,6 +24,8 @@ export const createCategoryUseCase = async ({ name, imageUrl, showInHero, showIn
         entityId: category.id,
         newValue: category.name,
     });
+
+    await triggerStorefrontRevalidation();
 
     return category;
 };

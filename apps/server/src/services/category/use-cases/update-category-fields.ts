@@ -72,8 +72,6 @@ export const updateCategoryFieldsUseCase = async (
                 categoryName: category.name,
             },
         });
-
-        await triggerStorefrontRevalidation();
     }
 
     if (actorId) {
@@ -101,6 +99,10 @@ export const updateCategoryFieldsUseCase = async (
             });
         }
     }
+
+    // Cualquier cambio de categoría (nombre, orden, hero, menú, publish, imagen)
+    // puede afectar la tienda → revalidamos el storefront.
+    await triggerStorefrontRevalidation();
 
     return category;
 };

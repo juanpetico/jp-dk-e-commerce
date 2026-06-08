@@ -3,6 +3,7 @@ import type { UpdateProductData } from "./product.types.js";
 export const buildUpdateProductPayload = (productData: UpdateProductData) => {
     return {
         ...(productData.name !== undefined ? { name: productData.name } : {}),
+        ...(productData.slug !== undefined ? { slug: productData.slug } : {}),
         ...(productData.description !== undefined ? { description: productData.description } : {}),
         ...(productData.price !== undefined ? { price: productData.price } : {}),
         ...(productData.originalPrice !== undefined ? { originalPrice: productData.originalPrice } : {}),
